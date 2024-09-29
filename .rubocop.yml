@@ -1,0 +1,32 @@
+require:
+  - standard
+  - standard-performance
+  - standard-rspec
+  - rubocop-performance
+  - rubocop-rake
+  - rubocop-rspec
+
+inherit_gem:
+  standard: config/base.yml
+  standard-performance: config/base.yml
+  standard-rspec: config/base.yml
+
+AllCops:
+  NewCops: disable
+  TargetRubyVersion: 3.2
+
+RSpec/ExampleLength:
+  Enabled: false
+
+RSpec/MessageSpies:
+  Enabled: false
+
+RSpec/MultipleExpectations:
+  Enabled: false
+
+RSpec/DescribeClass:
+  Exclude:
+    - spec/integrations/**/*.rb
+
+RSpec/NestedGroups:
+  Enabled: false
