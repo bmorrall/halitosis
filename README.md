@@ -68,11 +68,13 @@ serializer = DuckSerializer.new(duck)
 
 Then call `serializer.render`:
 
-```json
+```ruby
 {
-  name: 'Ferdi',
-  _links: {
-    self: { href: '/ducks/ferdi' }
+  duck: {
+    name: 'Ferdi',
+    _links: {
+      self: { href: '/ducks/ferdi' }
+    }
   }
 }
 ```
@@ -80,7 +82,7 @@ Then call `serializer.render`:
 Or `serializer.to_json`:
 
 ```ruby
-'{"name": "Ferdi", "_links": {"self": {"href": "/ducks/ferdi"}}}'
+'{"duck": {"name": "Ferdi", "_links": {"self": {"href": "/ducks/ferdi"}}}}'
 ```
 
 
