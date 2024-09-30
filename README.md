@@ -21,7 +21,7 @@ Need something more standardized ([JSON:API](https://jsonapi.org/), or [HAL](htt
 Add this line to your application's Gemfile:
 
 ```ruby
-gem "`UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG`"
+gem "halitosis"
 ```
 
 And then execute:
@@ -33,7 +33,7 @@ $ bundle install
 Or install it yourself as:
 
 ```bash
-$ gem install `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG`
+$ gem install halitosis
 ```
 
 ### Basic usage
