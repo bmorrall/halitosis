@@ -190,6 +190,12 @@ RSpec.describe Halitosis::Relationships do
           }
         )
       end
+
+      it "handles nil" do
+        serializer = klass.new(include: nil)
+
+        expect(serializer.include_options).to eq({})
+      end
     end
   end
 end

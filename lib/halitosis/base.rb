@@ -32,7 +32,7 @@ module Halitosis
       # @return [Object] the serializer instance
       #
       def initialize(**options)
-        @options = Halitosis::HashUtil.symbolize_params(options)
+        @options = Halitosis::HashUtil.symbolize_hash(options)
       end
 
       # @return [Hash, Array] rendered JSON
