@@ -109,6 +109,8 @@ class DucksSerializer
   collection :ducks do
     collection.map { |duck| DuckSerializer.new(duck) }
   end
+
+  permission :quack, value: true
 end
 
 RSpec.describe "Halitosis Example" do
@@ -116,6 +118,40 @@ RSpec.describe "Halitosis Example" do
 
   it "renders a Duck" do
     rendered = DuckSerializer.new(Duck.new).render
+
+    expect(rendered).to eq(
+      duck: {
+        id: 1,
+        age: 9.2,
+        full_name: "Ferdie Duck",
+        _links: {
+          self: {href: "/ducks/1"},
+          root: {href: "/ducks"},
+          find: {href: "/ducks/{?id}", templated: true}
+        }
+      }
+    )
+  end
+
+  it "renders a Duck with a custom root name" do
+    rendered = DuckSerializer.new(Duck.new, include_root: "mallard").render
+
+    expect(rendered).to eq(
+      mallard: {
+        id: 1,
+        age: 9.2,
+        full_name: "Ferdie Duck",
+        _links: {
+          self: {href: "/ducks/1"},
+          root: {href: "/ducks"},
+          find: {href: "/ducks/{?id}", templated: true}
+        }
+      }
+    )
+  end
+
+  it "renders a Duck without a root" do
+    rendered = DuckSerializer.new(Duck.new, include_root: false).render
 
     expect(rendered).to eq(
       id: 1,
@@ -133,9 +169,11 @@ RSpec.describe "Halitosis Example" do
     rendered = DuckSerializer.new(Duck.new, include_links: false).render
 
     expect(rendered).to eq(
-      id: 1,
-      age: 9.2,
-      full_name: "Ferdie Duck"
+      duck: {
+        id: 1,
+        age: 9.2,
+        full_name: "Ferdie Duck"
+      }
     )
   end
 
@@ -143,20 +181,22 @@ RSpec.describe "Halitosis Example" do
     rendered = DuckSerializer.new(Duck.new, include: {ducklings: true}).render
 
     expect(rendered).to eq(
-      id: 1,
-      age: 9.2,
-      full_name: "Ferdie Duck",
-      _relationships: {
-        ducklings: {
-          name: "Duckies",
-          count: 5,
-          _meta: {quacks_per_minute: "many"}
+      duck: {
+        id: 1,
+        age: 9.2,
+        full_name: "Ferdie Duck",
+        _relationships: {
+          ducklings: {
+            name: "Duckies",
+            count: 5,
+            _meta: {quacks_per_minute: "many"}
+          }
+        },
+        _links: {
+          self: {href: "/ducks/1"},
+          root: {href: "/ducks"},
+          find: {href: "/ducks/{?id}", templated: true}
         }
-      },
-      _links: {
-        self: {href: "/ducks/1"},
-        root: {href: "/ducks"},
-        find: {href: "/ducks/{?id}", templated: true}
       }
     )
   end
@@ -165,20 +205,22 @@ RSpec.describe "Halitosis Example" do
     rendered = DuckSerializer.new(Duck.new, include: "ducklings").render
 
     expect(rendered).to eq(
-      id: 1,
-      age: 9.2,
-      full_name: "Ferdie Duck",
-      _relationships: {
-        ducklings: {
-          name: "Duckies",
-          count: 5,
-          _meta: {quacks_per_minute: "many"}
+      duck: {
+        id: 1,
+        age: 9.2,
+        full_name: "Ferdie Duck",
+        _relationships: {
+          ducklings: {
+            name: "Duckies",
+            count: 5,
+            _meta: {quacks_per_minute: "many"}
+          }
+        },
+        _links: {
+          self: {href: "/ducks/1"},
+          root: {href: "/ducks"},
+          find: {href: "/ducks/{?id}", templated: true}
         }
-      },
-      _links: {
-        self: {href: "/ducks/1"},
-        root: {href: "/ducks"},
-        find: {href: "/ducks/{?id}", templated: true}
       }
     )
   end
@@ -210,7 +252,10 @@ RSpec.describe "Halitosis Example" do
             find: {href: "/ducks/{?id}", templated: true}
           }
         }
-      ]
+      ],
+      _permissions: {
+        quack: true
+      }
     )
   end
 
@@ -249,6 +294,54 @@ RSpec.describe "Halitosis Example" do
               _meta: {quacks_per_minute: "many"}
             }
           },
+          _links: {
+            self: {href: "/ducks/1"},
+            root: {href: "/ducks"},
+            find: {href: "/ducks/{?id}", templated: true}
+          }
+        }
+      ],
+      _permissions: {
+        quack: true
+      }
+    )
+  end
+
+  it "renders a collection with a custom root name" do
+    ducks = [Duck.new]
+
+    rendered = DucksSerializer.new(ducks, include_root: "mallards").render
+
+    expect(rendered).to eq(
+      mallards: [
+        {
+          id: 1,
+          age: 9.2,
+          full_name: "Ferdie Duck",
+          _links: {
+            self: {href: "/ducks/1"},
+            root: {href: "/ducks"},
+            find: {href: "/ducks/{?id}", templated: true}
+          }
+        }
+      ],
+      _permissions: {
+        quack: true
+      }
+    )
+  end
+
+  it "renders a collection without a root but without additional fields" do
+    ducks = [Duck.new]
+
+    rendered = DucksSerializer.new(ducks, include_root: false).render
+
+    expect(rendered).to eq(
+      [
+        {
+          id: 1,
+          age: 9.2,
+          full_name: "Ferdie Duck",
           _links: {
             self: {href: "/ducks/1"},
             root: {href: "/ducks"},
@@ -300,7 +393,10 @@ RSpec.describe "Halitosis Example" do
             ]
           }
         }
-      ]
+      ],
+      _permissions: {
+        quack: true
+      }
     )
   end
 
@@ -359,7 +455,10 @@ RSpec.describe "Halitosis Example" do
             ]
           }
         }
-      ]
+      ],
+      _permissions: {
+        quack: true
+      }
     )
   end
 end

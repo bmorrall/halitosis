@@ -74,6 +74,47 @@ RSpec.describe Halitosis::Links do
   end
 
   describe Halitosis::Links::InstanceMethods do
+    describe "#render" do
+      let :rendered do
+        klass.new(include_root: false).render
+      end
+
+      it "renders simple link" do
+        klass.link(:label) { "href" }
+
+        expect(rendered[:_links][:label]).to eq(href: "href")
+      end
+
+      it "does not include link if conditional checks fail" do
+        klass.send(:define_method, :return_false) { false }
+        klass.send(:define_method, :return_nil) { nil }
+
+        klass.link(:label) { "href" }
+
+        klass.link(:label_2, if: false) { "href" }
+        klass.link(:label_3, if: proc { false }) { "href" }
+        klass.link(:label_4, if: proc {}) { "href" }
+        klass.link(:label_5, if: :return_false) { "href" }
+
+        expect(rendered[:_links].keys).to eq([:label])
+      end
+
+      it "includes link if conditional checks pass" do
+        klass.send(:define_method, :return_true) { true }
+        klass.send(:define_method, :return_one) { 1 }
+
+        klass.link(:label) { "href" }
+
+        klass.link(:label_2, if: true) { "href" }
+        klass.link(:label_3, if: proc { true }) { "href" }
+        klass.link(:label_4, if: proc { 1 }) { "href" }
+        klass.link(:label_5, if: :return_true) { "href" }
+
+        expected = %i[label label_2 label_3 label_4 label_5]
+        expect(rendered[:_links].keys).to eq(expected)
+      end
+    end
+
     describe "options[:include_links]" do
       let :klass do
         Class.new do

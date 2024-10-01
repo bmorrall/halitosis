@@ -53,6 +53,23 @@ module Halitosis
 
         super(**)
       end
+
+      # @return [Hash] the rendered hash with resource, as a hash
+      #
+      def render
+        if (include_root = options.fetch(:include_root) { depth.zero? })
+          {root_name(include_root, self.class.resource_name) => super}
+        else
+          super
+        end
+      end
+
+      private
+
+      def root_name(include_root, default)
+        return include_root.to_sym if include_root.is_a?(String) || include_root.is_a?(Symbol)
+        default.to_sym
+      end
     end
   end
 end

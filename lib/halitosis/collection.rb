@@ -54,12 +54,12 @@ module Halitosis
         super(**)
       end
 
-      # @return [Hash] the rendered hash with collection, if any
+      # @return [Hash, Array] the rendered hash with collection, as an array or a hash under a key
       #
       def render
         field = self.class.collection_field
-        if depth.zero?
-          super.merge(field.name => render_collection_field(field))
+        if (include_root = options.fetch(:include_root) { depth.zero? })
+          super.merge(root_name(include_root, field.name) => render_collection_field(field))
         else
           render_collection_field(field)
         end
@@ -77,6 +77,11 @@ module Halitosis
       end
 
       private
+
+      def root_name(include_root, default)
+        return include_root.to_sym if include_root.is_a?(String) || include_root.is_a?(Symbol)
+        default.to_sym
+      end
 
       # @param key [String]
       #

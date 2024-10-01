@@ -28,47 +28,6 @@ RSpec.describe Halitosis::Base do
       end
     end
 
-    describe "#render" do
-      let :rendered do
-        resource_serializer.new(resource).render
-      end
-
-      it "renders simple link" do
-        resource_serializer.link(:label) { "href" }
-
-        expect(rendered[:_links][:label]).to eq(href: "href")
-      end
-
-      it "does not include link if conditional checks fail" do
-        resource_serializer.send(:define_method, :return_false) { false }
-        resource_serializer.send(:define_method, :return_nil) { nil }
-
-        resource_serializer.link(:label) { "href" }
-
-        resource_serializer.link(:label_2, if: false) { "href" }
-        resource_serializer.link(:label_3, if: proc { false }) { "href" }
-        resource_serializer.link(:label_4, if: proc {}) { "href" }
-        resource_serializer.link(:label_5, if: :return_false) { "href" }
-
-        expect(rendered[:_links].keys).to eq([:label])
-      end
-
-      it "includes link if conditional checks pass" do
-        resource_serializer.send(:define_method, :return_true) { true }
-        resource_serializer.send(:define_method, :return_one) { 1 }
-
-        resource_serializer.link(:label) { "href" }
-
-        resource_serializer.link(:label_2, if: true) { "href" }
-        resource_serializer.link(:label_3, if: proc { true }) { "href" }
-        resource_serializer.link(:label_4, if: proc { 1 }) { "href" }
-        resource_serializer.link(:label_5, if: :return_true) { "href" }
-
-        expected = %i[label label_2 label_3 label_4 label_5]
-        expect(rendered[:_links].keys).to eq(expected)
-      end
-    end
-
     describe "#render_child" do
       let :serializer do
         Class.new do
@@ -125,13 +84,13 @@ RSpec.describe Halitosis::Base do
 
     xdescribe "#as_json" do
       it "converts rendered serializer to json" do
-        expect(resource_serializer.new(resource).as_json).to eq({})
+        expect(resource_serializer.new(resource).as_json).to eq({test: {}})
       end
     end
 
     describe "#to_json" do
       it "converts rendered serializer to json" do
-        expect(resource_serializer.new(resource).to_json).to eq("{}")
+        expect(resource_serializer.new(resource).to_json).to eq('{"test":{}}')
       end
     end
 
