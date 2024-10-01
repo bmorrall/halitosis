@@ -4,38 +4,43 @@ module Halitosis
   module HashUtil
     module_function
 
-    # Transform hash keys into strings if necessary
+    # Transform include params into a hash
     #
-    # @param hash [Hash, Array, String]
+    # @param object [Hash, Array, String]
     #
     # @return [Hash]
-    #
-    def stringify_params(hash)
-      case hash
+    def hasherize_include_option(object)
+      case object
       when Hash
-        hash.transform_keys(&:to_s)
-      when String
-        hash.split(",").inject({}) do |output, key|
+        object.transform_keys(&:to_s)
+      when String, Symbol
+        object.to_s.split(",").inject({}) do |output, key|
           f, value = key.split(".", 2)
-          output.merge(f => value ? stringify_params(value) : true)
+          deep_merge(output, f => value ? hasherize_include_option(value) : {})
         end
       when Array
-        hash.map { |item| stringify_params(item) }.inject({}, &:merge)
-      when nil
-        {}
+        object.inject({}) do |output, value|
+          deep_merge(output, hasherize_include_option(value))
+        end
       else
-        hash
+        object
       end
     end
 
-    # Transform hash keys into strings if necessary
+    # Deep merge two hashes
     #
-    # @param hash [Hash, Array, String]
+    # @param hash [Hash]
+    # @param other_hash [Hash]
     #
     # @return [Hash]
-    #
-    def stringify_hash(hash)
-      hash.transform_keys(&:to_s)
+    def deep_merge(hash, other_hash)
+      hash.merge(other_hash) do |key, this_val, other_val|
+        if this_val.is_a?(Hash) && other_val.is_a?(Hash)
+          deep_merge(this_val, other_val)
+        else
+          other_val
+        end
+      end
     end
 
     # Transform hash keys into symbols if necessary

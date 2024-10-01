@@ -71,7 +71,7 @@ module Halitosis
       # @return [Hash] hash of options with top level string keys
       #
       def include_options
-        @include_options ||= Halitosis::HashUtil.stringify_params(options.fetch(:include, {}))
+        @include_options ||= Halitosis::HashUtil.hasherize_include_option(options[:include] || {})
       end
     end
   end

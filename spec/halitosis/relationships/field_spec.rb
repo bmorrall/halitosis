@@ -23,8 +23,8 @@ RSpec.describe Halitosis::Relationships::Field do
       Class.new { include Halitosis }
     end
 
-    it "is true for expected values" do
-      [1, 2, true, "1", "2", "true", "yes"].each do |value|
+    [1, 2, true, "1", "2", "true", "yes"].each do |value|
+      it "is true for expected values #{value.inspect}" do
         serializer = klass.new(include: {foo: value})
 
         relationship = described_class.new(:foo, {}, proc {})
@@ -33,8 +33,8 @@ RSpec.describe Halitosis::Relationships::Field do
       end
     end
 
-    it "is false for expected values" do
-      [0, false, "0", "false"].each do |value|
+    [0, false, "0", "false"].each do |value|
+      it "is false for expected values #{value.inspect}" do
         serializer = klass.new(include: {foo: value})
 
         relationship = described_class.new(:foo, {}, proc {})

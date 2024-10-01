@@ -118,7 +118,7 @@ RSpec.describe Halitosis::Relationships do
 
         opts = serializer.send(:child_relationship_opts, :unknown_key)
 
-        expect(opts).to eq({})
+        expect(opts).to eq({}).and(be_truthy)
       end
 
       it "returns empty options for known key with no child options" do
@@ -126,7 +126,7 @@ RSpec.describe Halitosis::Relationships do
 
         opts = serializer.send(:child_relationship_opts, "requested_key")
 
-        expect(opts).to eq({})
+        expect(opts).to eq({}).and(be_truthy)
       end
 
       it "returns child options for known key with child options" do
@@ -134,7 +134,7 @@ RSpec.describe Halitosis::Relationships do
 
         opts = serializer.send(:child_relationship_opts, "requested_key")
 
-        expect(opts).to eq(child_key: 0)
+        expect(opts).to eq(child_key: 0).and(be_truthy)
       end
 
       it "returns deeply nested child options" do
@@ -150,45 +150,68 @@ RSpec.describe Halitosis::Relationships do
 
         expect(opts).to eq(
           child_key: {grandchild_key: {great_grandchild_key: 1}}
-        )
+        ).and(be_truthy)
       end
     end
 
     describe "#include_options" do
-      it "stringifies top level keys" do
+      it "stringifies nested keys" do
         serializer = klass.new(include: {some: {options: 1}})
 
         expect(serializer.include_options).to eq("some" => {options: 1})
       end
 
-      it "hashifies string of lists" do
-        serializer = klass.new(include: "some.options,more.options,more.options.here")
+      ["some.options", "more.options.here", "more.options.there", "another"].permutation.each do |permutation|
+        it "hashifies an array of strings #{permutation.join(",")}" do
+          serializer = klass.new(include: permutation)
 
-        expect(serializer.include_options).to eq(
-          "some" => {
-            "options" => true
-          },
-          "more" => {
-            "options" => {
-              "here" => true
-            }
-          }
-        )
-      end
+          expect(serializer.include_options).to eq(
+            "some" => {
+              "options" => {}
+            },
+            "more" => {
+              "options" => {
+                "here" => {},
+                "there" => {}
+              }
+            },
+            "another" => {}
+          )
+        end
 
-      it "hashifies arrays of strings" do
-        serializer = klass.new(include: ["some.options", "more.options", "more.options.here"])
+        it "hashifies an array of symbols #{permutation.join(",")}" do
+          serializer = klass.new(include: permutation.map(&:to_sym))
 
-        expect(serializer.include_options).to eq(
-          "some" => {
-            "options" => true
-          },
-          "more" => {
-            "options" => {
-              "here" => true
-            }
-          }
-        )
+          expect(serializer.include_options).to eq(
+            "some" => {
+              "options" => {}
+            },
+            "more" => {
+              "options" => {
+                "here" => {},
+                "there" => {}
+              }
+            },
+            "another" => {}
+          )
+        end
+
+        it "hashifies a comma separated string #{permutation.join(",")}" do
+          serializer = klass.new(include: permutation.join(","))
+
+          expect(serializer.include_options).to eq(
+            "some" => {
+              "options" => {}
+            },
+            "more" => {
+              "options" => {
+                "here" => {},
+                "there" => {}
+              }
+            },
+            "another" => {}
+          )
+        end
       end
 
       it "handles nil" do
