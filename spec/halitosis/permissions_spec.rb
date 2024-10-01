@@ -26,6 +26,24 @@ RSpec.describe Halitosis::Permissions do
 
         expect(serializer.render).to eq(_permissions: {foo: "bar"})
       end
+
+      it "renders permissions with true values" do
+        klass.permission(:foo, value: true)
+
+        expect(serializer.render).to eq(_permissions: {foo: true})
+      end
+
+      it "renders permissions with false values" do
+        klass.permission(:foo, value: false)
+
+        expect(serializer.render).to eq(_permissions: {foo: false})
+      end
+
+      it "excludes permissions with nil values as false" do
+        klass.permission(:foo, value: nil)
+
+        expect(serializer.render).to eq(_permissions: {foo: false})
+      end
     end
 
     describe "#permissions" do

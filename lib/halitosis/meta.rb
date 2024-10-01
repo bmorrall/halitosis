@@ -33,7 +33,7 @@ module Halitosis
         render_fields(Field.name) do |field, result|
           value = field.value(self)
 
-          result[field.name] = value if value
+          result[field.name] = value
         end
       end
     end

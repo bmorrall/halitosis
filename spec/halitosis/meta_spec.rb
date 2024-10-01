@@ -26,6 +26,30 @@ RSpec.describe Halitosis::Meta do
 
         expect(serializer.render).to eq(_meta: {foo: "bar"})
       end
+
+      it "renders meta with string values" do
+        klass.meta(:foo, value: "bar")
+
+        expect(serializer.render).to eq(_meta: {foo: "bar"})
+      end
+
+      it "renders meta with integer values" do
+        klass.meta(:foo, value: 1)
+
+        expect(serializer.render).to eq(_meta: {foo: 1})
+      end
+
+      it "renders meta with true values" do
+        klass.meta(:foo, value: true)
+
+        expect(serializer.render).to eq(_meta: {foo: true})
+      end
+
+      it "renders meta with false values" do
+        klass.meta(:foo, value: false)
+
+        expect(serializer.render).to eq(_meta: {foo: false})
+      end
     end
 
     describe "#meta" do
