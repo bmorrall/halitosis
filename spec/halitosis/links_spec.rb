@@ -85,6 +85,28 @@ RSpec.describe Halitosis::Links do
         expect(rendered[:_links][:label]).to eq(href: "href")
       end
 
+      it "renders a simple link with a truthy if condition" do
+        klass.link(:label, if: true) do
+          "href"
+        end
+
+        expect(rendered[:_links][:label]).to eq(href: "href")
+      end
+
+      it "renders a simple link with an if conditional that evaluations to true" do
+        klass.link(:label, if: proc { true }) do
+          "href"
+        end
+
+        expect(rendered[:_links][:label]).to eq(href: "href")
+      end
+
+      it "renders a simple link with a falsy unless condition" do
+        klass.link(:label, unless: false) { "href" }
+
+        expect(rendered[:_links][:label]).to eq(href: "href")
+      end
+
       it "does not include link if conditional checks fail" do
         klass.send(:define_method, :return_false) { false }
         klass.send(:define_method, :return_nil) { nil }
