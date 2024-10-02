@@ -59,7 +59,9 @@ module Halitosis
       def render
         field = self.class.collection_field
         if (include_root = options.fetch(:include_root) { depth.zero? })
-          super.merge(root_name(include_root, field.name) => render_collection_field(field))
+          {
+            root_name(include_root, self.class.collection_name) => render_collection_field(field)
+          }.merge(super)
         else
           render_collection_field(field)
         end

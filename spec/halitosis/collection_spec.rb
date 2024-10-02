@@ -52,5 +52,26 @@ RSpec.describe Halitosis::Collection do
         expect(serializer.collection?).to eq(true)
       end
     end
+
+    describe "#render" do
+      it "renders the collection key as the first key" do
+        # Randomly define a collection, property, meta, link, and permission
+        [
+          -> {
+            klass.define_collection :ducks do
+              []
+            end
+          },
+          -> { klass.property :name, value: "Ferdi" },
+          -> { klass.meta :total, value: 1 },
+          -> { klass.link :self, value: "http://example.com" },
+          -> { klass.permission :read, value: true }
+        ].shuffle.each(&:call)
+
+        serializer = klass.new([])
+
+        expect(serializer.render.keys.first).to eq(:ducks)
+      end
+    end
   end
 end
