@@ -72,12 +72,12 @@ RSpec.describe Halitosis::Links::Field do
     it "merges attrs from options" do
       options = described_class.build_options([
         :templated,
-        {attrs: {properties: {}},
+        {attrs: {attributes: {}},
          foo: "bar"}
       ])
 
       expect(options).to(
-        eq(attrs: {properties: {}, templated: true}, foo: "bar")
+        eq(attrs: {attributes: {}, templated: true}, foo: "bar")
       )
     end
   end

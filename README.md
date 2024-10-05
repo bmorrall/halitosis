@@ -171,7 +171,7 @@ def calculate_quacks
 end
 ```
 
-Attributes can also be implemented using the `property` alias:
+Attributes can also be implemented using the legacy `property` alias:
 
 ```ruby
 property(:quacks) { "#{duck.quacks} per minute" }

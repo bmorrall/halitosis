@@ -9,7 +9,7 @@ module Halitosis
       base.send :include, Links
       base.send :include, Meta
       base.send :include, Permissions
-      base.send :include, Properties
+      base.send :include, Attributes
       base.send :include, Relationships
 
       base.send :attr_reader, :options

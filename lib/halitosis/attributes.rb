@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Halitosis
-  module Properties
+  module Attributes
     def self.included(base)
       base.extend ClassMethods
 
@@ -9,36 +9,38 @@ module Halitosis
     end
 
     module ClassMethods
-      # Rails-style alias for property
+      # Legacy alias for attribute
       #
       # @param name [Symbol, String]
       # @param options [nil, Hash]
       #
-      # @return [Halitosis::Properties::Field]
-      def attribute(...)
-        property(...)
+      # @return [Halitosis::Attributes::Field]
+      def property(...)
+        attribute(...)
       end
 
+      # Rails-style attribute definition
+      #
       # @param name [Symbol, String]
       # @param options [nil, Hash]
       #
-      # @return [Halitosis::Properties::Field]
+      # @return [Halitosis::Attributes::Field]
       #
-      def property(name, options = {}, &procedure)
+      def attribute(name, options = {}, &procedure)
         fields.add(Field.new(name, options, procedure))
       end
     end
 
     module InstanceMethods
-      # @return [Hash] the rendered hash with properties, if any
+      # @return [Hash] the rendered hash with attributes, if any
       #
       def render
-        super.merge(properties)
+        super.merge(attributes)
       end
 
-      # @return [Hash] properties from fields
+      # @return [Hash] attributes from fields
       #
-      def properties
+      def attributes
         render_fields(Field.name) do |field, result|
           result[field.name] = field.value(self)
         end
@@ -47,4 +49,4 @@ module Halitosis
   end
 end
 
-require "halitosis/properties/field"
+require "halitosis/attributes/field"

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Halitosis
-  module Properties
+  module Attributes
     class Field < Halitosis::Field
     end
   end

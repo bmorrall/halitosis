@@ -29,12 +29,12 @@ module Halitosis
         alias_method name, :resource
       end
 
-      # Override standard property field for resource-based serializers
+      # Override standard attribute field for resource-based serializers
       #
-      # @param name [Symbol, String] name of the property
-      # @param options [nil, Hash] property options for field
+      # @param name [Symbol, String] name of the attribute
+      # @param options [nil, Hash] attribute options for field
       #
-      def property(name, options = {}, &procedure)
+      def attribute(name, options = {}, &procedure)
         super.tap do |field|
           unless field.procedure || field.options.key?(:value)
             field.procedure = proc { resource.send(name) }

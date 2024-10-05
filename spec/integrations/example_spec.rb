@@ -17,7 +17,7 @@ class DuckSerializer
 
   def id = duck.id
 
-  # == 1. Properties
+  # == 1. Attributes
   #
   # If you define a attribute without an explicit value or proc, Halitosis will
   # look for a public instance method with the corresponding name.
