@@ -9,6 +9,16 @@ module Halitosis
     end
 
     module ClassMethods
+      # Rails-style alias for property
+      #
+      # @param name [Symbol, String]
+      # @param options [nil, Hash]
+      #
+      # @return [Halitosis::Properties::Field]
+      def attribute(...)
+        property(...)
+      end
+
       # @param name [Symbol, String]
       # @param options [nil, Hash]
       #

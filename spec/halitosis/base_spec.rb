@@ -33,8 +33,8 @@ RSpec.describe Halitosis::Base do
         Class.new do
           include Halitosis
 
-          property(:verify_parent) { parent.object_id }
-          property(:verify_opts) { options[:include] }
+          attribute(:verify_parent) { parent.object_id }
+          attribute(:verify_opts) { options[:include] }
         end.new
       end
 

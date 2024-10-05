@@ -51,7 +51,7 @@ class DuckSerializer
 
   resource :duck
 
-  property :name
+  attribute :name
 
   link :self do
     "/ducks/#{duck.code}"
@@ -119,10 +119,10 @@ When a resource is declared, `#initialize` expects the resource as the first arg
 serializer = DuckSerializer.new(Duck.new, ...)
 ```
 
-This makes property definitions cleaner:
+This makes attribute definitions cleaner:
 
 ```ruby
-property :name # now calls Duck#name by default
+attribute :name # now calls Duck#name by default
 ```
 
 #### 3. Collection
@@ -141,39 +141,51 @@ end
 
 The block should return an array of Halitosis instances in order to be rendered.
 
-### Defining properties, links, relationships, meta, and permissions
+### Defining attributes, links, relationships, meta, and permissions
 
-Properties can be defined in several ways:
+Attributes can be defined in several ways:
 
 ```ruby
-property(:quacks) { "#{duck.quacks} per minute" }
+attribute(:quacks) { "#{duck.quacks} per minute" }
 ```
 
 ```ruby
-property :quacks # => Duck#quacks, if resource is declared
+attribute :quacks # => Duck#quacks, if resource is declared
 ```
 
 ```ruby
-property :quacks do
+attribute :quacks, value: "many"
+```
+
+```ruby
+attribute :quacks do
   duck.quacks.round
 end
 ```
 
 ```ruby
-property(:quacks) { calculate_quacks }
+attribute(:quacks) { calculate_quacks }
 
 def calculate_quacks
   ...
 end
 ```
 
+Attributes can also be implemented using the `property` alias:
+
+```ruby
+property(:quacks) { "#{duck.quacks} per minute" }
+property :quacks # Duck#quacks
+property :quacks, value: "many"
+```
+
 #### Conditionals
 
-The inclusion of properties can be determined by conditionals using `if` and
+The inclusion of attributes can be determined by conditionals using `if` and
 `unless` options. For example, with a method name:
 
 ```ruby
-property :quacks, if: :include_quacks?
+attribute :quacks, if: :include_quacks?
 
 def include_quacks?
   duck.quacks < 10
@@ -182,7 +194,7 @@ end
 
 With a proc:
 ```ruby
-property :quacks, unless: proc { duck.quacks.nil? }, value: ...
+attribute :quacks, unless: proc { duck.quacks.nil? }, value: ...
 ```
 
 For links and relationships:

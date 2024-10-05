@@ -19,28 +19,28 @@ class DuckSerializer
 
   # == 1. Properties
   #
-  # If you define a property without an explicit value or proc, Halitosis will
+  # If you define a attribute without an explicit value or proc, Halitosis will
   # look for a public instance method with the corresponding name.
   #
   # This will call DuckSerializer#id.
   #
-  property :id # => { id: 1 }
+  attribute :id # => { id: 1 }
 
-  # You can also define a property with an explicit value, e.g.:
+  # You can also define a attribute with an explicit value, e.g.:
   #
-  property :age, value: 9.2 # => { age: 9.2 }
+  attribute :age, value: 9.2 # => { age: 9.2 }
 
-  # Or you can use a proc to determine the property value at render time.
+  # Or you can use a proc to determine the attribute value at render time.
   #
-  # The example below could also be written: property(:full_name) { ... }
+  # The example below could also be written: attribute(:full_name) { ... }
   #
-  property :full_name do # => { full_name: 'Ferdie Duck' }
+  attribute :full_name do # => { full_name: 'Ferdie Duck' }
     "#{duck.first_name} #{duck.last_name}"
   end
 
   # == 2. Links
   #
-  # As with properties, links can be defined with a proc:
+  # As with attributes, links can be defined with a proc:
   #
   link :self do
     "/ducks/#{id}" # => { self: { href: '/ducks/1' } }
@@ -96,9 +96,9 @@ end
 class DuckKidsSerializer
   include Halitosis
 
-  property :name, value: "Duckies"
+  attribute :name, value: "Duckies"
 
-  property :count, value: 5
+  attribute :count, value: 5
 
   meta :quacks_per_minute, value: "many"
 end

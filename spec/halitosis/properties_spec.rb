@@ -6,11 +6,27 @@ RSpec.describe Halitosis::Properties do
   end
 
   describe Halitosis::Properties::ClassMethods do
-    describe "#property" do
-      it "defines property" do
+    describe "#attribute" do
+      it "defines a property field" do
         expect do
-          klass.property(:foo)
+          klass.attribute(:foo)
         end.to change(klass.fields, :size).by(1)
+
+        inserted_field = klass.fields[Halitosis::Properties::Field.name].last
+        expect(inserted_field).to be_a(Halitosis::Properties::Field)
+        expect(inserted_field.name).to eq(:foo)
+      end
+    end
+
+    describe "#property" do
+      it "defines a property field" do
+        expect do
+          klass.property(:bar)
+        end.to change(klass.fields, :size).by(1)
+
+        inserted_field = klass.fields[Halitosis::Properties::Field.name].last
+        expect(inserted_field).to be_a(Halitosis::Properties::Field)
+        expect(inserted_field.name).to eq(:bar)
       end
     end
   end
@@ -30,7 +46,7 @@ RSpec.describe Halitosis::Properties do
 
     describe "#properties" do
       it "builds properties from fields" do
-        klass.property(:foo, value: "bar")
+        klass.attribute(:foo, value: "bar")
 
         expect(serializer.properties).to eq(foo: "bar")
       end

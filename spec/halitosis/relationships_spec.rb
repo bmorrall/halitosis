@@ -79,7 +79,7 @@ RSpec.describe Halitosis::Relationships do
         Class.new do
           include Halitosis
 
-          property(:foo) { "bar" }
+          attribute(:foo) { "bar" }
         end
       end
 

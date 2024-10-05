@@ -15,9 +15,9 @@ require "json"
 #
 #     resource :article
 #
-#     property :id, required: true
+#     attribute :id, required: true
 #
-#     property :title
+#     attribute :title
 #
 #     link :self, -> { article_path(article) }
 #

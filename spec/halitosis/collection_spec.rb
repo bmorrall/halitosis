@@ -55,14 +55,14 @@ RSpec.describe Halitosis::Collection do
 
     describe "#render" do
       it "renders the collection key as the first key" do
-        # Randomly define a collection, property, meta, link, and permission
+        # Randomly define a collection with an attribute, meta, link, and permissions
         [
           -> {
             klass.define_collection :ducks do
               []
             end
           },
-          -> { klass.property :name, value: "Ferdi" },
+          -> { klass.attribute :name, value: "Ferdi" },
           -> { klass.meta :total, value: 1 },
           -> { klass.link :self, value: "http://example.com" },
           -> { klass.permission :read, value: true }
