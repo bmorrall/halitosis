@@ -35,11 +35,10 @@ module Halitosis
       # @param options [nil, Hash] attribute options for field
       #
       def attribute(name, options = {}, &procedure)
-        super.tap do |field|
-          unless field.procedure || field.options.key?(:value)
-            field.procedure = proc { resource.send(name) }
-          end
+        unless procedure || options.key?(:value)
+          procedure = proc { resource.send(name) }
         end
+        super(name, options, &procedure)
       end
     end
 

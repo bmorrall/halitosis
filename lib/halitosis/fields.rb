@@ -9,6 +9,8 @@ module Halitosis
 
       field.validate
 
+      field.freeze
+
       self[type] ||= []
       self[type] << field
 
