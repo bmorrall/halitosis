@@ -3,7 +3,7 @@
 RSpec.describe Halitosis::Relationships do
   let :klass do
     Class.new do
-      include Halitosis
+      include Halitosis::Base
       include Halitosis::Relationships
     end
   end
@@ -50,7 +50,7 @@ RSpec.describe Halitosis::Relationships do
 
           klass.send(:define_method, :child) do
             # just build another serializer instance to be rendered
-            Class.new { include Halitosis }.new
+            Class.new { include Halitosis::Base }.new
           end
         end
 
@@ -77,7 +77,8 @@ RSpec.describe Halitosis::Relationships do
 
       let :child_class do
         Class.new do
-          include Halitosis
+          include Halitosis::Base
+          include Halitosis::Attributes
 
           attribute(:foo) { "bar" }
         end

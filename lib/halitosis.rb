@@ -33,6 +33,11 @@ module Halitosis
     base.extend ClassMethods
 
     base.include Base
+    base.include Links
+    base.include Meta
+    base.include Permissions
+    base.include Attributes
+    base.include Relationships
 
     config.extensions.each { |extension| base.send :include, extension }
   end

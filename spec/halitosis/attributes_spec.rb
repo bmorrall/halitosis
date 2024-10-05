@@ -2,7 +2,10 @@
 
 RSpec.describe Halitosis::Attributes do
   let :klass do
-    Class.new { include Halitosis }
+    Class.new {
+      include Halitosis::Base
+      include Halitosis::Attributes
+    }
   end
 
   describe Halitosis::Attributes::ClassMethods do
@@ -41,6 +44,14 @@ RSpec.describe Halitosis::Attributes do
         allow(serializer).to receive(:attributes).and_return(foo: "bar")
 
         expect(serializer.render).to eq(foo: "bar")
+      end
+    end
+
+    describe "#to_json" do
+      it "renders the JSON representation with inline attributes" do
+        klass.attribute(:foo, value: "bar")
+
+        expect(serializer.to_json).to eq('{"foo":"bar"}')
       end
     end
 

@@ -3,7 +3,7 @@
 RSpec.describe Halitosis::Collection do
   let :klass do
     Class.new do
-      include Halitosis
+      include Halitosis::Base
       include Halitosis::Collection
     end
   end
@@ -11,7 +11,7 @@ RSpec.describe Halitosis::Collection do
   describe ".included" do
     it "raises error if base is already a resource" do
       resource_class = Class.new do
-        include Halitosis
+        include Halitosis::Base
         include Halitosis::Resource
       end
 
@@ -55,6 +55,8 @@ RSpec.describe Halitosis::Collection do
 
     describe "#render" do
       it "renders the collection key as the first key" do
+        klass.send :include, Halitosis # allow other fields to be defined
+
         # Randomly define a collection with an attribute, meta, link, and permissions
         [
           -> {

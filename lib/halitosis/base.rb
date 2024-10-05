@@ -1,16 +1,14 @@
 # frozen_string_literal: true
 
 module Halitosis
+  # Base module for all serializer classes.
+  #
+  # Include this module in your serializer class, and include any additional field-type modules
   module Base
     def self.included(base)
       base.extend ClassMethods
 
       base.send :include, InstanceMethods
-      base.send :include, Links
-      base.send :include, Meta
-      base.send :include, Permissions
-      base.send :include, Attributes
-      base.send :include, Relationships
 
       base.send :attr_reader, :options
     end
@@ -109,7 +107,7 @@ module Halitosis
       # @return [nil, Hash] the rendered child
       #
       def render_child(child, opts)
-        return unless child.class.included_modules.include?(Halitosis)
+        return unless child.class.included_modules.include?(Halitosis::Base)
 
         child.options[:include] ||= {}
         child.options[:include] = child.options[:include].merge(opts)

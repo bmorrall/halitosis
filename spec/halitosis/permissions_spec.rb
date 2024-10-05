@@ -2,7 +2,10 @@
 
 RSpec.describe Halitosis::Permissions do
   let :klass do
-    Class.new { include Halitosis }
+    Class.new {
+      include Halitosis::Base
+      include Halitosis::Permissions
+    }
   end
 
   describe Halitosis::Permissions::ClassMethods do
@@ -39,7 +42,7 @@ RSpec.describe Halitosis::Permissions do
         expect(serializer.render).to eq(_permissions: {foo: false})
       end
 
-      it "excludes permissions with nil values as false" do
+      it "renders permissions with nil values as false" do
         klass.permission(:foo, value: nil)
 
         expect(serializer.render).to eq(_permissions: {foo: false})

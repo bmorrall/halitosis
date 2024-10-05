@@ -20,7 +20,10 @@ RSpec.describe Halitosis::Relationships::Field do
 
   describe "#enabled?" do
     let :klass do
-      Class.new { include Halitosis }
+      Class.new {
+        include Halitosis::Base
+        include Halitosis::Relationships
+      }
     end
 
     [1, 2, true, "1", "2", "true", "yes"].each do |value|

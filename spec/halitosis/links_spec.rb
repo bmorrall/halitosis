@@ -2,7 +2,10 @@
 
 RSpec.describe Halitosis::Links do
   let :klass do
-    Class.new { include Halitosis }
+    Class.new {
+      include Halitosis::Base
+      include Halitosis::Links
+    }
   end
 
   describe Halitosis::Links::ClassMethods do
@@ -140,7 +143,8 @@ RSpec.describe Halitosis::Links do
     describe "options[:include_links]" do
       let :klass do
         Class.new do
-          include Halitosis
+          include Halitosis::Base
+          include Halitosis::Links
         end
       end
 
@@ -176,7 +180,8 @@ RSpec.describe Halitosis::Links do
     describe "#links" do
       let :klass do
         Class.new do
-          include Halitosis
+          include Halitosis::Base
+          include Halitosis::Links
 
           link(:self) { nil }
         end

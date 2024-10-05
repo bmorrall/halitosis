@@ -3,18 +3,14 @@
 RSpec.describe Halitosis::Base do
   let :resource_serializer do
     Class.new do
-      include Halitosis
-
-      resource :test
+      include Halitosis::Base
     end
   end
-  let(:resource) { double }
 
   describe Halitosis::Base::InstanceMethods do
     describe "#initialize" do
       it "symbolizes option keys" do
         serializer = resource_serializer.new(
-          resource,
           "include" => {"foo" => "bar"},
           "ignore" => "this",
           :convert => "that"
@@ -31,7 +27,8 @@ RSpec.describe Halitosis::Base do
     describe "#render_child" do
       let :serializer do
         Class.new do
-          include Halitosis
+          include Halitosis::Base
+          include Halitosis::Attributes
 
           attribute(:verify_parent) { parent.object_id }
           attribute(:verify_opts) { options[:include] }
@@ -40,7 +37,7 @@ RSpec.describe Halitosis::Base do
 
       it "returns nil if child is not a serializer" do
         [nil, 1, ""].each do |child|
-          expect(resource_serializer.new(resource).send(:render_child, child, {})).to be_nil
+          expect(resource_serializer.new.send(:render_child, child, {})).to be_nil
         end
       end
 
@@ -64,16 +61,16 @@ RSpec.describe Halitosis::Base do
 
     describe "#depth" do
       it "is zero for top level serializer" do
-        expect(resource_serializer.new(resource).depth).to eq(0)
+        expect(resource_serializer.new.depth).to eq(0)
       end
 
       it "has expected value for included children" do
-        parent = resource_serializer.new(resource)
+        parent = resource_serializer.new
 
-        child = resource_serializer.new(resource)
+        child = resource_serializer.new
         allow(child).to receive(:parent).and_return(parent)
 
-        grandchild = resource_serializer.new(resource)
+        grandchild = resource_serializer.new
         allow(grandchild).to receive(:parent).and_return(child)
 
         expect(parent.depth).to eq(0)
@@ -84,19 +81,19 @@ RSpec.describe Halitosis::Base do
 
     xdescribe "#as_json" do
       it "converts rendered serializer to json" do
-        expect(resource_serializer.new(resource).as_json).to eq({test: {}})
+        expect(resource_serializer.new.as_json).to eq({test: {}})
       end
     end
 
     describe "#to_json" do
       it "converts rendered serializer to json" do
-        expect(resource_serializer.new(resource).to_json).to eq('{"test":{}}')
+        expect(resource_serializer.new.to_json).to eq("{}")
       end
     end
 
     xdescribe "#to_xml" do
       it "converts rendered serializer to json" do
-        expect(resource_serializer.new(resource).to_xml).to eq(
+        expect(resource_serializer.new.to_xml).to eq(
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<hash>\n</hash>\n"
         )
       end

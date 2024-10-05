@@ -2,7 +2,10 @@
 
 RSpec.describe Halitosis::Meta do
   let :klass do
-    Class.new { include Halitosis }
+    Class.new {
+      include Halitosis::Base
+      include Halitosis::Meta
+    }
   end
 
   describe Halitosis::Meta::ClassMethods do
