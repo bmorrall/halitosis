@@ -21,10 +21,10 @@ module Halitosis
       #
       # @return [true, false]
       #
-      def enabled?(instance)
+      def enabled?(context)
         return false unless super
 
-        opts = instance.include_options
+        opts = context.include_options
 
         # Field name must appear in instance included option keys
         return false unless opts.include?(name.to_s)

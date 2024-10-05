@@ -28,30 +28,30 @@ RSpec.describe Halitosis::Relationships::Field do
 
     [1, 2, true, "1", "2", "true", "yes"].each do |value|
       it "is true for expected values #{value.inspect}" do
-        serializer = klass.new(include: {foo: value})
+        context = klass.new(include: {foo: value}).send(:build_context)
 
         relationship = described_class.new(:foo, {}, proc {})
 
-        expect(relationship.send(:enabled?, serializer)).to eq(true)
+        expect(relationship.send(:enabled?, context)).to be(true)
       end
     end
 
     [0, false, "0", "false"].each do |value|
       it "is false for expected values #{value.inspect}" do
-        serializer = klass.new(include: {foo: value})
+        context = klass.new(include: {foo: value}).send(:build_context)
 
         relationship = described_class.new(:foo, {}, proc {})
 
-        expect(relationship.send(:enabled?, serializer)).to eq(false)
+        expect(relationship.send(:enabled?, context)).to be(false)
       end
     end
 
     it "is false by default" do
-      serializer = klass.new
+      context = klass.new.send(:build_context)
 
       relationship = described_class.new(:foo, {}, proc {})
 
-      expect(relationship.send(:enabled?, serializer)).to eq(false)
+      expect(relationship.send(:enabled?, context)).to be(false)
     end
   end
 end

@@ -22,23 +22,21 @@ module Halitosis
       @procedure = procedure
     end
 
-    # @param instance [Object] the serializer instance with which to evaluate
+    # @param context [Halitosis::Context] the serializer instance with which to evaluate
     #   the stored procedure
     #
-    def value(instance)
-      options.fetch(:value) do
-        procedure ? instance.instance_eval(&procedure) : instance.send(name)
-      end
+    def value(context)
+      options.fetch(:value) { context.call_instance(procedure || name) }
     end
 
     # @return [true, false] whether this Field should be included based on
     #   its conditional guard, if any
     #
-    def enabled?(instance)
+    def enabled?(context)
       if options.key?(:if)
-        !!eval_guard(instance, options.fetch(:if))
+        !!context.call_instance(options.fetch(:if))
       elsif options.key?(:unless)
-        !eval_guard(instance, options.fetch(:unless))
+        !context.call_instance(options.fetch(:unless))
       else
         true
       end
@@ -53,21 +51,6 @@ module Halitosis
 
       raise InvalidField,
         "Cannot specify both value and procedure for #{name}"
-    end
-
-    private
-
-    # Evaluate guard procedure or method
-    #
-    def eval_guard(instance, guard)
-      case guard
-      when Proc
-        instance.instance_eval(&guard)
-      when Symbol, String
-        instance.send(guard)
-      else
-        guard
-      end
     end
   end
 end

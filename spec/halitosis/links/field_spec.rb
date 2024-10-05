@@ -21,12 +21,14 @@ RSpec.describe Halitosis::Links::Field do
   end
 
   describe "#value" do
+    let(:context) { Halitosis::Context.new(nil) }
+
     it "handles multiple hrefs" do
       field = described_class.new(
         :name, proc { %w[first second] }
       )
 
-      expect(field.value(nil)).to eq([
+      expect(field.value(context)).to eq([
         {href: "first"},
         {href: "second"}
       ])
@@ -37,7 +39,7 @@ RSpec.describe Halitosis::Links::Field do
         :name, {attrs: {foo: "bar"}}, proc { %w[first second] }
       )
 
-      expect(field.value(nil)).to eq([
+      expect(field.value(context)).to eq([
         {href: "first", foo: "bar"},
         {href: "second", foo: "bar"}
       ])
@@ -46,13 +48,13 @@ RSpec.describe Halitosis::Links::Field do
     it "handles single href" do
       field = described_class.new(:name, proc { "first" })
 
-      expect(field.value(nil)).to eq(href: "first")
+      expect(field.value(context)).to eq(href: "first")
     end
 
     it "is nil for nil href" do
       field = described_class.new(:name, proc {})
 
-      expect(field.value(nil)).to be_nil
+      expect(field.value(context)).to be_nil
     end
   end
 

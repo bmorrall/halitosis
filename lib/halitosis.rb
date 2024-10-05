@@ -73,6 +73,7 @@ module Halitosis
   end
 end
 
+require_relative "halitosis/context"
 require_relative "halitosis/base"
 require_relative "halitosis/errors"
 require_relative "halitosis/field"
