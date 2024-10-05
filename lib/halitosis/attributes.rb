@@ -34,15 +34,15 @@ module Halitosis
     module InstanceMethods
       # @return [Hash] the rendered hash with attributes, if any
       #
-      def render
-        super.merge(attributes)
+      def render_with_context(context)
+        super.merge(attributes(context))
       end
 
       # @return [Hash] attributes from fields
       #
-      def attributes
-        render_fields(Field) do |field, result|
-          result[field.name] = field.value(self)
+      def attributes(context = build_context)
+        render_fields(Field, context) do |field, result|
+          result[field.name] = field.value(context)
         end
       end
     end

@@ -25,7 +25,7 @@ module Halitosis
 
       # @return [nil, Hash]
       #
-      def value(_instance)
+      def value(_context)
         hrefs = super
 
         attrs = options.fetch(:attrs, {})

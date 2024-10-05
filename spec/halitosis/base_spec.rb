@@ -25,57 +25,44 @@ RSpec.describe Halitosis::Base do
     end
 
     describe "#render_child" do
-      let :serializer do
+      let :klass do
         Class.new do
           include Halitosis::Base
           include Halitosis::Attributes
 
-          attribute(:verify_parent) { parent.object_id }
-          attribute(:verify_opts) { options[:include] }
-        end.new
+          attribute(:verify_parent) { |context| context.parent.object_id }
+          attribute(:verify_opts) { |context| context.fetch(:include) }
+        end
       end
 
       it "returns nil if child is not a serializer" do
+        serializer = klass.new
+        context = serializer.send(:build_context)
+
         [nil, 1, ""].each do |child|
-          expect(resource_serializer.new.send(:render_child, child, {})).to be_nil
+          expect(resource_serializer.new.send(:render_child, child, context, {})).to be_nil
         end
       end
 
       it "renders child serializer with correct parent and options" do
-        result = serializer.send(:render_child, serializer, foo: "bar")
+        serializer = klass.new
+        context = serializer.send(:build_context)
+
+        result = serializer.send(:render_child, serializer, context, foo: "bar")
 
         expect(result).to eq(
-          verify_parent: serializer.object_id,
+          verify_parent: context.object_id,
           verify_opts: {foo: "bar"}
         )
       end
 
       it "merges child options if already present" do
-        serializer.options[:include] = {bar: "bar"}
+        serializer = klass.new(include: {bar: "bar"})
+        context = serializer.send(:build_context)
 
-        result = serializer.send(:render_child, serializer, foo: "foo")
+        result = serializer.send(:render_child, serializer, context, foo: "foo")
 
         expect(result[:verify_opts]).to eq(foo: "foo", bar: "bar")
-      end
-    end
-
-    describe "#depth" do
-      it "is zero for top level serializer" do
-        expect(resource_serializer.new.depth).to eq(0)
-      end
-
-      it "has expected value for included children" do
-        parent = resource_serializer.new
-
-        child = resource_serializer.new
-        allow(child).to receive(:parent).and_return(parent)
-
-        grandchild = resource_serializer.new
-        allow(grandchild).to receive(:parent).and_return(child)
-
-        expect(parent.depth).to eq(0)
-        expect(child.depth).to eq(1)
-        expect(grandchild.depth).to eq(2)
       end
     end
 

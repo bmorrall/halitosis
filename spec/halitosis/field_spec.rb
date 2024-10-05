@@ -14,14 +14,16 @@ RSpec.describe Halitosis::Field do
   describe "#value" do
     it "returns value from options if present" do
       field = described_class.new(:name, {value: "some value"}, nil)
+      context = Halitosis::Context.new(nil)
 
-      expect(field.value(nil)).to eq("some value")
+      expect(field.value(context)).to eq("some value")
     end
 
     it "evaluates procedure if value from options is missing" do
       field = described_class.new(:name, {}, proc { size })
+      context = Halitosis::Context.new("foo")
 
-      expect(field.value("foo")).to eq(3)
+      expect(field.value(context)).to eq(3)
     end
   end
 
@@ -29,7 +31,8 @@ RSpec.describe Halitosis::Field do
     it "is true if field is not guarded" do
       field = described_class.new(:name, {}, nil)
 
-      expect(field.enabled?(nil)).to eq(true)
+      context = Halitosis::Context.new(nil)
+      expect(field.enabled?(context)).to be(true)
     end
 
     describe "when guard is a proc" do
@@ -38,11 +41,13 @@ RSpec.describe Halitosis::Field do
       end
 
       it "is true if condition passes" do
-        expect(field.enabled?("")).to eq(true)
+        context = Halitosis::Context.new("")
+        expect(field.enabled?(context)).to be(true)
       end
 
       it "is false if condition fails" do
-        expect(field.enabled?("foo")).to eq(false)
+        context = Halitosis::Context.new("foo")
+        expect(field.enabled?(context)).to be(false)
       end
     end
 
@@ -52,11 +57,13 @@ RSpec.describe Halitosis::Field do
       end
 
       it "is true if condition passes" do
-        expect(field.enabled?("")).to eq(true)
+        context = Halitosis::Context.new("")
+        expect(field.enabled?(context)).to be(true)
       end
 
       it "is false if condition fails" do
-        expect(field.enabled?("foo")).to eq(false)
+        context = Halitosis::Context.new("foo")
+        expect(field.enabled?(context)).to be(false)
       end
     end
 
@@ -64,13 +71,15 @@ RSpec.describe Halitosis::Field do
       it "is true if condition passes" do
         field = described_class.new(:name, {if: true}, nil)
 
-        expect(field.enabled?(nil)).to eq(true)
+        context = Halitosis::Context.new(nil)
+        expect(field.enabled?(context)).to be(true)
       end
 
       it "is false if condition fails" do
         field = described_class.new(:name, {if: false}, nil)
 
-        expect(field.enabled?(nil)).to eq(false)
+        context = Halitosis::Context.new(nil)
+        expect(field.enabled?(context)).to be(false)
       end
     end
 
@@ -80,7 +89,8 @@ RSpec.describe Halitosis::Field do
       end
 
       it "is false if condition passes" do
-        expect(field.enabled?("")).to eq(false)
+        context = Halitosis::Context.new("")
+        expect(field.enabled?(context)).to be(false)
       end
     end
   end

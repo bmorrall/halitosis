@@ -19,9 +19,9 @@ module Halitosis
     module InstanceMethods
       # @return [Hash] the rendered hash with links, if any
       #
-      def render
-        if options.fetch(:include_links, true)
-          decorate_render :links, super
+      def render_with_context(context)
+        if context.fetch(:include_links, true)
+          decorate_render :links, context, super
         else
           super
         end
@@ -29,9 +29,9 @@ module Halitosis
 
       # @return [Hash] links from fields
       #
-      def links
-        render_fields(Field) do |field, result|
-          value = field.value(self)
+      def links(context = build_context)
+        render_fields(Field, context) do |field, result|
+          value = field.value(context)
 
           result[field.name] = value if value
         end

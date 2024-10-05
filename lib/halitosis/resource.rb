@@ -36,7 +36,7 @@ module Halitosis
       #
       def attribute(name, options = {}, &procedure)
         unless procedure || options.key?(:value)
-          procedure = proc { resource.send(name) }
+          procedure = proc { resource.public_send(name) }
         end
         super(name, options, &procedure)
       end
@@ -55,8 +55,8 @@ module Halitosis
 
       # @return [Hash] the rendered hash with resource, as a hash
       #
-      def render
-        if (include_root = options.fetch(:include_root) { depth.zero? })
+      def render_with_context(context)
+        if (include_root = context.fetch(:include_root) { context.depth.zero? })
           {root_name(include_root, self.class.resource_name) => super}
         else
           super

@@ -19,9 +19,9 @@ module Halitosis
     module InstanceMethods
       # @return [Hash] the rendered hash with meta, if any
       #
-      def render
-        if options.fetch(:include_meta, true)
-          decorate_render :meta, super
+      def render_with_context(context)
+        if context.fetch(:include_meta, true)
+          decorate_render :meta, context, super
         else
           super
         end
@@ -29,9 +29,9 @@ module Halitosis
 
       # @return [Hash] meta from fields
       #
-      def meta
-        render_fields(Field) do |field, result|
-          value = field.value(self)
+      def meta(context = build_context)
+        render_fields(Field, context) do |field, result|
+          value = field.value(context)
 
           result[field.name] = value
         end

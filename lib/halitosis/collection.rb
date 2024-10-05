@@ -56,22 +56,15 @@ module Halitosis
 
       # @return [Hash, Array] the rendered hash with collection, as an array or a hash under a key
       #
-      def render
+      def render_with_context(context)
         field = self.class.collection_field
-        if (include_root = options.fetch(:include_root) { depth.zero? })
+        if (include_root = context.fetch(:include_root) { context.depth.zero? })
           {
-            root_name(include_root, self.class.collection_name) => render_collection_field(field)
+            root_name(include_root, self.class.collection_name) => render_collection_field(field, context)
           }.merge(super)
         else
-          render_collection_field(field)
+          render_collection_field(field, context)
         end
-      end
-
-      # @return [Hash] collection from fields
-      #
-      def render_collection_field(field)
-        value = instance_eval(&field.procedure)
-        value.map { |child| render_child(child, collection_opts) }
       end
 
       def collection?
@@ -79,6 +72,13 @@ module Halitosis
       end
 
       private
+
+      # @return [Hash] collection from fields
+      #
+      def render_collection_field(field, context)
+        value = context.call_instance(field.procedure)
+        value.map { |child| render_child(child, context, collection_opts(context)) }
+      end
 
       def root_name(include_root, default)
         return include_root.to_sym if include_root.is_a?(String) || include_root.is_a?(Symbol)
@@ -89,10 +89,10 @@ module Halitosis
       #
       # @return [Hash]
       #
-      def collection_opts
-        return include_options if depth.positive?
+      def collection_opts(context)
+        return context.include_options if context.depth.positive?
 
-        opts = include_options.fetch(self.class.collection_field.name.to_s, {})
+        opts = context.include_options.fetch(self.class.collection_field.name.to_s, {})
 
         # Turn { :report => 1 } into { :report => {} } for child
         opts = {} unless opts.is_a?(Hash)

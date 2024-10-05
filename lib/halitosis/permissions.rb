@@ -19,9 +19,9 @@ module Halitosis
     module InstanceMethods
       # @return [Hash] the rendered hash with permissions, if any
       #
-      def render
-        if options.fetch(:include_permissions, true)
-          decorate_render :permissions, super
+      def render_with_context(context)
+        if context.fetch(:include_permissions, true)
+          decorate_render :permissions, context, super
         else
           super
         end
@@ -29,9 +29,9 @@ module Halitosis
 
       # @return [Hash] permissions from fields
       #
-      def permissions
-        render_fields(Field) do |field, result|
-          value = field.value(self)
+      def permissions(context = build_context)
+        render_fields(Field, context) do |field, result|
+          value = field.value(context)
 
           result[field.name] = value || false
         end

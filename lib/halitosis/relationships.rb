@@ -24,17 +24,17 @@ module Halitosis
     module InstanceMethods
       # @return [Hash] the rendered hash with relationships resources, if any
       #
-      def render
-        decorate_render :relationships, super
+      def render_with_context(context)
+        decorate_render :relationships, context, super
       end
 
       # @return [Hash] hash of rendered resources to include
       #
-      def relationships
-        render_fields(Field) do |field, result|
-          value = instance_eval(&field.procedure)
+      def relationships(context = build_context)
+        render_fields(Field, context) do |field, result|
+          value = context.call_instance(field.procedure)
 
-          child = relationships_child(field.name.to_s, value)
+          child = relationships_child(field.name.to_s, context, value)
 
           result[field.name] = child if child
         end
@@ -43,15 +43,15 @@ module Halitosis
       # @return [nil, Hash, Array<Hash>] either a single rendered child
       #   serializer or an array of them
       #
-      def relationships_child(key, value)
+      def relationships_child(key, context, value)
         return unless value
 
-        opts = child_relationship_opts(key)
+        opts = child_relationship_opts(key, context)
 
         if value.is_a?(Array)
-          value.map { |item| render_child(item, opts) }.compact
+          value.map { |item| render_child(item, context, opts) }.compact
         else
-          render_child(value, opts)
+          render_child(value, context, opts)
         end
       end
 
@@ -59,19 +59,13 @@ module Halitosis
       #
       # @return [Hash]
       #
-      def child_relationship_opts(key)
-        opts = include_options.fetch(key, {})
+      def child_relationship_opts(key, context)
+        opts = context.include_options.fetch(key, {})
 
         # Turn { :report => 1 } into { :report => {} } for child
         opts = {} unless opts.is_a?(Hash)
 
         opts
-      end
-
-      # @return [Hash] hash of options with top level string keys
-      #
-      def include_options
-        @include_options ||= Halitosis::HashUtil.hasherize_include_option(options[:include] || {})
       end
     end
   end
