@@ -31,7 +31,7 @@ module Halitosis
       # @return [Hash] hash of rendered resources to include
       #
       def relationships
-        render_fields(Field.name) do |field, result|
+        render_fields(Field) do |field, result|
           value = instance_eval(&field.procedure)
 
           child = relationships_child(field.name.to_s, value)

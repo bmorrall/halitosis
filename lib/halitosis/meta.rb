@@ -30,7 +30,7 @@ module Halitosis
       # @return [Hash] meta from fields
       #
       def meta
-        render_fields(Field.name) do |field, result|
+        render_fields(Field) do |field, result|
           value = field.value(self)
 
           result[field.name] = value

@@ -30,7 +30,7 @@ module Halitosis
       # @return [Hash] permissions from fields
       #
       def permissions
-        render_fields(Field.name) do |field, result|
+        render_fields(Field) do |field, result|
           value = field.value(self)
 
           result[field.name] = value || false

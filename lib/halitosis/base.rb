@@ -92,7 +92,7 @@ module Halitosis
       # @return [Hash] the result
       #
       def render_fields(type)
-        fields = self.class.fields.fetch(type, [])
+        fields = self.class.fields.for_type(type)
 
         fields.each_with_object({}) do |field, result|
           next unless field.enabled?(self)

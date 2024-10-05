@@ -41,7 +41,7 @@ module Halitosis
       # @return [Hash] attributes from fields
       #
       def attributes
-        render_fields(Field.name) do |field, result|
+        render_fields(Field) do |field, result|
           result[field.name] = field.value(self)
         end
       end

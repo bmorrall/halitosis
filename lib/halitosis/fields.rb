@@ -14,5 +14,9 @@ module Halitosis
 
       field
     end
+
+    def for_type(type)
+      fetch(type.name, [])
+    end
   end
 end
