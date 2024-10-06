@@ -22,25 +22,44 @@ RSpec.describe Halitosis::Collection do
         expect(exception.message).to match(/has already defined a resource/i)
       end
     end
+
+    it "declares a collection accessor" do
+      collection = double
+      serializer = klass.new(collection)
+      expect(serializer.collection).to be(collection)
+    end
   end
 
-  describe Halitosis::Collection::ClassMethods do
-    describe "#define_collection" do
-      it "handles string argument" do
-        klass.define_collection "ducks" do
-          []
-        end
+  describe ".define_collection" do
+    it "handles symbol argument" do
+      klass.define_collection :ducks
 
-        expect(klass.resource_type).to eq("ducks")
-      end
+      expect(klass.resource_type).to eq("ducks")
+    end
 
-      it "handles symbol argument" do
-        klass.define_collection :ducks do
-          []
-        end
+    it "adds a collection field" do
+      expect do
+        klass.define_collection :ducks
+      end.to change(klass.fields, :size).by(1)
 
-        expect(klass.resource_type).to eq("ducks")
-      end
+      inserted_field = klass.fields.for_type(Halitosis::Collection::Field).last
+      expect(inserted_field).to be_a(Halitosis::Collection::Field)
+      expect(inserted_field.name).to eq(:ducks)
+    end
+
+    it "declares a named collection accessor" do
+      collection = double
+
+      klass.define_collection :ducks
+
+      serializer = klass.new(collection)
+      expect(serializer.ducks).to be(collection)
+    end
+
+    it "handles string argument" do
+      klass.define_collection "ducks"
+
+      expect(klass.resource_type).to eq("ducks")
     end
   end
 

@@ -1,13 +1,53 @@
 RSpec.describe Halitosis::Resource do
   let(:klass) {
-    Class.new { include Halitosis }
+    Class.new {
+      include Halitosis
+      include Halitosis::Resource
+    }
   }
 
-  describe ".resource" do
-    it "adds Halitosis::Resource to the class" do
-      expect do
-        klass.resource(:foo)
-      end.to change(klass, :included_modules).to include(described_class)
+  describe ".included" do
+    it "raises error if base is already a collection" do
+      collection_class = Class.new {
+        include Halitosis
+        include Halitosis::Collection
+      }
+
+      expect {
+        collection_class.send :include, described_class
+      }.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidResource)
+        expect(exception.message).to match(/has already defined a collection/i)
+      end
+    end
+
+    it "declares a resource accessor" do
+      resource = double
+      serializer = klass.new(resource)
+      expect(serializer.resource).to be(resource)
+    end
+  end
+
+  describe ".define_resource" do
+    it "sets a resource type" do
+      klass.define_resource(:foo)
+
+      expect(klass.resource_type).to eq("foo")
+    end
+
+    it "declares a named resource accessor" do
+      resource = double
+
+      klass.define_resource(:foo)
+
+      serializer = klass.new(resource)
+      expect(serializer.foo).to be(resource)
+    end
+
+    it "handles string arguments" do
+      klass.define_resource("foo")
+
+      expect(klass.resource_type).to eq("foo")
     end
   end
 
