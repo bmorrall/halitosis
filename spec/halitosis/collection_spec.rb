@@ -260,4 +260,47 @@ RSpec.describe Halitosis::Collection do
       end
     end
   end
+
+  describe "#render", "include options" do
+    context "with a collection of resources with a child reference" do
+      let(:klass) do
+        Class.new do
+          include Halitosis::Base
+          include Halitosis::Collection
+
+          define_collection :ducks do
+            [
+              Class.new do
+                include Halitosis
+
+                attribute :name, value: "Ferdi"
+
+                relationship :favourite_food do
+                  Class.new do
+                    include Halitosis
+
+                    attribute :name, value: "bread"
+                  end.new
+                end
+              end.new
+            ]
+          end
+        end
+      end
+
+      it "excludes the child reference by default" do
+        serializer = klass.new([])
+
+        expect(serializer.render).to eq(ducks: [{name: "Ferdi"}])
+      end
+
+      it "includes the child reference when requested" do
+        serializer = klass.new([], include: {favourite_food: true})
+
+        expect(serializer.render).to match(
+          ducks: [{name: "Ferdi", _relationships: {favourite_food: {name: "bread"}}}]
+        )
+      end
+    end
+  end
 end

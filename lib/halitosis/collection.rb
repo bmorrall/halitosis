@@ -58,7 +58,7 @@ module Halitosis
       def render_with_context(context)
         if (include_root = context.fetch(:include_root) { context.depth.zero? })
           {
-            root_name(include_root, self.class.resource_type) => render_collection_field(context)
+            root_name(include_root) => render_collection_field(context)
           }.merge(super)
         else
           render_collection_field(context)
@@ -78,31 +78,17 @@ module Halitosis
       def render_collection_field(context)
         value = collection_field.value(context)
 
-        return render_child(value, context, collection_opts(context)) if value.is_a?(Halitosis::Collection)
+        return render_child(value, context, context.include_options) if value.is_a?(Halitosis::Collection)
 
         value.reject { |child| child.is_a?(Halitosis::Collection) } # Skip nested collections in array
-          .map { |child| render_child(child, context, collection_opts(context)) }
+          .map { |child| render_child(child, context, context.include_options) }
           .compact
       end
 
-      def root_name(include_root, default)
+      def root_name(include_root)
         return include_root.to_sym if include_root.is_a?(String) || include_root.is_a?(Symbol)
-        default.to_sym
-      end
 
-      # @param key [String]
-      #
-      # @return [Hash]
-      #
-      def collection_opts(context)
-        return context.include_options if context.depth.positive?
-
-        opts = context.include_options.fetch(self.class.collection_field.name.to_s, {})
-
-        # Turn { :report => 1 } into { :report => {} } for child
-        opts = {} unless opts.is_a?(Hash)
-
-        opts
+        self.class.resource_type.to_sym
       end
     end
   end

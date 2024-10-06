@@ -262,7 +262,7 @@ RSpec.describe "Halitosis Example" do
   it "renders a collection of Ducks with included ducklings" do
     ducks = [Duck.new, Duck.new]
 
-    rendered = DucksSerializer.new(ducks, include: {ducks: {ducklings: true}}).render
+    rendered = DucksSerializer.new(ducks, include: {ducklings: true}).render
 
     expect(rendered).to eq(
       ducks: [
@@ -355,7 +355,7 @@ RSpec.describe "Halitosis Example" do
   it "renders a collection of Ducks with parents" do
     ducks = [Duck.new]
 
-    rendered = DucksSerializer.new(ducks, include: {ducks: {parents: true}}).render
+    rendered = DucksSerializer.new(ducks, include: {parents: true}).render
 
     expect(rendered).to eq(
       ducks: [
@@ -403,7 +403,7 @@ RSpec.describe "Halitosis Example" do
   it "renders a collection of Ducks with parents and parents with ducklings" do
     ducks = [Duck.new]
 
-    rendered = DucksSerializer.new(ducks, include: {ducks: {parents: {ducklings: true}}}).render
+    rendered = DucksSerializer.new(ducks, include: {parents: {ducklings: true}}).render
 
     expect(rendered).to eq(
       ducks: [
