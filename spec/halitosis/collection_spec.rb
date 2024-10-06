@@ -35,14 +35,14 @@ RSpec.describe Halitosis::Collection do
 
   describe ".define_collection" do
     it "handles symbol argument" do
-      klass.define_collection :ducks
+      klass.define_collection(:ducks) { [] }
 
       expect(klass.resource_type).to eq("ducks")
     end
 
     it "adds a collection field" do
       expect do
-        klass.define_collection :ducks
+        klass.define_collection(:ducks) { [] }
       end.to change(klass.fields, :size).by(1)
 
       inserted_field = klass.fields.for_type(Halitosis::Collection::Field).last
@@ -53,7 +53,7 @@ RSpec.describe Halitosis::Collection do
     it "declares a collection accessor" do
       collection = double
 
-      klass.define_collection :ducks
+      klass.define_collection(:ducks) { [] }
 
       serializer = klass.new(collection)
       expect(serializer.collection).to be(collection)
@@ -62,26 +62,35 @@ RSpec.describe Halitosis::Collection do
     it "declares a named collection accessor" do
       collection = double
 
-      klass.define_collection :ducks
+      klass.define_collection(:ducks) { [] }
 
       serializer = klass.new(collection)
       expect(serializer.ducks).to be(collection)
     end
 
     it "handles string argument" do
-      klass.define_collection "ducks"
+      klass.define_collection("ducks") { [] }
 
       expect(klass.resource_type).to eq("ducks")
     end
 
     it "raises error if collection is already defined" do
-      klass.define_collection :ducks, value: -> { [] }
+      klass.define_collection(:ducks) { [] }
 
       expect do
-        klass.define_collection :ducks
+        klass.define_collection(:ducks) { [] }
       end.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidCollection)
-        expect(exception.message).to match(/collection is already defined/i)
+        expect(exception.message).to match(/ducks collection is already defined/i)
+      end
+    end
+
+    it "raises an error without a block" do
+      expect do
+        klass.define_collection(:ducks)
+      end.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidField)
+        expect(exception.message).to match(/collection ducks must be defined with a proc/i)
       end
     end
   end
@@ -89,7 +98,7 @@ RSpec.describe Halitosis::Collection do
   describe Halitosis::Collection::InstanceMethods do
     describe "#collection?" do
       it "is true" do
-        klass.define_collection :ducks
+        klass.define_collection(:ducks) { [] }
         serializer = klass.new([])
 
         expect(serializer.collection?).to eq(true)

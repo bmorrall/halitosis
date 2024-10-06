@@ -16,7 +16,7 @@ module Halitosis
     #
     def initialize(name, options, procedure)
       @name = name.to_sym
-      @options = Halitosis::HashUtil.symbolize_hash(options).freeze
+      @options = Halitosis::HashUtil.symbolize_hash(options)
       @procedure = procedure
     end
 
