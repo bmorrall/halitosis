@@ -23,7 +23,7 @@ module Halitosis
       # @return [Module] self
       #
       def define_collection(name, options = {}, &procedure)
-        raise InvalidCollection, "#{name || Collection.name} collection is already defined" if fields.for_type(Field).any?
+        raise InvalidCollection, "#{self.name || Collection.name} collection is already defined" if fields.for_type(Field).any?
 
         self.resource_type = name.to_s
 

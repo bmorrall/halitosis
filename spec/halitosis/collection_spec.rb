@@ -81,7 +81,7 @@ RSpec.describe Halitosis::Collection do
         klass.define_collection(:ducks) { [] }
       end.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidCollection)
-        expect(exception.message).to match(/ducks collection is already defined/i)
+        expect(exception.message).to match(/collection is already defined/i)
       end
     end
 
