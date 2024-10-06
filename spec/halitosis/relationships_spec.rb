@@ -35,10 +35,15 @@ RSpec.describe Halitosis::Relationships do
           expect(serializer.relationships).to eq({})
         end
 
-        it "returns empty hash when Relationships are requested" do
+        it "raises an error when an unknown resource is requested" do
           serializer = klass.new(include: {foo: true})
 
-          expect(serializer.relationships).to eq({})
+          expect do
+            serializer.relationships
+          end.to raise_error do |exception|
+            expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
+            expect(exception.message).to match(/does not have a `foo` relationship path/i)
+          end
         end
       end
 

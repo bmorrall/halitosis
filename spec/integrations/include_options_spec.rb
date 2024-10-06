@@ -179,6 +179,35 @@ RSpec.describe "Include Options" do
         }
       )
     end
+
+    it "raises an error when an unknown key is included" do
+      expect {
+        klass.new(include: {goose: true}).render
+      }.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
+        expect(exception.message).to eq("The resource does not have a `goose` relationship path.")
+      end
+    end
+
+    it "raises an error when an unknown key is included in a child resource" do
+      expect {
+        klass.new(include: {item: {goose: true}}).render
+      }.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
+        expect(exception.message).to eq("The resource does not have a `goose` relationship path.")
+      end
+    end
+
+    it "uses the resource type in the error message" do
+      klass.resource(:example)
+
+      expect {
+        klass.new(nil, include: {goose: true}).render
+      }.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
+        expect(exception.message).to eq("The example resource does not have a `goose` relationship path.")
+      end
+    end
   end
 
   context "with a collection with a child relationships" do
@@ -266,6 +295,15 @@ RSpec.describe "Include Options" do
           _relationships: {items_collection: [{verify_depth: 3, verify_include: []}]}
         }]
       )
+    end
+
+    it "raises an error for unknown keys on the root collection" do
+      expect {
+        klass.new([], include: {goose: true}).render
+      }.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
+        expect(exception.message).to eq("The resource does not have a `goose` relationship path.")
+      end
     end
   end
 end

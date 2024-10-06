@@ -31,6 +31,9 @@ module Halitosis
       # @return [Hash] hash of rendered resources to include
       #
       def relationships(context = build_context)
+        # Do not validation non-root collections (as they pass values directly to children)
+        validate_relationships!(context) unless collection?
+
         render_fields(Field, context) do |field, result|
           value = field.value(context)
 
@@ -66,6 +69,19 @@ module Halitosis
         opts = {} unless opts.is_a?(Hash)
 
         opts
+      end
+
+      private
+
+      def validate_relationships!(context)
+        opts = context.include_options.keys.map(&:to_s)
+
+        opts -= self.class.fields.for_type(Field).map { |field| field.name.to_s }
+
+        return if opts.none?
+
+        resource_label = [self.class.resource_type, "resource"].compact.join(" ")
+        raise Halitosis::InvalidQueryParameter.new("The #{resource_label} does not have a `#{opts.first}` relationship path.", "includes")
       end
     end
   end
