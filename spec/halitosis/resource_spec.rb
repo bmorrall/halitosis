@@ -127,4 +127,152 @@ RSpec.describe Halitosis::Resource do
       end
     end
   end
+
+  describe "#render", "include options" do
+    context "with a resource containing a relationship with a resource" do
+      before do
+        klass.define_resource(:duck)
+
+        klass.attribute(:name, value: "Ferdi")
+
+        klass.relationship(:favourite_food) do
+          Class.new {
+            include Halitosis
+
+            attribute(:name, value: "bread")
+          }.new
+        end
+      end
+
+      it "excludes resource relationships by default" do
+        serializer = klass.new(nil)
+
+        expect(serializer.render).to match(
+          duck: {name: "Ferdi"}
+        )
+      end
+
+      it "includes resource relationships when requested" do
+        serializer = klass.new(nil, include: {favourite_food: true})
+
+        expect(serializer.render).to match(
+          duck: {name: "Ferdi", _relationships: {favourite_food: {name: "bread"}}}
+        )
+      end
+    end
+
+    context "with a resource containing a relationship with a collection" do
+      before do
+        klass.define_resource(:duck)
+
+        klass.attribute(:name, value: "Ferdi")
+
+        klass.relationship(:favourite_foods) do
+          Class.new {
+            include Halitosis
+
+            collection(:foods) do
+              [
+                Class.new {
+                  include Halitosis
+
+                  attribute(:name, value: "bread")
+                }.new
+              ]
+            end
+
+            attribute(:mystery, value: "root_only")
+          }.new([])
+        end
+      end
+
+      it "excludes resource relationships by default" do
+        serializer = klass.new(nil)
+
+        expect(serializer.render).to match(
+          duck: {name: "Ferdi"}
+        )
+      end
+
+      it "includes resource relationships when requested" do
+        serializer = klass.new(nil, include: {favourite_foods: true})
+
+        expect(serializer.render).to match(
+          duck: {name: "Ferdi", _relationships: {favourite_foods: [{name: "bread"}]}}
+        )
+      end
+    end
+
+    context "with a resource containing child and grandchild relationships" do
+      before do
+        klass.define_resource(:duck)
+
+        klass.attribute(:name, value: "Ferdi")
+
+        klass.relationship(:favourite_food) do
+          Class.new {
+            include Halitosis
+
+            attribute(:name, value: "bread")
+
+            relationship(:ingredients) do
+              [
+                Class.new {
+                  include Halitosis
+
+                  attribute(:name, value: "flour")
+                }.new,
+                Class.new {
+                  include Halitosis
+
+                  attribute(:name, value: "water")
+                }.new
+              ]
+            end
+          }.new
+        end
+      end
+
+      it "excludes resource relationships by default" do
+        serializer = klass.new(nil)
+
+        expect(serializer.render).to match(
+          duck: {name: "Ferdi"}
+        )
+      end
+
+      it "includes child relationships when requested" do
+        serializer = klass.new(nil, include: {favourite_food: true})
+
+        expect(serializer.render).to match(
+          duck: {
+            name: "Ferdi",
+            _relationships: {
+              favourite_food: {
+                name: "bread"
+              }
+            }
+          }
+        )
+      end
+
+      it "includes grandchild relationships when requested" do
+        serializer = klass.new(nil, include: {favourite_food: {ingredients: true}})
+
+        expect(serializer.render).to match(
+          duck: {
+            name: "Ferdi",
+            _relationships: {
+              favourite_food: {
+                name: "bread",
+                _relationships: {
+                  ingredients: [{name: "flour"}, {name: "water"}]
+                }
+              }
+            }
+          }
+        )
+      end
+    end
+  end
 end
