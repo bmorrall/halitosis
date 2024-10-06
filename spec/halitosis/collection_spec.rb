@@ -23,10 +23,13 @@ RSpec.describe Halitosis::Collection do
       end
     end
 
-    it "declares a collection accessor" do
-      collection = double
-      serializer = klass.new(collection)
-      expect(serializer.collection).to be(collection)
+    it "requires a collection to be defined" do
+      expect do
+        klass.new(nil)
+      end.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidCollection)
+        expect(exception.message).to match(/collection is not defined/i)
+      end
     end
   end
 
@@ -47,6 +50,15 @@ RSpec.describe Halitosis::Collection do
       expect(inserted_field.name).to eq(:ducks)
     end
 
+    it "declares a collection accessor" do
+      collection = double
+
+      klass.define_collection :ducks
+
+      serializer = klass.new(collection)
+      expect(serializer.collection).to be(collection)
+    end
+
     it "declares a named collection accessor" do
       collection = double
 
@@ -61,11 +73,23 @@ RSpec.describe Halitosis::Collection do
 
       expect(klass.resource_type).to eq("ducks")
     end
+
+    it "raises error if collection is already defined" do
+      klass.define_collection :ducks
+
+      expect do
+        klass.define_collection :ducks
+      end.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidCollection)
+        expect(exception.message).to match(/collection is already defined/i)
+      end
+    end
   end
 
   describe Halitosis::Collection::InstanceMethods do
     describe "#collection?" do
       it "is true" do
+        klass.define_collection :ducks
         serializer = klass.new([])
 
         expect(serializer.collection?).to eq(true)

@@ -23,7 +23,7 @@ module Halitosis
       # @return [Module] self
       #
       def define_collection(name, options = {}, &procedure)
-        raise InvalidCollection, "#{self.name} collection is already defined" if fields.for_type(Field).any?
+        raise InvalidCollection, "#{name || Collection.name} collection is already defined" if fields.for_type(Field).any?
 
         self.resource_type = name.to_s
 
@@ -37,7 +37,7 @@ module Halitosis
       end
 
       def collection_field
-        fields.for_type(Field).last || raise(InvalidCollection, "#{name} collection is not defined")
+        fields.for_type(Field).last || raise(InvalidCollection, "#{name || Collection.name} collection is not defined")
       end
     end
 
@@ -48,6 +48,7 @@ module Halitosis
       #
       def initialize(collection, **)
         @collection = collection
+        @collection_field = self.class.collection_field
 
         super(**)
       end
@@ -55,13 +56,12 @@ module Halitosis
       # @return [Hash, Array] the rendered hash with collection, as an array or a hash under a key
       #
       def render_with_context(context)
-        field = self.class.collection_field
         if (include_root = context.fetch(:include_root) { context.depth.zero? })
           {
-            root_name(include_root, self.class.resource_type) => render_collection_field(field, context)
+            root_name(include_root, self.class.resource_type) => render_collection_field(context)
           }.merge(super)
         else
-          render_collection_field(field, context)
+          render_collection_field(context)
         end
       end
 
@@ -71,10 +71,12 @@ module Halitosis
 
       private
 
+      attr_reader :collection_field
+
       # @return [Hash] collection from fields
       #
-      def render_collection_field(field, context)
-        value = context.call_instance(field.procedure)
+      def render_collection_field(context)
+        value = context.call_instance(collection_field.procedure)
 
         return render_child(value, context, collection_opts(context)) if value.is_a?(Halitosis::Collection)
 
