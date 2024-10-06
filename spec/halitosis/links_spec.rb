@@ -16,7 +16,7 @@ RSpec.describe Halitosis::Links do
 
           expect(link.name).to eq(:self)
           expect(link.options).to eq(attrs: {})
-          expect(link.procedure.call).to eq("path")
+          expect(link.send(:procedure).call).to eq("path")
         end
 
         it "builds complex field" do
@@ -28,7 +28,7 @@ RSpec.describe Halitosis::Links do
           expect(link.options).to eq(
             foo: "foo", attrs: {templated: true, bar: "bar"}
           )
-          expect(link.procedure.call).to eq("path")
+          expect(link.send(:procedure).call).to eq("path")
         end
 
         it "handles multiple values" do
@@ -47,7 +47,7 @@ RSpec.describe Halitosis::Links do
 
             expect(link.name).to eq(:self)
             expect(link.options).to eq(attrs: {}, value: "path")
-            expect(link.procedure).to be_nil
+            expect(link.send(:procedure)).to be_nil
           end
 
           it "builds complex field" do
@@ -63,7 +63,7 @@ RSpec.describe Halitosis::Links do
               attrs: {templated: true, bar: "bar"},
               value: "path"
             )
-            expect(link.procedure).to be_nil
+            expect(link.send(:procedure)).to be_nil
           end
         end
       end

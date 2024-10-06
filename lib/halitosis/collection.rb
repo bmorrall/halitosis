@@ -76,7 +76,7 @@ module Halitosis
       # @return [Hash] collection from fields
       #
       def render_collection_field(context)
-        value = context.call_instance(collection_field.procedure)
+        value = collection_field.value(context)
 
         return render_child(value, context, collection_opts(context)) if value.is_a?(Halitosis::Collection)
 

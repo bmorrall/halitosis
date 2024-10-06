@@ -75,7 +75,7 @@ RSpec.describe Halitosis::Collection do
     end
 
     it "raises error if collection is already defined" do
-      klass.define_collection :ducks
+      klass.define_collection :ducks, value: -> { [] }
 
       expect do
         klass.define_collection :ducks

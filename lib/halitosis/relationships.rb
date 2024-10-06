@@ -32,7 +32,7 @@ module Halitosis
       #
       def relationships(context = build_context)
         render_fields(Field, context) do |field, result|
-          value = context.call_instance(field.procedure)
+          value = field.value(context)
 
           child = relationships_child(field.name.to_s, context, value)
 

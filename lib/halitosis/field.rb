@@ -7,8 +7,6 @@ module Halitosis
   class Field
     attr_reader :name, :options
 
-    attr_accessor :procedure
-
     # Construct a new Field instance
     #
     # @param name [Symbol, String] Field name
@@ -52,5 +50,9 @@ module Halitosis
       raise InvalidField,
         "Cannot specify both value and procedure for #{name}"
     end
+
+    private
+
+    attr_reader :procedure
   end
 end
