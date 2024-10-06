@@ -77,7 +77,12 @@ module Halitosis
       #
       def render_collection_field(field, context)
         value = context.call_instance(field.procedure)
-        value.map { |child| render_child(child, context, collection_opts(context)) }
+
+        return render_child(value, context, collection_opts(context)) if value.is_a?(Halitosis::Collection)
+
+        value.reject { |child| child.is_a?(Halitosis::Collection) } # Skip nested collections in array
+          .map { |child| render_child(child, context, collection_opts(context)) }
+          .compact
       end
 
       def root_name(include_root, default)
