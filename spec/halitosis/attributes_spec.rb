@@ -15,7 +15,7 @@ RSpec.describe Halitosis::Attributes do
           klass.attribute(:foo)
         end.to change(klass.fields, :size).by(1)
 
-        inserted_field = klass.fields[Halitosis::Attributes::Field.name].last
+        inserted_field = klass.fields.for_type(Halitosis::Attributes::Field).last
         expect(inserted_field).to be_a(Halitosis::Attributes::Field)
         expect(inserted_field.name).to eq(:foo)
       end
@@ -27,7 +27,7 @@ RSpec.describe Halitosis::Attributes do
           klass.property(:bar)
         end.to change(klass.fields, :size).by(1)
 
-        inserted_field = klass.fields[Halitosis::Attributes::Field.name].last
+        inserted_field = klass.fields.for_type(Halitosis::Attributes::Field).last
         expect(inserted_field).to be_a(Halitosis::Attributes::Field)
         expect(inserted_field.name).to eq(:bar)
       end
