@@ -10,7 +10,7 @@ RSpec.describe Halitosis do
       it "includes resource module" do
         klass = Class.new { include Halitosis }
 
-        expect(klass).to receive(:define_resource)
+        expect(klass).to receive(:define_resource).with(:foo)
 
         klass.resource :foo
 
@@ -22,7 +22,7 @@ RSpec.describe Halitosis do
       it "includes collection module", :aggregate_failures do
         klass = Class.new { include Halitosis }
 
-        expect(klass).to receive(:define_collection)
+        expect(klass).to receive(:define_collection).with(:foo)
 
         klass.collection :foo do
           -> { [] }

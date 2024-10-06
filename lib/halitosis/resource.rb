@@ -14,8 +14,6 @@ module Halitosis
       base.send :include, InstanceMethods
 
       base.send :attr_reader, :resource
-
-      base.class.send :attr_accessor, :resource_name
     end
 
     module ClassMethods
@@ -24,7 +22,7 @@ module Halitosis
       # @return [Module] self
       #
       def define_resource(name)
-        self.resource_name = name.to_s
+        self.resource_type = name.to_s
 
         alias_method name, :resource
       end
@@ -57,7 +55,7 @@ module Halitosis
       #
       def render_with_context(context)
         if (include_root = context.fetch(:include_root) { context.depth.zero? })
-          {root_name(include_root, self.class.resource_name) => super}
+          {root_name(include_root, self.class.resource_type) => super}
         else
           super
         end

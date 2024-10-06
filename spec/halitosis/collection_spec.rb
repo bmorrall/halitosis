@@ -31,7 +31,7 @@ RSpec.describe Halitosis::Collection do
           []
         end
 
-        expect(klass.collection_name).to eq("ducks")
+        expect(klass.resource_type).to eq("ducks")
       end
 
       it "handles symbol argument" do
@@ -39,7 +39,7 @@ RSpec.describe Halitosis::Collection do
           []
         end
 
-        expect(klass.collection_name).to eq("ducks")
+        expect(klass.resource_type).to eq("ducks")
       end
     end
   end

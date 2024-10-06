@@ -15,8 +15,6 @@ module Halitosis
       base.send :include, InstanceMethods
 
       base.send :attr_reader, :collection
-
-      base.class.send :attr_accessor, :collection_name
     end
 
     module ClassMethods
@@ -27,7 +25,7 @@ module Halitosis
       def define_collection(name, options = {}, &procedure)
         raise InvalidCollection, "#{self.name} collection is already defined" if fields.key?(Field.name)
 
-        self.collection_name = name.to_s
+        self.resource_type = name.to_s
 
         alias_method name, :collection
 
@@ -60,7 +58,7 @@ module Halitosis
         field = self.class.collection_field
         if (include_root = context.fetch(:include_root) { context.depth.zero? })
           {
-            root_name(include_root, self.class.collection_name) => render_collection_field(field, context)
+            root_name(include_root, self.class.resource_type) => render_collection_field(field, context)
           }.merge(super)
         else
           render_collection_field(field, context)

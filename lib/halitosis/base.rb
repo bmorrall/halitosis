@@ -11,6 +11,8 @@ module Halitosis
       base.send :include, InstanceMethods
 
       base.send :attr_reader, :options
+
+      base.class.send :attr_accessor, :resource_type
     end
 
     module ClassMethods

@@ -114,7 +114,7 @@ class DucksSerializer
 end
 
 RSpec.describe "Halitosis Example" do
-  specify { expect(DuckSerializer.resource_name).to eq "duck" }
+  specify { expect(DuckSerializer.resource_type).to eq "duck" }
 
   it "renders a Duck" do
     rendered = DuckSerializer.new(Duck.new).render
