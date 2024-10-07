@@ -186,6 +186,7 @@ RSpec.describe "Include Options" do
       }.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
         expect(exception.message).to eq("The resource does not have a `goose` relationship path.")
+        expect(exception.parameter).to eq("include")
       end
     end
 
@@ -195,6 +196,7 @@ RSpec.describe "Include Options" do
       }.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
         expect(exception.message).to eq("The resource does not have a `goose` relationship path.")
+        expect(exception.parameter).to eq("include")
       end
     end
 
@@ -206,6 +208,7 @@ RSpec.describe "Include Options" do
       }.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
         expect(exception.message).to eq("The example resource does not have a `goose` relationship path.")
+        expect(exception.parameter).to eq("include")
       end
     end
   end
@@ -303,6 +306,7 @@ RSpec.describe "Include Options" do
       }.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
         expect(exception.message).to eq("The resource does not have a `goose` relationship path.")
+        expect(exception.parameter).to eq("include")
       end
     end
   end
