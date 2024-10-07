@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+unless ENV.fetch("RAILS_VERSION", "").empty?
+  require File.expand_path("../dummy/config/application", __FILE__)
+end
+
 require "halitosis"
 
 RSpec.configure do |config|

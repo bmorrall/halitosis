@@ -5,6 +5,10 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in halitosis.gemspec
 gemspec
 
+unless ["", "none"].include?(rails_version = ENV.fetch("RAILS_VERSION", ""))
+  gem "rails", "~> #{rails_version}.0"
+end
+
 gem "rake", "~> 13.0"
 
 gem "rspec", "~> 3.0"
