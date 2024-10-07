@@ -16,6 +16,10 @@ module Halitosis
       Halitosis.config.extensions << ::Rails.application.routes.url_helpers
     end
 
+    initializer "halitosis.error_response" do |app|
+      app.config.action_dispatch.rescue_responses[InvalidQueryParameter.name] ||= :bad_request
+    end
+
     initializer "halitosis.renderable" do |_app|
       Halitosis.config.extensions << Renderable
     end
