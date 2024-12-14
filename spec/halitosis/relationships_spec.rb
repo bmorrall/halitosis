@@ -51,6 +51,7 @@ RSpec.describe Halitosis::Relationships do
       describe "when Relationships are defined" do
         before do
           klass.rel(:just_nil, {}) { nil }
+          klass.rel(:empty_array, {}) { [] }
           klass.rel(:non_repr, {}) { "some object" }
           klass.rel(:child_repr, {}) { child }
 
@@ -67,11 +68,11 @@ RSpec.describe Halitosis::Relationships do
         end
 
         it "builds relationships resources as expected" do
-          include_opts = {just_nil: true, non_repr: true, child_repr: true}
+          include_opts = {just_nil: true, empty_array: true, non_repr: true, child_repr: true}
 
           serializer = klass.new(include: include_opts)
 
-          expect(serializer.relationships).to eq(child_repr: {})
+          expect(serializer.relationships).to eq(just_nil: nil, empty_array: [], non_repr: nil, child_repr: {})
         end
       end
     end

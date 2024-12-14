@@ -37,9 +37,7 @@ module Halitosis
         render_fields(Field, context) do |field, result|
           value = field.value(context)
 
-          child = relationships_child(field.name.to_s, context, value)
-
-          result[field.name] = child if child
+          result[field.name] = relationships_child(field.name.to_s, context, value)
         end
       end
 
