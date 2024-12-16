@@ -44,6 +44,7 @@ module Halitosis
 
   module ClassMethods
     def resource(name)
+      include Identifiers
       include Halitosis::Resource
 
       define_resource(name)
@@ -79,6 +80,7 @@ require_relative "halitosis/errors"
 require_relative "halitosis/field"
 require_relative "halitosis/fields"
 require_relative "halitosis/attributes"
+require_relative "halitosis/identifiers"
 require_relative "halitosis/links"
 require_relative "halitosis/meta"
 require_relative "halitosis/permissions"
