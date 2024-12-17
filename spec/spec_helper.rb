@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "halitosis"
+rails_version = ENV["RAILS_VERSION"].to_s
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -15,4 +15,15 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  if rails_version.empty?
+    config.filter_run_excluding rails: true
+    require "halitosis"
+  end
+end
+
+# Optional Rails setup
+unless rails_version.empty?
+  require "rails_helper"
+  require "halitosis"
 end
