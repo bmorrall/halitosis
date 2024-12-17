@@ -33,31 +33,28 @@ module Halitosis
     base.extend ClassMethods
 
     base.include Base
+    base.include Identifiers
     base.include Attributes
+    base.include Links
+    base.include Meta
+    base.include Permissions
+    base.include Relationships
+    base.include RootLinks
+    base.include RootMeta
+    base.include RootPermissions
 
     config.extensions.each { |extension| base.send :include, extension }
   end
 
   module ClassMethods
     def resource(name)
-      include Identifiers
-      include Links
-      include Meta
-      include Permissions
-      include Relationships
       include Halitosis::Resource
-      include RootLinks
-      include RootMeta
-      include RootPermissions
 
       define_resource(name)
     end
 
     def collection(name, ...)
       include Halitosis::Collection
-      include RootLinks
-      include RootMeta
-      include RootPermissions
 
       define_collection(name, ...)
     end
