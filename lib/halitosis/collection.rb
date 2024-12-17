@@ -40,6 +40,11 @@ module Halitosis
         fields.for_type(Field).last || raise(InvalidCollection, "#{name || Collection.name} collection is not defined")
       end
 
+      # Provide an alias for root_link
+      def link(*, **, &)
+        root_link(*, **, &)
+      end
+
       # Provide an alias for root_meta
       def meta(*, **, &)
         root_meta(*, **, &)
