@@ -9,8 +9,6 @@ RSpec.describe "SimpleRenderables", :rails, type: :request do
 
       expect(response.media_type).to eq Mime[:json]
 
-      puts response.body
-
       expect(response.parsed_body).to match(
         "simples" => [
           {

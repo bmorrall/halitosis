@@ -19,7 +19,7 @@ module Halitosis
     module InstanceMethods
       # @return [Hash] the rendered hash with link, if any
       #
-      def render
+      def render(**)
         super.tap do |result|
           next unless options.fetch(:include_root) { true }
 
