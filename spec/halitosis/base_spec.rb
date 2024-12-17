@@ -66,9 +66,9 @@ RSpec.describe Halitosis::Base do
       end
     end
 
-    xdescribe "#as_json" do
+    describe "#as_json", :rails do
       it "converts rendered serializer to json" do
-        expect(resource_serializer.new.as_json).to eq({test: {}})
+        expect(resource_serializer.new.as_json).to eq({})
       end
     end
 
