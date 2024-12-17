@@ -8,6 +8,8 @@ Rails.application.routes.draw do
   resources :simple_jsons, only: [:index, :show]
   resources :simple_renderables, only: [:index, :show]
 
+  resources :complex_renderables, only: :show
+
   # Defines the root path route ("/")
   # root "posts#index"
 end

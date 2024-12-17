@@ -48,8 +48,8 @@ module Halitosis
 
       # @return [Hash] rendered representation
       #
-      def render
-        render_with_context(build_context)
+      def render(**options)
+        render_with_context(build_context(options))
       end
 
       # @param context [Halitosis::Context] the context instance

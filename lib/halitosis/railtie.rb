@@ -3,8 +3,13 @@ module Halitosis
   #
   class Railtie < ::Rails::Railtie
     module Renderable
+      def render_with_params(params)
+        render(include: params[:include])
+      end
+
       def render_in(view_context)
-        view_context.render plain: render.to_json
+        rendered = render_with_params(view_context.params)
+        view_context.render plain: rendered.to_json
       end
 
       def format

@@ -1,4 +1,4 @@
-class Simple
+class Example
   include ActiveModel::Model
   include ActiveModel::Attributes
 

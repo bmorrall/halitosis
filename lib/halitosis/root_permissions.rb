@@ -19,7 +19,7 @@ module Halitosis
     module InstanceMethods
       # @return [Hash] the rendered hash with permissions, if any
       #
-      def render
+      def render(**)
         super.tap do |result|
           value = root_permissions
           result[:_permissions] = result.fetch(:_permissions, {}).merge(value) if value.any?
