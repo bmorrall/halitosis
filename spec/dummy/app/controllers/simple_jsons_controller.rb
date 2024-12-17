@@ -1,4 +1,4 @@
-class SimpleJsonsController < ApplicationController
+class SimpleJsonsController < ApiController
   def index
     example = Simple.new(id: 1, name: "Simple 1")
     examples = [example]
