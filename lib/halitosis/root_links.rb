@@ -21,6 +21,8 @@ module Halitosis
       #
       def render
         super.tap do |result|
+          next unless options.fetch(:include_root) { true }
+
           value = root_links
           result[:_links] = result.fetch(:_links, {}).merge(value) if value.any?
         end

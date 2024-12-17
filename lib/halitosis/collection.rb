@@ -49,6 +49,11 @@ module Halitosis
       def meta(*, **, &)
         root_meta(*, **, &)
       end
+
+      # Provide an alias for root_permission
+      def permission(*, **, &)
+        root_permission(*, **, &)
+      end
     end
 
     module InstanceMethods
