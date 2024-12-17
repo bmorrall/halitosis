@@ -46,15 +46,16 @@ module Halitosis
       include Permissions
       include Relationships
       include Halitosis::Resource
+      include RootLinks
       include RootMeta
 
       define_resource(name)
     end
 
     def collection(name, ...)
-      include Links
       include Permissions
       include Halitosis::Collection
+      include RootLinks
       include RootMeta
 
       define_collection(name, ...)
@@ -89,6 +90,7 @@ require_relative "halitosis/links"
 require_relative "halitosis/meta"
 require_relative "halitosis/permissions"
 require_relative "halitosis/relationships"
+require_relative "halitosis/root_links"
 require_relative "halitosis/root_meta"
 require_relative "halitosis/resource"
 require_relative "halitosis/collection"
