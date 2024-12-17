@@ -4,7 +4,7 @@ module Halitosis
   class Railtie < ::Rails::Railtie
     module Renderable
       def render_in(view_context)
-        view_context.render json: self
+        view_context.render plain: render.to_json
       end
 
       def format
