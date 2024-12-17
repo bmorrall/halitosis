@@ -95,6 +95,7 @@ end
 #
 class DuckKidsSerializer
   include Halitosis
+  include Halitosis::Meta
 
   attribute :name, value: "Duckies"
 
