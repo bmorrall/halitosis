@@ -3,6 +3,7 @@ RSpec.describe "Include Options" do
     let(:klass) do
       Class.new do
         include Halitosis
+        include Halitosis::Relationships
 
         attribute(:verify_depth) { |ctx| ctx.depth }
         attribute(:verify_include) { |ctx| ctx.include_options.keys }
@@ -224,6 +225,7 @@ RSpec.describe "Include Options" do
           [
             Class.new do
               include Halitosis
+              include Halitosis::Relationships
 
               attribute(:verify_depth) { |ctx| ctx.depth }
               attribute(:verify_include) { |ctx| ctx.include_options.keys }

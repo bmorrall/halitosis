@@ -144,6 +144,9 @@ RSpec.describe Halitosis::Collection do
 
       it "renders the collection key as the first key" do
         klass.send :include, Halitosis # allow other fields to be defined
+        klass.send :include, Halitosis::Meta
+        klass.send :include, Halitosis::Links
+        klass.send :include, Halitosis::Permissions
 
         # Randomly define a collection with an attribute, meta, link, and permissions
         [
@@ -272,6 +275,7 @@ RSpec.describe Halitosis::Collection do
             [
               Class.new do
                 include Halitosis
+                include Halitosis::Relationships
 
                 attribute :name, value: "Ferdi"
 
