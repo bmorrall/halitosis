@@ -39,6 +39,11 @@ module Halitosis
       def collection_field
         fields.for_type(Field).last || raise(InvalidCollection, "#{name || Collection.name} collection is not defined")
       end
+
+      # Provide an alias for root_meta
+      def meta(*, **, &)
+        root_meta(*, **, &)
+      end
     end
 
     module InstanceMethods
