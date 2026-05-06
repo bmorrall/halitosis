@@ -440,6 +440,51 @@ render json: ArticleSerializer.new(article)
 
 When using `renderable:`, Halitosis will automatically forward the `include` query parameter from the request to the serializer, so clients can request relationships via `?include=author,comments` without any extra controller code.
 
+### ErrorsSerializer
+
+`Halitosis::ErrorsSerializer` serializes an `ActiveModel::Errors` collection into a JSON-compatible errors array. It is available when Halitosis is loaded inside a Rails application.
+
+The output follows a JSON:API-inspired structure with `id`, `detail`, and `source.pointer` fields:
+
+```ruby
+render renderable: Halitosis::ErrorsSerializer.new(record.errors), status: :unprocessable_entity
+
+# Or as :json if you need to control rendering explicitly
+render json: Halitosis::ErrorsSerializer.new(record.errors), status: :unprocessable_entity
+```
+
+```json
+{
+  "errors": [
+    {
+      "id": "title_blank",
+      "detail": "Title can't be blank",
+      "source": { "pointer": "/title" }
+    },
+    {
+      "id": "body_too_short",
+      "detail": "Body is too short (minimum is 10 characters)",
+      "source": { "pointer": "/body" }
+    }
+  ]
+}
+```
+
+Pass `param:` to scope the source pointer under a named namespace — useful when the client submits nested params:
+
+```ruby
+Halitosis::ErrorsSerializer.new(record.errors, param: "article").as_json
+# source pointers become "/article/title", "/article/body", etc.
+```
+
+Field behaviour:
+
+| Field | Value |
+| --- | --- |
+| `id` | `"attribute_type"` (e.g. `"title_blank"`), or just `"type"` for base errors. Omitted when the error type is not a Symbol (e.g. a custom message string). |
+| `detail` | `error.full_message` |
+| `source.pointer` | JSON Pointer to the attribute (e.g. `"/title"`). Omitted for base errors and errors with no attribute. |
+
 
 ## Development
 

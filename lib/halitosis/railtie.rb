@@ -30,3 +30,5 @@ module Halitosis
     end
   end
 end
+
+require_relative "rails/errors_serializer"
