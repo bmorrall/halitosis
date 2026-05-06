@@ -2,7 +2,7 @@
 
 RSpec.describe Halitosis do
   it "has a version number" do
-    expect(Halitosis::VERSION).not_to be nil
+    expect(Halitosis::VERSION).not_to be_nil
   end
 
   describe Halitosis::ClassMethods do
@@ -14,7 +14,7 @@ RSpec.describe Halitosis do
 
         klass.resource :foo
 
-        expect(klass.included_modules.include?(Halitosis::Resource)).to eq(true)
+        expect(klass.include?(Halitosis::Resource)).to be(true)
       end
     end
 
@@ -28,7 +28,7 @@ RSpec.describe Halitosis do
           -> { [] }
         end
 
-        expect(klass.included_modules.include?(Halitosis::Collection)).to eq(true)
+        expect(klass.include?(Halitosis::Collection)).to be(true)
       end
     end
 
@@ -36,7 +36,7 @@ RSpec.describe Halitosis do
       it "is false by default" do
         klass = Class.new { include Halitosis }
 
-        expect(klass.collection?).to eq(false)
+        expect(klass.collection?).to be(false)
       end
 
       it "is true for collection" do
@@ -46,7 +46,7 @@ RSpec.describe Halitosis do
           -> { [] }
         end
 
-        expect(klass.collection?).to eq(true)
+        expect(klass.collection?).to be(true)
       end
     end
   end

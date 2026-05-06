@@ -22,7 +22,6 @@ gem "rubocop-rspec"
 
 gem "standard", ">= 1.35.1"
 gem "standard-performance"
-gem "standard-rspec"
 
 gem "pry"
 

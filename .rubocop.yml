@@ -1,7 +1,8 @@
 require:
   - standard
+
+plugins:
   - standard-performance
-  - standard-rspec
   - rubocop-performance
   - rubocop-rake
   - rubocop-rspec
@@ -9,7 +10,6 @@ require:
 inherit_gem:
   standard: config/base.yml
   standard-performance: config/base.yml
-  standard-rspec: config/base.yml
 
 AllCops:
   NewCops: disable

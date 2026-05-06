@@ -3,7 +3,7 @@ RSpec.describe Halitosis::Relationships::Field do
     it "returns true with procedure" do
       result = described_class.new(:name, {}, proc {}).validate
 
-      expect(result).to eq(true)
+      expect(result).to be(true)
     end
 
     it "raises exception without procedure" do

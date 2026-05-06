@@ -8,7 +8,7 @@ module Halitosis
   #
   module Collection
     def self.included(base)
-      raise InvalidCollection, "#{base.name} has already defined a resource" if base.included_modules.include?(Resource)
+      raise InvalidCollection, "#{base.name} has already defined a resource" if base.include?(Resource)
 
       base.extend ClassMethods
 

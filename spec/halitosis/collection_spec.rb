@@ -101,7 +101,7 @@ RSpec.describe Halitosis::Collection do
         klass.define_collection(:ducks) { [] }
         serializer = klass.new([])
 
-        expect(serializer.collection?).to eq(true)
+        expect(serializer.collection?).to be(true)
       end
     end
 
