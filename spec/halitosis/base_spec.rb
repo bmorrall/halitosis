@@ -78,7 +78,7 @@ RSpec.describe Halitosis::Base do
       end
     end
 
-    xdescribe "#to_xml" do
+    describe "#to_xml", skip: "XML output not yet implemented" do
       it "converts rendered serializer to json" do
         expect(resource_serializer.new.to_xml).to eq(
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<hash>\n</hash>\n"

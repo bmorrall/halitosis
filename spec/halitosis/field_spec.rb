@@ -99,7 +99,7 @@ RSpec.describe Halitosis::Field do
     it "returns true for valid field" do
       field = described_class.new(:name, {value: "value"}, nil)
 
-      expect(field.validate).to eq(true)
+      expect(field.validate).to be(true)
     end
 
     it "raises error for invalid field" do

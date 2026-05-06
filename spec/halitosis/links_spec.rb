@@ -173,7 +173,7 @@ RSpec.describe Halitosis::Links do
 
         render = serializer.render
 
-        expect(render[:_links]).to eq(nil)
+        expect(render[:_links]).to be_nil
       end
     end
 

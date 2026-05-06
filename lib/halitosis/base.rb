@@ -110,7 +110,7 @@ module Halitosis
       # @return [nil, Hash] the rendered child
       #
       def render_child(child, context, opts)
-        return unless child.class.included_modules.include?(Halitosis::Base)
+        return unless child.class.include?(Halitosis::Base)
 
         child.render_with_context child.build_context(parent: context, include: opts)
       end
