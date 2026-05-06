@@ -36,323 +36,409 @@ Or install it yourself as:
 $ gem install halitosis
 ```
 
-### Basic usage
+## Usage
 
-Create a simple serializer class and include Halitosis:
+### Quick start
+
+Create a serializer class, include `Halitosis`, declare a resource, and define fields:
 
 ```ruby
-class Duck
-  def name = "Ferdi"
-  def code = "ferdi"
-end
-
-class DuckSerializer
+class ArticleSerializer
   include Halitosis
 
-  resource :duck
+  resource :article
 
-  attribute :name
+  identifier :id
 
-  link :self do
-    "/ducks/#{duck.code}"
-  end
+  attribute :title
+  attribute :body
+
+  link(:self) { "/articles/#{article.id}" }
 end
 ```
 
-Instantiate:
+Instantiate with the resource as the first argument, then call `render` or `to_json`:
 
 ```ruby
-duck = Duck.new
-serializer = DuckSerializer.new(duck)
+serializer = ArticleSerializer.new(article)
+
+serializer.render
+# => {
+#      article: {
+#        id: 1,
+#        title: "Hello World",
+#        body: "...",
+#        _links: { self: { href: "/articles/1" } }
+#      }
+#    }
+
+serializer.to_json
+# => '{"article":{"id":1,"title":"Hello World",...}}'
 ```
-
-Then call `serializer.render`:
-
-```ruby
-{
-  duck: {
-    name: 'Ferdi',
-    _links: {
-      self: { href: '/ducks/ferdi' }
-    }
-  }
-}
-```
-
-Or `serializer.to_json`:
-
-```ruby
-'{"duck": {"name": "Ferdi", "_links": {"self": {"href": "/ducks/ferdi"}}}}'
-```
-
 
 ### Serializer types
 
 #### 1. Simple
 
-Not associated with any particular resource or collection. For example, an API
-entry point:
+Not associated with any particular resource or collection — useful for API entry points or custom response shapes:
 
 ```ruby
 class ApiRootSerializer
   include Halitosis
 
-  link(:self) { '/api' }
+  link(:self) { "/api" }
+  link(:articles) { "/api/articles" }
 end
+
+ApiRootSerializer.new.render
+# => { _links: { self: { href: "/api" }, articles: { href: "/api/articles" } } }
 ```
 
 #### 2. Resource
 
-Represents a single item:
+Wraps a single object. Declare it with `resource`, and `#initialize` will accept the resource as its first argument:
 
 ```ruby
-class DuckSerializer
+class ArticleSerializer
   include Halitosis
 
-  resource :duck
+  resource :article   # exposes the resource as `article` inside the serializer
+
+  identifier :id      # calls article.id
+  attribute :title    # calls article.title
 end
-```
 
-When a resource is declared, `#initialize` expects the resource as the first argument:
-
-```ruby
-serializer = DuckSerializer.new(Duck.new, ...)
-```
-
-This makes attribute definitions cleaner:
-
-```ruby
-attribute :name # now calls Duck#name by default
+ArticleSerializer.new(article).render
+# => { article: { id: 1, title: "Hello World" } }
 ```
 
 #### 3. Collection
 
-Represents a collection of items. When a collection is declared, `#initialize` expects the collection as the first argument:
+Wraps a collection of items. Declare it with `collection`, providing a block that maps each item to a Halitosis serializer instance:
 
 ```ruby
-class DuckKidsSerializer
+class ArticlesSerializer
   include Halitosis
 
-  collection :ducklings do
-    [ ... ]
+  collection :articles do
+    collection.map { |article| ArticleSerializer.new(article) }
   end
+end
+
+ArticlesSerializer.new(Article.all).render
+# => { articles: [ { id: 1, title: "Hello World" }, ... ] }
+```
+
+### Identifiers
+
+Identifiers are rendered before other attributes and are typically used for primary keys:
+
+```ruby
+identifier :id              # calls article.id on the resource
+identifier :uuid do
+  SecureRandom.uuid
 end
 ```
 
-The block should return an array of Halitosis instances in order to be rendered.
+Only one identifier may be defined per serializer.
 
-### Defining attributes, links, relationships, meta, and permissions
+### Attributes
 
 Attributes can be defined in several ways:
 
 ```ruby
-attribute(:quacks) { "#{duck.quacks} per minute" }
-```
+# Delegate to the resource method of the same name
+attribute :title
 
-```ruby
-attribute :quacks # => Duck#quacks, if resource is declared
-```
+# Inline block
+attribute(:summary) { article.body.truncate(100) }
 
-```ruby
-attribute :quacks, value: "many"
-```
+# Static value
+attribute :version, value: 1
 
-```ruby
-attribute :quacks do
-  duck.quacks.round
+# Private helper method
+attribute(:word_count) { count_words }
+
+def count_words
+  article.body.split.size
 end
 ```
 
-```ruby
-attribute(:quacks) { calculate_quacks }
-
-def calculate_quacks
-  ...
-end
-```
-
-Attributes can also be implemented using the legacy `property` alias:
+Attributes also support the legacy `property` alias:
 
 ```ruby
-property(:quacks) { "#{duck.quacks} per minute" }
-property :quacks # Duck#quacks
-property :quacks, value: "many"
+property :title
+property(:summary) { article.body.truncate(100) }
 ```
 
 #### Conditionals
 
-The inclusion of attributes can be determined by conditionals using `if` and
-`unless` options. For example, with a method name:
+Use `if` or `unless` to conditionally include any field:
 
 ```ruby
-attribute :quacks, if: :include_quacks?
+# With a method name
+attribute :draft_notes, if: :show_draft_notes?
 
-def include_quacks?
-  duck.quacks < 10
+def show_draft_notes?
+  article.draft?
+end
+
+# With a proc
+attribute :published_at, unless: proc { article.published_at.nil? }
+
+# Works on links and relationships too
+link :edit, if: :can_edit?
+relationship :comments, unless: proc { article.comments.empty? } do
+  article.comments.map { |c| CommentSerializer.new(c) }
 end
 ```
 
-With a proc:
-```ruby
-attribute :quacks, unless: proc { duck.quacks.nil? }, value: ...
-```
-
-For links and relationships:
-
-```ruby
-link :ducklings, :templated, unless: :exclude_ducklings_link?, value: ...
-```
-
-```ruby
-relationship :ducklings, if: proc { duck.ducklings.size > 0 } do
-  [ ... ]
-end
-```
-
-#### Links
+### Links
 
 Simple link:
 
 ```ruby
-link(:root) { '/' }
-# => { _links: { root: { href: '/' } } ... }
+link(:self) { "/articles/#{article.id}" }
+# => { _links: { self: { href: "/articles/1" } } }
 ```
 
-Templated link:
+Templated link (follows the [HAL](https://datatracker.ietf.org/doc/html/draft-kelly-json-hal-11) `templated` convention):
 
 ```ruby
-link(:find, :templated) { '/ducks/{?id}' }
-# => { _links: { find: { href: '/ducks/{?id}', templated: true } } ... }
+link(:find, :templated) { "/articles/{?id}" }
+# => { _links: { find: { href: "/articles/{?id}", templated: true } } }
 ```
 
-Optional links:
+Suppress all links at render time with `include_links: false`:
 
 ```ruby
-serializer = MySerializerWithManyLinks.new(include_links: false)
-rendered = serializer.render
-rendered[:_links] # nil
+ArticleSerializer.new(article, include_links: false).render
+# => { article: { id: 1, title: "Hello World" } }
 ```
 
-#### Relationships
+### Relationships
 
-Simple one-to-one relationship:
+Relationships allow embedding associated serializers inside `_relationships`. They are **opt-in**: they are only rendered when explicitly requested.
+
+One-to-one:
 
 ```ruby
-relationship(:owner) { UserSerializer.new(duck.owner) }
-# => { duck: { _relationships: { owner: { ... } } } }
+relationship(:author) { UserSerializer.new(article.author) }
+# => { article: { ..., _relationships: { author: { id: 5, name: "Alice" } } } }
 ```
 
-or a one-to-many collection with an array of record serializers:
+One-to-many (array of serializers):
 
 ```ruby
-relationship(:ducklings) do
-  duck.ducklings.map { |duckling| DucklingSerializer.new(duckling) }
+relationship(:comments) do
+  article.comments.map { |comment| CommentSerializer.new(comment) }
 end
-# => { duck: { _relationships: { ducklings: [ ... ] } } }
+# => { article: { ..., _relationships: { comments: [ ... ] } } }
 ```
 
-or with a single collection serializer:
+One-to-many (collection serializer):
 
 ```ruby
-relationship(:ducklings) do
-  DucklingsSerializer.new(duck.ducklings)
-end
+relationship(:comments) { CommentsSerializer.new(article.comments) }
 ```
 
-A rel shorthand is also available for those who like to avoid a relationship:
+The `rel` method is a shorthand alias for `relationship`:
 
 ```ruby
-rel(:parent) { UserSerializer.new(...) }
-rel(:ducklings) { [DucklingSerializer.new(...), ...] }
-end
+rel(:author) { UserSerializer.new(article.author) }
+rel(:comments) { article.comments.map { |c| CommentSerializer.new(c) } }
 ```
 
-Resources are not rendered by default. They will be included if both
-of the following conditions are met:
+#### Including relationships
 
-1. The proc returns either a Halitosis instance or an array of Halitosis instances
-2. The relationship is requested via the parent serializer's options, e.g.:
+Pass `include:` when instantiating to request relationships. Excluded relationships are not evaluated:
 
 ```ruby
-DuckSerializer.new(include: { ducklings: true, parent: false })
+# Hash syntax
+ArticleSerializer.new(article, include: { author: true, comments: true })
+
+# Array syntax
+ArticleSerializer.new(article, include: ["author", "comments"])
+
+# Comma-joined string
+ArticleSerializer.new(article, include: "author,comments")
 ```
 
-They can also be prested as an array of strings:
+Relationships can be nested to any depth:
 
 ```ruby
-DuckSerializer.new(include: ["ducklings", "parent"])
-```
-
-or as comma-joined strings:
-
-```ruby
-DuckSerializer.new(include: "ducklings,parent")
-```
-
-Resources can be nested to any depth, e.g.:
-
-```ruby
-DuckSerializer.new(include: {
-  ducklings: {
-    foods: {
-      ingredients: true
-    },
-    pond: true
+# Hash syntax
+ArticleSerializer.new(article, include: {
+  author: {
+    avatar: true
+  },
+  comments: {
+    author: true
   }
 })
+
+# Dot-notation string
+ArticleSerializer.new(article, include: "author.avatar,comments.author")
 ```
 
-or:
+Include relationships on collections the same way:
 
 ```ruby
-DuckSerializer.new(include: "ducklings.foods.ingredients,ducklings.pond")
+ArticlesSerializer.new(Article.all, include: "articles.author")
 ```
 
-and requested on collections:
+### Meta
+
+Use `meta` to include read-only metadata alongside a resource (timestamps, counts, etc.):
 
 ```ruby
-DucksSerializer.new(..., include: ["ducks.ducklings.foods"])
+class ArticleSerializer
+  include Halitosis
+
+  resource :article
+
+  identifier :id
+  attribute :title
+
+  meta(:created_at) { article.created_at.iso8601 }
+  meta(:updated_at) { article.updated_at.iso8601 }
+end
+
+ArticleSerializer.new(article).render
+# => {
+#      article: {
+#        id: 1,
+#        title: "Hello World",
+#        _meta: {
+#          created_at: "2024-09-30T20:46:00Z",
+#          updated_at: "2024-10-01T08:00:00Z"
+#        }
+#      }
+#    }
 ```
 
-#### Meta
-
-Simple nested Meta information. Use this for providing details of attributes that are not modified directly by the API.
+Suppress meta at render time with `include_meta: false`:
 
 ```ruby
-meta(:created_at)
-# => { _meta: { created_at: "2024-09-30T20:46:00Z }}
+ArticleSerializer.new(article, include_meta: false).render
 ```
 
-#### Permissions
+### Permissions
 
-Simple nested Access Rights information. Use this for informing clients of what resources they are able to access.
+Use `permission` to communicate access rights to clients:
 
 ```ruby
-permission(:snuggle) -> { duckling_policy.snuggle? }
-# => { _permissions: { snuggle: true }}
+class ArticleSerializer
+  include Halitosis
+
+  resource :article
+
+  identifier :id
+  attribute :title
+
+  permission(:edit) { policy.edit? }
+  permission(:destroy) { policy.destroy? }
+end
+
+ArticleSerializer.new(article).render
+# => {
+#      article: {
+#        id: 1,
+#        title: "Hello World",
+#        _permissions: { edit: true, destroy: false }
+#      }
+#    }
 ```
 
+Suppress permissions at render time with `include_permissions: false`:
+
+```ruby
+ArticleSerializer.new(article, include_permissions: false).render
+```
+
+### Root-level fields
+
+`root_link`, `root_meta`, and `root_permission` render outside the resource envelope. This is useful for pagination metadata or top-level navigation links on collection responses:
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+
+  collection :articles do
+    collection.map { |article| ArticleSerializer.new(article) }
+  end
+
+  root_link(:self) { "/articles" }
+  root_link(:next, :templated) { "/articles?page={?page}" }
+
+  root_meta(:total) { collection.total_count }
+  root_meta(:per_page, value: 25)
+
+  root_permission(:create) { policy.create? }
+end
+
+ArticlesSerializer.new(articles).render
+# => {
+#      articles: [ ... ],
+#      _links: {
+#        self: { href: "/articles" },
+#        next: { href: "/articles?page={?page}", templated: true }
+#      },
+#      _meta: { total: 42, per_page: 25 },
+#      _permissions: { create: true }
+#    }
+```
+
+### Render options summary
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `include:` | `{}` | Relationships to include (hash, array, or string) |
+| `include_root:` | resource name | Override root key, or `false` to omit the wrapper |
+| `include_links:` | `true` | Set to `false` to omit all `_links` |
+| `include_meta:` | `true` | Set to `false` to omit all `_meta` |
+| `include_permissions:` | `true` | Set to `false` to omit all `_permissions` |
+
+```ruby
+# Omit the root wrapper entirely
+ArticleSerializer.new(article, include_root: false).render
+# => { id: 1, title: "Hello World", ... }
+
+# Use a custom root key
+ArticleSerializer.new(article, include_root: "post").render
+# => { post: { id: 1, title: "Hello World", ... } }
+```
 
 ### Using with Rails
 
-If Halitosis is loaded in a Rails application, Rails url helpers will be
-available in serializers:
+When Halitosis is loaded in a Rails application, URL helpers are automatically available inside serializer blocks:
 
 ```ruby
-link(:new) { new_duck_url }
+class ArticleSerializer
+  include Halitosis
+
+  resource :article
+
+  identifier :id
+  attribute :title
+
+  link(:self)   { article_url(article) }
+  link(:edit)   { edit_article_url(article) }
+  link(:index)  { articles_url }
+end
 ```
 
-Serializers can either be passed in as a json argument to render:
+Render directly from a controller action using the `renderable:` option:
 
 ```ruby
-render json: DuckSerializer.new(duck)
+# As a renderable (automatically reads `include` from request params)
+render renderable: ArticleSerializer.new(article)
+
+# Or pass as :json to control rendering explicitly
+render json: ArticleSerializer.new(article)
 ```
 
-or directly given as arguments to render:
-
-```ruby
-render DuckSerializer.new(duck)
-```
+When using `renderable:`, Halitosis will automatically forward the `include` query parameter from the request to the serializer, so clients can request relationships via `?include=author,comments` without any extra controller code.
 
 
 ## Development
