@@ -25,3 +25,5 @@ gem "standard-performance"
 gem "standard-rspec"
 
 gem "pry"
+
+gem "simplecov", require: false

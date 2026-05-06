@@ -30,6 +30,12 @@ RSpec.describe Halitosis::Meta do
         expect(serializer.render).to eq(_meta: {foo: "bar"})
       end
 
+      it "excludes meta when include_meta is false" do
+        klass.meta(:foo, value: "bar")
+
+        expect(serializer.render(include_meta: false)).to eq({})
+      end
+
       it "renders meta with string values" do
         klass.meta(:foo, value: "bar")
 
