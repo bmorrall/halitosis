@@ -106,11 +106,11 @@ RSpec.describe "Sortable" do
       end
     end
 
-    it "raises InvalidQueryParameter with the direction prefix for descending" do
+    it "raises InvalidSortParameter with the direction prefix for descending" do
       serializer = ascending_only_klass.new(items, sort: "-name")
 
       expect { serializer.render }.to raise_error do |exception|
-        expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
+        expect(exception).to be_an_instance_of(Halitosis::InvalidSortParameter)
         expect(exception.message).to match(/can not be sorted by '-name'/)
         expect(exception.parameter).to eq("sort")
       end
@@ -124,11 +124,11 @@ RSpec.describe "Sortable" do
   end
 
   context "with an unknown sort field" do
-    it "raises InvalidQueryParameter" do
+    it "raises InvalidSortParameter" do
       serializer = klass.new(items, sort: "unknown")
 
       expect { serializer.render }.to raise_error do |exception|
-        expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
+        expect(exception).to be_an_instance_of(Halitosis::InvalidSortParameter)
         expect(exception.message).to match(/can not be sorted by 'unknown'/)
         expect(exception.parameter).to eq("sort")
       end
@@ -138,7 +138,7 @@ RSpec.describe "Sortable" do
       serializer = klass.new(items, sort: "name,bogus")
 
       expect { serializer.render }.to raise_error(
-        Halitosis::InvalidQueryParameter,
+        Halitosis::InvalidSortParameter,
         /can not be sorted by 'bogus'/
       )
     end
@@ -177,7 +177,7 @@ RSpec.describe "Sortable" do
       end
 
       expect { unknown_klass.new([]).render }.to raise_error(
-        Halitosis::InvalidQueryParameter,
+        Halitosis::InvalidSortParameter,
         /can not be sorted by 'unknown'/
       )
     end

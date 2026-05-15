@@ -95,7 +95,7 @@ RSpec.describe Halitosis::Sortable do
       expect do
         serializer.send(:validate_sorts!, [["unknown", true]])
       end.to raise_error do |exception|
-        expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
+        expect(exception).to be_an_instance_of(Halitosis::InvalidSortParameter)
         expect(exception.message).to match(/can not be sorted by 'unknown'/i)
         expect(exception.parameter).to eq("sort")
       end
@@ -104,13 +104,13 @@ RSpec.describe Halitosis::Sortable do
     it "reports the first unknown field" do
       expect do
         serializer.send(:validate_sorts!, [["name", true], ["bogus", false]])
-      end.to raise_error(Halitosis::InvalidQueryParameter, /can not be sorted by 'bogus'/)
+      end.to raise_error(Halitosis::InvalidSortParameter, /can not be sorted by 'bogus'/)
     end
 
     it "includes the resource type in the error message" do
       expect do
         serializer.send(:validate_sorts!, [["nope", true]])
-      end.to raise_error(Halitosis::InvalidQueryParameter, /items collection/)
+      end.to raise_error(Halitosis::InvalidSortParameter, /items collection/)
     end
   end
 
@@ -173,10 +173,10 @@ RSpec.describe Halitosis::Sortable do
 
         expect do
           serializer.send(:apply_sorts!, context)
-        end.to raise_error(Halitosis::InvalidQueryParameter)
+        end.to raise_error(Halitosis::InvalidSortParameter)
       end
 
-      it "raises InvalidQueryParameter when the block returns nil for ascending" do
+      it "raises InvalidSortParameter when the block returns nil for ascending" do
         nil_klass = Class.new do
           include Halitosis
 
@@ -196,13 +196,13 @@ RSpec.describe Halitosis::Sortable do
         expect do
           serializer.send(:apply_sorts!, context)
         end.to raise_error do |exception|
-          expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
+          expect(exception).to be_an_instance_of(Halitosis::InvalidSortParameter)
           expect(exception.message).to match(/can not be sorted by '-name'/)
           expect(exception.parameter).to eq("sort")
         end
       end
 
-      it "raises InvalidQueryParameter when the block returns nil for descending" do
+      it "raises InvalidSortParameter when the block returns nil for descending" do
         nil_klass = Class.new do
           include Halitosis
 
@@ -222,7 +222,7 @@ RSpec.describe Halitosis::Sortable do
         expect do
           serializer.send(:apply_sorts!, context)
         end.to raise_error do |exception|
-          expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
+          expect(exception).to be_an_instance_of(Halitosis::InvalidSortParameter)
           expect(exception.message).to match(/can not be sorted by 'name'/)
           expect(exception.parameter).to eq("sort")
         end

@@ -123,17 +123,16 @@ module Halitosis
         end
       end
 
-      # Build and raise an InvalidQueryParameter for the given sort token.
+      # Build and raise an InvalidSortParameter for the given sort token.
       #
       # @param sort_token [String] the sort token, e.g. "name" or "-name"
       #
-      # @raise [Halitosis::InvalidQueryParameter]
+      # @raise [Halitosis::InvalidSortParameter]
       #
       def raise_sort_error(sort_token)
         resource_label = [self.class.resource_type, "collection"].compact.join(" ")
-        raise Halitosis::InvalidQueryParameter.new(
-          "The #{resource_label} can not be sorted by '#{sort_token}'",
-          "sort"
+        raise Halitosis::InvalidSortParameter.new(
+          "The #{resource_label} can not be sorted by '#{sort_token}'"
         )
       end
     end
