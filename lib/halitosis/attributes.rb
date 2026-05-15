@@ -34,7 +34,7 @@ module Halitosis
             procedure = default_procedure_for(name)
           end
         end
-        fields.add(Field.new(name, options, procedure))
+        fields.add(Attributes::Field.new(name, options, procedure))
       end
     end
 
@@ -48,7 +48,7 @@ module Halitosis
       # @return [Hash] attributes from fields
       #
       def attributes(context = build_context)
-        render_fields(Field, context) do |field, result|
+        render_fields(Attributes::Field, context) do |field, result|
           result[field.name] = field.value(context)
         end
       end

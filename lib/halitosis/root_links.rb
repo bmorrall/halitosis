@@ -12,7 +12,7 @@ module Halitosis
       # @return [Halitosis::RootLinks::Field]
       #
       def root_link(name, **options, &procedure)
-        fields.add(Field.new(name, options, procedure))
+        fields.add(RootLinks::Field.new(name, options, procedure))
       end
     end
 
@@ -33,7 +33,7 @@ module Halitosis
       # @return [Hash] root_links from fields
       #
       def root_links(context = build_context)
-        render_fields(Field, context) do |field, result|
+        render_fields(RootLinks::Field, context) do |field, result|
           value = field.value(context)
 
           result[field.name] = value if value

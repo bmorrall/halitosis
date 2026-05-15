@@ -15,7 +15,7 @@ module Halitosis
       # @return [Halitosis::Relationships::Field]
       #
       def relationship(name, options = {}, &procedure)
-        fields.add(Field.new(name, options, procedure))
+        fields.add(Relationships::Field.new(name, options, procedure))
       end
 
       alias_method :rel, :relationship
@@ -34,7 +34,7 @@ module Halitosis
         # Do not validation non-root collections (as they pass values directly to children)
         validate_relationships!(context) unless collection?
 
-        render_fields(Field, context) do |field, result|
+        render_fields(Relationships::Field, context) do |field, result|
           value = field.value(context)
 
           result[field.name] = relationships_child(field.name.to_s, context, value)

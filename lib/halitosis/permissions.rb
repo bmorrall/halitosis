@@ -12,7 +12,7 @@ module Halitosis
       # @return [Halitosis::Permissions::Field]
       #
       def permission(name, **options, &procedure)
-        fields.add(Field.new(name, options, procedure))
+        fields.add(Permissions::Field.new(name, options, procedure))
       end
     end
 
@@ -30,7 +30,7 @@ module Halitosis
       # @return [Hash] permissions from fields
       #
       def permissions(context = build_context)
-        render_fields(Field, context) do |field, result|
+        render_fields(Permissions::Field, context) do |field, result|
           value = field.value(context)
 
           result[field.name] = value || false

@@ -19,7 +19,7 @@ module Halitosis
             procedure = default_procedure_for(name)
           end
         end
-        fields.add(Field.new(name, options, procedure))
+        fields.add(Meta::Field.new(name, options, procedure))
       end
     end
 
@@ -37,7 +37,7 @@ module Halitosis
       # @return [Hash] meta from fields
       #
       def meta(context = build_context)
-        render_fields(Field, context) do |field, result|
+        render_fields(Meta::Field, context) do |field, result|
           value = field.value(context)
 
           result[field.name] = value
