@@ -27,28 +27,13 @@ module Halitosis
         alias_method name, :resource
       end
 
-      # Override standard identifier field for resource-based serializers
+      # For resource-based serializers, delegate to the resource by default
       #
-      # @param name [Symbol, String] name of the identifier
-      # @param options [nil, Hash] identifier options for field
+      # @param name [Symbol] the field name
+      # @return [Proc]
       #
-      def identifier(name, options = {}, &procedure)
-        unless procedure || options.key?(:value)
-          procedure = proc { resource.public_send(name) }
-        end
-        super(name, options, &procedure)
-      end
-
-      # Override standard attribute field for resource-based serializers
-      #
-      # @param name [Symbol, String] name of the attribute
-      # @param options [nil, Hash] attribute options for field
-      #
-      def attribute(name, options = {}, &procedure)
-        unless procedure || options.key?(:value)
-          procedure = proc { resource.public_send(name) }
-        end
-        super(name, options, &procedure)
+      def default_procedure_for(name)
+        proc { resource.public_send(name) }
       end
     end
 

@@ -21,6 +21,7 @@ module Halitosis
           raise InvalidField, "You can only define one identifier per serializer"
         end
 
+        procedure ||= default_procedure_for(name) unless options.key?(:value)
         fields.add(Field.new(name, options, procedure))
       end
     end
