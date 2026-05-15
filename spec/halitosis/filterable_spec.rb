@@ -43,6 +43,97 @@ RSpec.describe Halitosis::Filterable do
         klass.filterable_by(:title)
       end.to raise_error(Halitosis::InvalidField, /filter field title must be defined with a proc/i)
     end
+
+    it "raises InvalidField when the block accepts more than 1 argument" do
+      expect do
+        klass.filterable_by(:title) { |a, b| a }
+      end.to raise_error(Halitosis::InvalidField, /must accept 0 arguments.*or 1 argument/i)
+    end
+
+    context "with a zero-arity namespace block" do
+      it "registers nested fields with dot-prefixed names" do
+        ns_klass = Class.new do
+          include Halitosis
+
+          collection :items do
+            collection
+          end
+
+          filterable_by :user do
+            filterable_by :name do |value|
+              collection.select { |i| i[:name] == value }
+            end
+          end
+        end
+
+        fields = ns_klass.fields.for_type(Halitosis::Filterable::Field)
+        expect(fields.size).to eq(1)
+        expect(fields.first.name).to eq(:"user.name")
+      end
+
+      it "supports multiple levels of nesting" do
+        ns_klass = Class.new do
+          include Halitosis
+
+          collection :items do
+            collection
+          end
+
+          filterable_by :a do
+            filterable_by :b do
+              filterable_by :c do |value|
+                collection.select { |i| i[:c] == value }
+              end
+            end
+          end
+        end
+
+        fields = ns_klass.fields.for_type(Halitosis::Filterable::Field)
+        expect(fields.size).to eq(1)
+        expect(fields.first.name).to eq(:"a.b.c")
+      end
+
+      it "supports multiple fields inside a single namespace" do
+        ns_klass = Class.new do
+          include Halitosis
+
+          collection :items do
+            collection
+          end
+
+          filterable_by :user do
+            filterable_by :name do |v|
+              collection.select { |i| i[:name] == v }
+            end
+
+            filterable_by :age do |v|
+              collection.select { |i| i[:age] == v.to_i }
+            end
+          end
+        end
+
+        fields = ns_klass.fields.for_type(Halitosis::Filterable::Field)
+        expect(fields.map(&:name)).to contain_exactly(:"user.name", :"user.age")
+      end
+
+      it "raises InvalidField when a nested block accepts more than 1 argument" do
+        expect do
+          Class.new do
+            include Halitosis
+
+            collection :items do
+              collection
+            end
+
+            filterable_by :user do
+              filterable_by :name do |a, b|
+                a
+              end
+            end
+          end
+        end.to raise_error(Halitosis::InvalidField, /must accept 0 arguments.*or 1 argument/i)
+      end
+    end
   end
 
   describe "#validate_filters!" do

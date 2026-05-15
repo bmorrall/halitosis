@@ -266,13 +266,33 @@ The articles collection can not be filtered by 'created_after' with the provided
 
 Both Rails bracket notation (`filter[user][name]=Alice`) and dot notation
 (`filter[user.name]=Alice`) produce the same dot-separated key after parsing,
-so a single `filterable_by` declaration handles both:
+so a single `filterable_by` declaration handles both.
+
+Use a zero-arity block to open a namespace and group related filter fields under a shared prefix:
 
 ```ruby
-filterable_by :"user.name" do |value|
-  collection.joins(:user).where(users: { name: value })
+filterable_by :user do
+  filterable_by :name do |value|
+    collection.joins(:user).where(users: { name: value })
+  end
+
+  filterable_by :role do |value|
+    collection.joins(:user).where(users: { role: value })
+  end
 end
 ```
+
+This registers `user.name` and `user.role` as filter fields. Both of the following are equivalent:
+
+```ruby
+# Rails bracket notation
+ArticlesSerializer.new(Article.all, filter: { user: { name: "Alice" } }).render
+
+# Dot notation
+ArticlesSerializer.new(Article.all, filter: { "user.name" => "Alice" }).render
+```
+
+Namespaces can be nested to any depth. A block with no arguments opens a namespace; a block with one argument is a filter implementation. Any other arity raises `InvalidField` at class load time.
 
 ### Identifiers
 
