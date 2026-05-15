@@ -1,0 +1,12 @@
+en:
+  halitosis:
+    errors:
+      "Halitosis::InvalidQueryParameter":
+        id: invalid_query_parameter
+        title: Invalid Query Parameter
+      "Halitosis::InvalidSortParameter":
+        id: invalid_sort_parameter
+        title: Invalid Sort Parameter
+      "Halitosis::InvalidIncludeParameter":
+        id: invalid_include_parameter
+        title: Invalid Include Parameter
