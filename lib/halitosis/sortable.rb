@@ -81,11 +81,7 @@ module Halitosis
 
         return if unknown.none?
 
-        resource_label = [self.class.resource_type, "collection"].compact.join(" ")
-        raise Halitosis::InvalidQueryParameter.new(
-          "The #{resource_label} can not be sorted by '#{unknown.first}'",
-          "sort"
-        )
+        raise_sort_error(unknown.first)
       end
 
       # Apply sort directives from context to @collection, or fall back to the
@@ -116,8 +112,29 @@ module Halitosis
 
         directives.each do |name, ascending|
           field = sort_fields.find { |f| f.name.to_s == name }
-          @collection = field.apply(self, ascending)
+          result = field.apply(self, ascending)
+
+          if result.nil?
+            sort_token = ascending ? name : "-#{name}"
+            raise_sort_error(sort_token)
+          end
+
+          @collection = result
         end
+      end
+
+      # Build and raise an InvalidQueryParameter for the given sort token.
+      #
+      # @param sort_token [String] the sort token, e.g. "name" or "-name"
+      #
+      # @raise [Halitosis::InvalidQueryParameter]
+      #
+      def raise_sort_error(sort_token)
+        resource_label = [self.class.resource_type, "collection"].compact.join(" ")
+        raise Halitosis::InvalidQueryParameter.new(
+          "The #{resource_label} can not be sorted by '#{sort_token}'",
+          "sort"
+        )
       end
     end
   end

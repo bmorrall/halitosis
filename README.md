@@ -170,6 +170,24 @@ ArticlesSerializer.new(Article.all, sort: ["title", "-published_at"]).render
 
 Requesting a field that has not been declared with `sortable_by` raises `Halitosis::InvalidQueryParameter`, which Rails maps to a `400 Bad Request` response.
 
+#### Restricting sort directions
+
+Return `nil` from a `sortable_by` block to signal that a particular direction is not supported. Halitosis will raise `InvalidQueryParameter` with the direction-prefixed token, so the client gets a clear error:
+
+```ruby
+sortable_by :name do |ascending|
+  # Only ascending is supported for this field
+  collection.order(name: :asc) if ascending
+end
+```
+
+Requesting `sort: "-name"` will raise:
+```
+The articles collection can not be sorted by '-name'
+```
+
+This is useful when descending order is expensive or semantically meaningless for a given field.
+
 #### Default sort
 
 Use `default_sort` to apply a fallback when no `sort` param is provided. It accepts either a sort string (which delegates through the same `sortable_by` pipeline) or a no-argument block:

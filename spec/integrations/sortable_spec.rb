@@ -88,6 +88,41 @@ RSpec.describe "Sortable" do
     end
   end
 
+  context "when a sortable_by block returns nil for the requested direction" do
+    let :ascending_only_klass do
+      item_ser = item_klass
+
+      Class.new do
+        include Halitosis
+
+        collection :items do
+          collection.map { |i| item_ser.new(i) }
+        end
+
+        sortable_by :name do |ascending|
+          # only supports ascending — returns nil to signal unsupported direction
+          collection.sort_by { |i| i[:name] } if ascending
+        end
+      end
+    end
+
+    it "raises InvalidQueryParameter with the direction prefix for descending" do
+      serializer = ascending_only_klass.new(items, sort: "-name")
+
+      expect { serializer.render }.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
+        expect(exception.message).to match(/can not be sorted by '-name'/)
+        expect(exception.parameter).to eq("sort")
+      end
+    end
+
+    it "succeeds for the supported ascending direction" do
+      serializer = ascending_only_klass.new(items, sort: "name")
+
+      expect(rendered_names(serializer.render)).to eq(%w[apple banana cherry])
+    end
+  end
+
   context "with an unknown sort field" do
     it "raises InvalidQueryParameter" do
       serializer = klass.new(items, sort: "unknown")
