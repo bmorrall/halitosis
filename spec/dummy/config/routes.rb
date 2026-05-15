@@ -11,6 +11,7 @@ Rails.application.routes.draw do
   resources :complex_renderables, only: :show
 
   resources :sortable_articles, only: :index
+  resources :filterable_articles, only: :index
 
   # Defines the root path route ("/")
   # root "posts#index"

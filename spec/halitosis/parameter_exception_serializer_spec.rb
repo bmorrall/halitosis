@@ -32,6 +32,22 @@ RSpec.describe Halitosis::ParameterExceptionSerializer, :rails do
       end
     end
 
+    context "with an InvalidFilterParameter" do
+      let(:error) { Halitosis::InvalidFilterParameter.new("The articles collection can not be filtered by 'name'") }
+
+      it "returns an errors array with I18n id and title", :aggregate_failures do
+        result = serializer.as_json
+
+        expect(result["errors"]).to be_an(Array).and have_attributes(size: 1)
+
+        error_object = result["errors"].first
+        expect(error_object["id"]).to eq("invalid_filter_parameter")
+        expect(error_object["title"]).to eq("Invalid Filter Parameter")
+        expect(error_object["detail"]).to eq("The articles collection can not be filtered by 'name'")
+        expect(error_object["source"]).to eq("parameter" => "filter")
+      end
+    end
+
     context "with an InvalidQueryParameter with a custom parameter" do
       let(:error) { Halitosis::InvalidQueryParameter.new("Bad param", "filter") }
 
