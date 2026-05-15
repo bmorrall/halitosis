@@ -23,13 +23,13 @@ module Halitosis
       # @return [Module] self
       #
       def define_collection(name, options = {}, &procedure)
-        raise InvalidCollection, "#{self.name || Collection.name} collection is already defined" if fields.for_type(Field).any?
+        raise InvalidCollection, "#{self.name || Collection.name} collection is already defined" if fields.for_type(Collection::Field).any?
 
         self.resource_type = name.to_s
 
         alias_method name, :collection
 
-        fields.add Field.new(name, options, procedure)
+        fields.add Collection::Field.new(name, options, procedure)
       end
 
       def collection?
@@ -37,7 +37,7 @@ module Halitosis
       end
 
       def collection_field
-        fields.for_type(Field).last || raise(InvalidCollection, "#{name || Collection.name} collection is not defined")
+        fields.for_type(Collection::Field).last || raise(InvalidCollection, "#{name || Collection.name} collection is not defined")
       end
 
       # Provide an alias for root_link

@@ -12,7 +12,7 @@ module Halitosis
       # @return [Halitosis::Links::Field]
       #
       def link(name, *, &procedure)
-        fields.add(Field.new(name, *, procedure))
+        fields.add(Links::Field.new(name, *, procedure))
       end
     end
 
@@ -30,7 +30,7 @@ module Halitosis
       # @return [Hash] links from fields
       #
       def links(context = build_context)
-        render_fields(Field, context) do |field, result|
+        render_fields(Links::Field, context) do |field, result|
           value = field.value(context)
 
           result[field.name] = value if value

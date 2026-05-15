@@ -12,7 +12,7 @@ module Halitosis
       # @return [Halitosis::RootPermission::Field]
       #
       def root_permission(name, **options, &procedure)
-        fields.add(Field.new(name, options, procedure))
+        fields.add(RootPermissions::Field.new(name, options, procedure))
       end
     end
 
@@ -29,7 +29,7 @@ module Halitosis
       # @return [Hash] permissions from fields
       #
       def root_permissions(context = build_context)
-        render_fields(Field, context) do |field, result|
+        render_fields(RootPermissions::Field, context) do |field, result|
           next unless options.fetch(:include_root) { true }
 
           value = field.value(context)

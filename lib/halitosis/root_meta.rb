@@ -12,7 +12,7 @@ module Halitosis
       # @return [Halitosis::RootMeta::Field]
       #
       def root_meta(name, **options, &procedure)
-        fields.add(Field.new(name, options, procedure))
+        fields.add(RootMeta::Field.new(name, options, procedure))
       end
     end
 
@@ -31,7 +31,7 @@ module Halitosis
       # @return [Hash] meta from fields
       #
       def root_meta(context = build_context)
-        render_fields(Field, context) do |field, result|
+        render_fields(RootMeta::Field, context) do |field, result|
           value = field.value(context)
 
           result[field.name] = value
