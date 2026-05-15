@@ -2,6 +2,10 @@ module Halitosis
   # Provide Rails-specific extensions if loaded in a Rails application
   #
   class Railtie < ::Rails::Railtie
+    initializer "halitosis.i18n" do
+      I18n.load_path += Dir[File.join(__dir__, "locales", "*.yml")]
+    end
+
     module Renderable
       def render_with_params(params)
         render(include: params[:include], sort: params[:sort])
@@ -32,3 +36,5 @@ module Halitosis
     end
   end
 end
+
+require_relative "error_handling"

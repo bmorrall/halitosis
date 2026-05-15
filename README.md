@@ -593,6 +593,50 @@ render json: ArticleSerializer.new(article)
 
 When using `renderable:`, Halitosis will automatically forward the `include` and `sort` query parameters from the request to the serializer, so clients can request relationships and ordering via `?include=author,comments&sort=-published_at` without any extra controller code.
 
+#### Error handling
+
+Include `Halitosis::ErrorHandling` in your base controller to automatically rescue `InvalidQueryParameter` errors (and its subclasses `InvalidSortParameter` and `InvalidIncludeParameter`) and render a structured `400 Bad Request` JSON response:
+
+```ruby
+class ApplicationController < ActionController::Base
+  include Halitosis::ErrorHandling
+end
+```
+
+Invalid `sort` or `include` parameters will now produce a response like:
+
+```json
+{
+  "errors": [
+    {
+      "id": "invalid_sort_parameter",
+      "title": "Invalid Sort Parameter",
+      "detail": "The articles collection can not be sorted by 'nonexistent'",
+      "source": { "parameter": "sort" }
+    }
+  ]
+}
+```
+
+The `id` and `title` values come from Halitosis's built-in locale file (`en.halitosis.errors.{ClassName}.id` / `.title`). Override them in your application's locale file:
+
+```yaml
+# config/locales/en.yml
+en:
+  halitosis:
+    errors:
+      "Halitosis::InvalidSortParameter":
+        title: "Unsupported Sort Field"
+```
+
+If you need custom rescue logic, `Halitosis::ParameterExceptionSerializer` is available directly:
+
+```ruby
+rescue_from Halitosis::InvalidQueryParameter do |error|
+  render json: Halitosis::ParameterExceptionSerializer.new(error), status: :unprocessable_entity
+end
+```
+
 
 ## Development
 
