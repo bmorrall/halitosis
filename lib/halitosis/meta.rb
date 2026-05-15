@@ -12,6 +12,13 @@ module Halitosis
       # @return [Halitosis::Meta::Field]
       #
       def meta(name, **options, &procedure)
+        unless procedure
+          if options[:value].is_a?(Symbol)
+            procedure = default_procedure_for(options.delete(:value))
+          elsif !options.key?(:value)
+            procedure = default_procedure_for(name)
+          end
+        end
         fields.add(Field.new(name, options, procedure))
       end
     end
