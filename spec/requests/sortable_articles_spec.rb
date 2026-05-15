@@ -94,10 +94,10 @@ RSpec.describe "SortableArticles", :rails, type: :request do
     end
 
     context "when given an unknown sort field" do
-      it "raises InvalidQueryParameter" do
+      it "raises InvalidSortParameter" do
         expect {
           get sortable_articles_path, params: {sort: "unknown"}
-        }.to raise_error(Halitosis::InvalidQueryParameter, /can not be sorted by 'unknown'/)
+        }.to raise_error(Halitosis::InvalidSortParameter, /can not be sorted by 'unknown'/)
       end
     end
   end

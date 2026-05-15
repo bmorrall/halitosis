@@ -21,4 +21,10 @@ module Halitosis
 
     attr_reader :parameter
   end
+
+  class InvalidSortParameter < InvalidQueryParameter
+    def initialize(message)
+      super(message, "sort")
+    end
+  end
 end
