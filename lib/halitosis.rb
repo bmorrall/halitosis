@@ -58,6 +58,10 @@ module Halitosis
 
       define_collection(name, ...)
     end
+
+    def collect_includes
+      include Halitosis::CollectIncludes
+    end
   end
 
   class << self
@@ -91,6 +95,7 @@ require_relative "halitosis/relationships"
 require_relative "halitosis/root_links"
 require_relative "halitosis/root_meta"
 require_relative "halitosis/root_permissions"
+require_relative "halitosis/collect_includes"
 require_relative "halitosis/resource"
 require_relative "halitosis/collection"
 require_relative "halitosis/hash_util"
