@@ -91,6 +91,16 @@ RSpec.describe Halitosis::Resource do
         )
       end
 
+      it "delegates to the named resource method when value is a symbol" do
+        klass.attribute(:bar, value: :baz)
+
+        allow(resource).to receive(:baz).and_return("qux")
+
+        expect(serializer.render).to eq(
+          foo: {bar: "qux"}
+        )
+      end
+
       it "evaluates the block in the context of the serializer" do
         def serializer.bar
           object_id

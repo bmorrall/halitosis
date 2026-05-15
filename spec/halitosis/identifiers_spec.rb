@@ -57,6 +57,22 @@ RSpec.describe Halitosis::Identifiers do
 
         expect(serializer.identifiers).to eq(foo: "bar")
       end
+
+      it "delegates to the serializer instance when no value or block is given" do
+        klass.identifier(:foo)
+
+        allow(serializer).to receive(:foo).and_return("bar")
+
+        expect(serializer.identifiers).to eq(foo: "bar")
+      end
+
+      it "delegates to the named method when value is a symbol" do
+        klass.identifier(:foo, value: :bar)
+
+        allow(serializer).to receive(:bar).and_return("baz")
+
+        expect(serializer.identifiers).to eq(foo: "baz")
+      end
     end
   end
 end
