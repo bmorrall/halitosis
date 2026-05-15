@@ -17,6 +17,7 @@ RSpec.describe "RootPermissions" do
 
       expect(serializer.render).to eq(
         simple: {
+          _type: "simple",
           _permissions: {inline_permission: true}
         },
         _permissions: {root_permission: false}
