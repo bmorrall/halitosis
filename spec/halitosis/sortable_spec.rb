@@ -175,6 +175,58 @@ RSpec.describe Halitosis::Sortable do
           serializer.send(:apply_sorts!, context)
         end.to raise_error(Halitosis::InvalidQueryParameter)
       end
+
+      it "raises InvalidQueryParameter when the block returns nil for ascending" do
+        nil_klass = Class.new do
+          include Halitosis
+
+          collection :items do
+            collection
+          end
+
+          sortable_by :name do |ascending|
+            collection.sort if ascending
+            # returns nil for descending — direction not supported
+          end
+        end
+
+        serializer = nil_klass.new(["b", "a"])
+        context = build_context(serializer, {sort: "-name"})
+
+        expect do
+          serializer.send(:apply_sorts!, context)
+        end.to raise_error do |exception|
+          expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
+          expect(exception.message).to match(/can not be sorted by '-name'/)
+          expect(exception.parameter).to eq("sort")
+        end
+      end
+
+      it "raises InvalidQueryParameter when the block returns nil for descending" do
+        nil_klass = Class.new do
+          include Halitosis
+
+          collection :items do
+            collection
+          end
+
+          sortable_by :name do |ascending|
+            collection.sort unless ascending
+            # returns nil for ascending — direction not supported
+          end
+        end
+
+        serializer = nil_klass.new(["b", "a"])
+        context = build_context(serializer, {sort: "name"})
+
+        expect do
+          serializer.send(:apply_sorts!, context)
+        end.to raise_error do |exception|
+          expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
+          expect(exception.message).to match(/can not be sorted by 'name'/)
+          expect(exception.parameter).to eq("sort")
+        end
+      end
     end
 
     context "without a sort param" do
