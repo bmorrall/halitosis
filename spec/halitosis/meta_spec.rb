@@ -67,6 +67,22 @@ RSpec.describe Halitosis::Meta do
 
         expect(serializer.meta).to eq(foo: "bar")
       end
+
+      it "delegates to the serializer instance when no value or block is given" do
+        klass.meta(:foo)
+
+        allow(serializer).to receive(:foo).and_return("bar")
+
+        expect(serializer.meta).to eq(foo: "bar")
+      end
+
+      it "delegates to the named method when value is a symbol" do
+        klass.meta(:foo, value: :bar)
+
+        allow(serializer).to receive(:bar).and_return("baz")
+
+        expect(serializer.meta).to eq(foo: "baz")
+      end
     end
   end
 end
