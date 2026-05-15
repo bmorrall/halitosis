@@ -30,7 +30,7 @@ RSpec.describe "FilterableArticles", :rails, type: :request do
       end
     end
 
-    context "filtering by name" do
+    context "when filtering by name" do
       it "returns only articles with the matching name" do
         get filterable_articles_path, params: {filter: {name: "Alpha"}}
 
@@ -48,7 +48,7 @@ RSpec.describe "FilterableArticles", :rails, type: :request do
       end
     end
 
-    context "filtering by score" do
+    context "when filtering by score" do
       it "returns only articles with the matching score" do
         get filterable_articles_path, params: {filter: {score: "2"}}
 
@@ -59,7 +59,7 @@ RSpec.describe "FilterableArticles", :rails, type: :request do
       end
     end
 
-    context "filtering by multiple fields (AND logic)" do
+    context "when filtering by multiple fields (AND logic)" do
       it "applies both filters and returns the intersection" do
         get filterable_articles_path, params: {filter: {name: "Bravo", score: "2"}}
 

@@ -86,7 +86,7 @@ module Halitosis
       # @raise [Halitosis::InvalidFilterParameter]
       #
       def raise_unknown_filter_error(raw_key)
-        safe_key = raw_key.to_s.gsub(/\W/, "")[0, 50]
+        safe_key = raw_key.to_s.gsub(/[^\w.]/, "")[0, 50]
         resource_label = [self.class.resource_type, "collection"].compact.join(" ")
         raise Halitosis::InvalidFilterParameter.new(
           "The #{resource_label} can not be filtered by '#{safe_key}'"

@@ -262,6 +262,18 @@ Providing an unparseable date string will raise:
 The articles collection can not be filtered by 'created_after' with the provided value
 ```
 
+#### Nested filter keys
+
+Both Rails bracket notation (`filter[user][name]=Alice`) and dot notation
+(`filter[user.name]=Alice`) produce the same dot-separated key after parsing,
+so a single `filterable_by` declaration handles both:
+
+```ruby
+filterable_by :"user.name" do |value|
+  collection.joins(:user).where(users: { name: value })
+end
+```
+
 ### Identifiers
 
 Identifiers are rendered before other attributes and are typically used for primary keys:
