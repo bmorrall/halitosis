@@ -8,22 +8,45 @@ module Halitosis
     end
 
     module ClassMethods
-      # Declare a named filter field.
+      # Declare a named filter field, or open a nested namespace for grouping
+      # related filter fields under a dot-prefixed key.
       #
-      # The block receives the filter value from the request and must return
-      # the filtered collection, or +nil+ to signal that the value is invalid.
+      # When the block accepts +1+ argument it is a filter implementation: the
+      # block receives the request value and must return the filtered collection,
+      # or +nil+ to signal an invalid value.
       #
-      # @param name [Symbol, String] the filter field name (used as the key in
-      #   the +filter+ param, e.g. +filter[name]=Alice+)
-      # @param options [Hash] field options (e.g. +:if+, +:unless+)
+      # When the block accepts +0+ arguments it opens a namespace. Calls to
+      # +filterable_by+ inside the block are registered with a dot-prefixed name,
+      # so both +filter[user][name]=Alice+ and +filter[user.name]=Alice+ map to
+      # the same field.
       #
-      # @example
+      # @param name [Symbol, String] the filter field name or namespace prefix
+      # @param options [Hash] field options (e.g. +:if+, +:unless+); ignored for namespaces
+      #
+      # @example Field (arity 1)
       #   filterable_by :name do |value|
       #     collection.where(name: value)
       #   end
       #
+      # @example Namespace (arity 0)
+      #   filterable_by :user do
+      #     filterable_by :name do |value|
+      #       collection.joins(:user).where(users: { name: value })
+      #     end
+      #   end
+      #
       def filterable_by(name, options = {}, &procedure)
-        fields.add(Filterable::Field.new(name, options, procedure))
+        case procedure&.arity
+        when 0
+          Filterable::Namespace.new(name, self).instance_eval(&procedure)
+        when 1
+          fields.add(Filterable::Field.new(name, options, procedure))
+        when nil
+          raise InvalidField, "Filter field #{name} must be defined with a proc"
+        else
+          raise InvalidField,
+            "Filter field #{name} block must accept 0 arguments (namespace) or 1 argument (filter value)"
+        end
       end
     end
 
@@ -111,3 +134,4 @@ end
 
 require "halitosis/filter_util"
 require "halitosis/filterable/field"
+require "halitosis/filterable/namespace"

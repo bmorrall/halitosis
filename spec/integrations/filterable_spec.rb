@@ -131,4 +131,56 @@ RSpec.describe "Filterable" do
       expect(result.map { |i| i[:name] }).to all(eq("Alice"))
     end
   end
+
+  context "with a namespace DSL" do
+    let :nested_klass do
+      item_ser = item_klass
+
+      Class.new do
+        include Halitosis
+
+        collection :items do
+          collection.map { |i| item_ser.new(i) }
+        end
+
+        filterable_by :item do
+          filterable_by :name do |value|
+            collection.select { |i| i[:name] == value }
+          end
+
+          filterable_by :score do |value|
+            integer_value = Integer(value)
+            collection.select { |i| i[:score] == integer_value }
+          rescue ArgumentError, TypeError
+            nil
+          end
+        end
+      end
+    end
+
+    it "filters using Rails bracket notation filter[item][name]" do
+      serializer = nested_klass.new(items, filter: {item: {name: "Alice"}})
+
+      expect(rendered_names(serializer.render)).to eq(%w[Alice Alice])
+    end
+
+    it "filters using dot-notation filter[item.name]" do
+      serializer = nested_klass.new(items, filter: {"item.name": "Alice"})
+
+      expect(rendered_names(serializer.render)).to eq(%w[Alice Alice])
+    end
+
+    it "produces identical results for both notations" do
+      bracket = nested_klass.new(items, filter: {item: {name: "Alice"}}).render
+      dot = nested_klass.new(items, filter: {"item.name": "Alice"}).render
+
+      expect(bracket).to eq(dot)
+    end
+
+    it "raises InvalidFilterParameter for an unknown nested key" do
+      serializer = nested_klass.new(items, filter: {item: {unknown: "x"}})
+
+      expect { serializer.render }.to raise_error(Halitosis::InvalidFilterParameter, /item\.unknown/)
+    end
+  end
 end
