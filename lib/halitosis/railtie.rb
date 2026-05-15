@@ -8,7 +8,7 @@ module Halitosis
 
     module Renderable
       def render_with_params(params)
-        render(include: params[:include], sort: params[:sort])
+        render(include: params[:include], sort: params[:sort], filter: params[:filter])
       end
 
       def render_in(view_context, **)
@@ -29,6 +29,7 @@ module Halitosis
       app.config.action_dispatch.rescue_responses[InvalidQueryParameter.name] ||= :bad_request
       app.config.action_dispatch.rescue_responses[InvalidSortParameter.name] ||= :bad_request
       app.config.action_dispatch.rescue_responses[InvalidIncludeParameter.name] ||= :bad_request
+      app.config.action_dispatch.rescue_responses[InvalidFilterParameter.name] ||= :bad_request
     end
 
     initializer "halitosis.renderable" do |_app|

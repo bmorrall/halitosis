@@ -28,6 +28,12 @@ module Halitosis
     end
   end
 
+  class InvalidFilterParameter < InvalidQueryParameter
+    def initialize(message)
+      super(message, "filter")
+    end
+  end
+
   class InvalidIncludeParameter < InvalidQueryParameter
     def initialize(message)
       super(message, "include")

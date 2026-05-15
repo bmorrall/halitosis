@@ -212,6 +212,56 @@ class ArticlesSerializer
 end
 ```
 
+### Filtering collections
+
+Declare filter fields on a collection serializer with `filterable_by`. The block receives the value from the `filter` param and must return the filtered collection, or `nil` to signal that the value is invalid:
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+
+  collection :articles do
+    collection.map { |article| ArticleSerializer.new(article) }
+  end
+
+  filterable_by :name do |value|
+    collection.where(name: value)
+  end
+
+  filterable_by :published do |value|
+    collection.where(published: value == "true")
+  end
+end
+```
+
+Pass the `filter:` option as a hash at render time:
+
+```ruby
+# Filter by a single field
+ArticlesSerializer.new(Article.all, filter: { name: "Alice" }).render
+
+# Filter by multiple fields — applied as AND logic, left to right
+ArticlesSerializer.new(Article.all, filter: { name: "Alice", published: "true" }).render
+```
+
+Requesting a key that has not been declared with `filterable_by` raises `Halitosis::InvalidFilterParameter`, which Rails maps to a `400 Bad Request` response.
+
+#### Rejecting invalid values
+
+Return `nil` from a `filterable_by` block to signal that the provided value cannot be applied. Halitosis will raise `InvalidFilterParameter` naming the field, without reflecting the user-supplied value back in the message:
+
+```ruby
+filterable_by :created_after do |date_str|
+  date = DateTime.parse(date_str) rescue nil
+  collection.created_after(date) if date
+end
+```
+
+Providing an unparseable date string will raise:
+```
+The articles collection can not be filtered by 'created_after' with the provided value
+```
+
 ### Identifiers
 
 Identifiers are rendered before other attributes and are typically used for primary keys:
@@ -547,6 +597,7 @@ ArticlesSerializer.new(articles, include: "author").render
 | --- | --- | --- |
 | `include:` | `{}` | Relationships to include (hash, array, or string) |
 | `sort:` | `nil` | Sort fields (string or array; prefix `-` for descending, e.g. `"name,-age"`) |
+| `filter:` | `nil` | Filter key/value pairs as a hash, e.g. `{ name: "Alice" }` |
 | `include_root:` | resource name | Override root key, or `false` to omit the wrapper |
 | `include_links:` | `true` | Set to `false` to omit all `_links` |
 | `include_meta:` | `true` | Set to `false` to omit all `_meta` |
@@ -591,11 +642,11 @@ render renderable: ArticleSerializer.new(article)
 render json: ArticleSerializer.new(article)
 ```
 
-When using `renderable:`, Halitosis will automatically forward the `include` and `sort` query parameters from the request to the serializer, so clients can request relationships and ordering via `?include=author,comments&sort=-published_at` without any extra controller code.
+When using `renderable:`, Halitosis will automatically forward the `include`, `sort`, and `filter` query parameters from the request to the serializer, so clients can request relationships, ordering, and filtering via `?include=author&sort=-published_at&filter[name]=Alice` without any extra controller code.
 
 #### Error handling
 
-Include `Halitosis::ErrorHandling` in your base controller to automatically rescue `InvalidQueryParameter` errors (and its subclasses `InvalidSortParameter` and `InvalidIncludeParameter`) and render a structured `400 Bad Request` JSON response:
+Include `Halitosis::ErrorHandling` in your base controller to automatically rescue `InvalidQueryParameter` errors (and its subclasses `InvalidSortParameter`, `InvalidIncludeParameter`, and `InvalidFilterParameter`) and render a structured `400 Bad Request` JSON response:
 
 ```ruby
 class ApplicationController < ActionController::Base
@@ -603,7 +654,7 @@ class ApplicationController < ActionController::Base
 end
 ```
 
-Invalid `sort` or `include` parameters will now produce a response like:
+Invalid `sort`, `filter`, or `include` parameters will now produce a response like:
 
 ```json
 {
