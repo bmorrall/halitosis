@@ -27,7 +27,13 @@ module Halitosis
       # @return [Halitosis::Attributes::Field]
       #
       def attribute(name, options = {}, &procedure)
-        procedure ||= default_procedure_for(name) unless options.key?(:value)
+        unless procedure
+          if options[:value].is_a?(Symbol)
+            procedure = default_procedure_for(options.delete(:value))
+          elsif !options.key?(:value)
+            procedure = default_procedure_for(name)
+          end
+        end
         fields.add(Field.new(name, options, procedure))
       end
     end
