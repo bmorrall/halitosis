@@ -32,6 +32,33 @@ RSpec.describe Halitosis::FilterUtil do
       end
     end
 
+    context "with nested hashes" do
+      it "flattens one level of nesting into dot-notation keys" do
+        result = described_class.parse_filter_param({"user" => {"name" => "Alice"}})
+
+        expect(result).to eq([["user.name", "Alice"]])
+      end
+
+      it "flattens multiple levels of nesting" do
+        result = described_class.parse_filter_param({"a" => {"b" => {"c" => "deep"}}})
+
+        expect(result).to eq([["a.b.c", "deep"]])
+      end
+
+      it "flattens mixed flat and nested keys" do
+        result = described_class.parse_filter_param({"name" => "Bob", "user" => {"age" => "30"}})
+
+        expect(result).to eq([["name", "Bob"], ["user.age", "30"]])
+      end
+
+      it "treats filter[user.name]=Alice identically to filter[user][name]=Alice" do
+        dot_literal = described_class.parse_filter_param({"user.name" => "Alice"})
+        nested = described_class.parse_filter_param({"user" => {"name" => "Alice"}})
+
+        expect(dot_literal).to eq(nested)
+      end
+    end
+
     context "with non-hash input" do
       it "returns [] for nil" do
         expect(described_class.parse_filter_param(nil)).to eq([])

@@ -57,7 +57,7 @@ RSpec.describe Halitosis::Filterable::Field do
     end
 
     it "returns nil when the block returns nil" do
-      field = described_class.new(:score, {}, proc { |_v| nil })
+      field = described_class.new(:score, {}, proc { |_v| })
 
       expect(field.apply(Object.new, "bad")).to be_nil
     end

@@ -59,7 +59,7 @@ RSpec.describe "Filterable" do
     end
   end
 
-  context "filtering by name" do
+  context "when filtering by name" do
     it "returns only items matching the name" do
       serializer = klass.new(items, filter: {name: "Alice"})
 
@@ -73,7 +73,7 @@ RSpec.describe "Filterable" do
     end
   end
 
-  context "filtering by score" do
+  context "when filtering by score" do
     it "returns only items with the matching score" do
       serializer = klass.new(items, filter: {score: "2"})
 
@@ -82,7 +82,7 @@ RSpec.describe "Filterable" do
     end
   end
 
-  context "filtering with multiple keys (AND logic)" do
+  context "when filtering with multiple keys (AND logic)" do
     it "applies both filters in sequence" do
       serializer = klass.new(items, filter: {name: "Alice", score: "1"})
 
@@ -117,7 +117,7 @@ RSpec.describe "Filterable" do
     end
   end
 
-  context "combined with sorting" do
+  context "when combined with sorting" do
     before do
       klass.sortable_by(:name) { |asc| asc ? collection.sort_by { |i| i[:name] } : collection.sort_by { |i| i[:name] }.reverse }
     end

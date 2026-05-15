@@ -88,6 +88,12 @@ RSpec.describe Halitosis::Filterable do
       end.to raise_error(Halitosis::InvalidFilterParameter, /scriptalert1script/)
     end
 
+    it "preserves dots in unknown dot-notation keys" do
+      expect do
+        serializer.send(:validate_filters!, [["user.name", "x"]])
+      end.to raise_error(Halitosis::InvalidFilterParameter, /can not be filtered by 'user\.name'/)
+    end
+
     it "truncates a very long unknown key to 50 characters" do
       long_key = "a" * 100
 
