@@ -110,10 +110,38 @@ module Halitosis
       def before_render(context)
         super
 
+        validate_includes!(context)
+
         process_resource_includes(context)
       end
 
       private
+
+      # Validate that all requested include paths are in the declared set.
+      # A no-op when +allow_undeclared_includes+ is +true+ or no paths are declared.
+      #
+      # @param context [Halitosis::Context] the render context
+      #
+      # @raise [Halitosis::InvalidIncludeParameter] for any undeclared path
+      #
+      def validate_includes!(context)
+        return if Halitosis.config.allow_undeclared_includes
+
+        resource_include_fields = self.class.fields.for_type(ResourceIncludes::Field)
+        return if resource_include_fields.empty?
+
+        return if context.include_options.empty?
+
+        declared = collect_declared_paths(resource_include_fields)
+
+        collect_leaf_paths(context.include_options).each do |leaf_path|
+          next if declared.include?(leaf_path.join("."))
+
+          raise Halitosis::InvalidIncludeParameter.new(
+            "The #{self.class.resource_type} does not support the `#{leaf_path.join(".")}` include."
+          )
+        end
+      end
 
       def process_resource_includes(context)
         context.include_options.each_key do |name|
@@ -143,6 +171,34 @@ module Halitosis
         return if current.nil?
 
         store_preload(context, cache_key, context.call_instance(current, field.procedure))
+      end
+
+      # Recursively collect all declared include paths as dot-joined strings.
+      #
+      # @param fields [Array<ResourceIncludes::Field>]
+      # @param prefix [Array<String>]
+      #
+      # @return [Array<String>]
+      #
+      def collect_declared_paths(fields, prefix = [])
+        fields.flat_map do |field|
+          path = prefix + [field.name.to_s]
+          [path.join(".")] + collect_declared_paths(field.children, path)
+        end
+      end
+
+      # Recursively collect all leaf paths from a nested include-options hash.
+      # Each leaf is returned as an ordered array of string segments from root to leaf.
+      #
+      # @param hash [Hash] nested include options with string keys
+      # @param prefix [Array<String>] accumulated path segments
+      #
+      # @return [Array<Array<String>>] list of leaf paths
+      #
+      def collect_leaf_paths(hash, prefix = [])
+        return [prefix] if !hash.is_a?(Hash) || hash.empty?
+
+        hash.flat_map { |key, subtree| collect_leaf_paths(subtree, prefix + [key]) }
       end
     end
   end
