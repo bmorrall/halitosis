@@ -27,4 +27,10 @@ module Halitosis
       super(message, "sort")
     end
   end
+
+  class InvalidIncludeParameter < InvalidQueryParameter
+    def initialize(message)
+      super(message, "include")
+    end
+  end
 end
