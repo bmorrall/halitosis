@@ -19,6 +19,7 @@ module Halitosis
       base.include CollectionPaginatable
       base.include CollectionSortable
       base.include CollectionFilterable
+      base.include CollectionIncludeable
     end
 
     module ClassMethods
