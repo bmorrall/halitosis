@@ -9,6 +9,7 @@ rails_version = ENV["RAILS_VERSION"].to_s
 unless rails_version.empty?
   gem "rails", "~> #{rails_version}.0"
   gem "rspec-rails"
+  gem "sqlite3", "~> 2.0"
 end
 
 gem "rake", "~> 13.0"

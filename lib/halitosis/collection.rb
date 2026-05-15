@@ -15,6 +15,8 @@ module Halitosis
       base.send :include, InstanceMethods
 
       base.send :attr_reader, :collection
+
+      base.include Sortable
     end
 
     module ClassMethods

@@ -130,6 +130,70 @@ ArticlesSerializer.new(Article.all).render
 # => { articles: [ { id: 1, title: "Hello World", _type: "article" }, ... ] }
 ```
 
+### Sorting collections
+
+Declare sort fields on a collection serializer with `sortable_by`. The block receives a single Boolean — `true` for ascending, `false` for descending — and must return the sorted collection:
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+
+  collection :articles do
+    collection.map { |article| ArticleSerializer.new(article) }
+  end
+
+  sortable_by :title do |ascending|
+    collection.order(title: ascending ? :asc : :desc)
+  end
+
+  sortable_by :published_at do |ascending|
+    collection.order(published_at: ascending ? :asc : :desc)
+  end
+end
+```
+
+Pass the `sort:` option at render time. Prefix a field name with `-` for descending order:
+
+```ruby
+# Single field, ascending
+ArticlesSerializer.new(Article.all, sort: "title").render
+
+# Single field, descending
+ArticlesSerializer.new(Article.all, sort: "-title").render
+
+# Multiple fields — applied left to right
+ArticlesSerializer.new(Article.all, sort: "title,-published_at").render
+
+# Array input is also accepted
+ArticlesSerializer.new(Article.all, sort: ["title", "-published_at"]).render
+```
+
+Requesting a field that has not been declared with `sortable_by` raises `Halitosis::InvalidQueryParameter`, which Rails maps to a `400 Bad Request` response.
+
+#### Default sort
+
+Use `default_sort` to apply a fallback when no `sort` param is provided. It accepts either a sort string (which delegates through the same `sortable_by` pipeline) or a no-argument block:
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+
+  collection :articles do
+    collection.map { |article| ArticleSerializer.new(article) }
+  end
+
+  sortable_by :title do |ascending|
+    collection.order(title: ascending ? :asc : :desc)
+  end
+
+  # Delegates to the :title sortable_by block, descending
+  default_sort "-title"
+
+  # Or provide a custom fallback block (no arguments)
+  # default_sort { collection.order(created_at: :desc) }
+end
+```
+
 ### Identifiers
 
 Identifiers are rendered before other attributes and are typically used for primary keys:
@@ -464,6 +528,7 @@ ArticlesSerializer.new(articles, include: "author").render
 | Option | Default | Description |
 | --- | --- | --- |
 | `include:` | `{}` | Relationships to include (hash, array, or string) |
+| `sort:` | `nil` | Sort fields (string or array; prefix `-` for descending, e.g. `"name,-age"`) |
 | `include_root:` | resource name | Override root key, or `false` to omit the wrapper |
 | `include_links:` | `true` | Set to `false` to omit all `_links` |
 | `include_meta:` | `true` | Set to `false` to omit all `_meta` |
@@ -508,7 +573,7 @@ render renderable: ArticleSerializer.new(article)
 render json: ArticleSerializer.new(article)
 ```
 
-When using `renderable:`, Halitosis will automatically forward the `include` query parameter from the request to the serializer, so clients can request relationships via `?include=author,comments` without any extra controller code.
+When using `renderable:`, Halitosis will automatically forward the `include` and `sort` query parameters from the request to the serializer, so clients can request relationships and ordering via `?include=author,comments&sort=-published_at` without any extra controller code.
 
 
 ## Development
