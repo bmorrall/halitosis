@@ -51,10 +51,12 @@ module Halitosis
       # @return [Hash] the rendered hash with resource, as a hash
       #
       def render_with_context(context)
+        rendered = super.merge(_type: self.class.resource_type)
+
         if (include_root = context.fetch(:include_root) { context.depth.zero? })
-          {root_name(include_root, self.class.resource_type) => super}
+          {root_name(include_root, self.class.resource_type) => rendered}
         else
-          super
+          rendered
         end
       end
 

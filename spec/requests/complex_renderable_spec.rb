@@ -12,7 +12,8 @@ RSpec.describe "ComplexRenderables", :rails, type: :request do
       expect(response.parsed_body).to match(
         "complex" => {
           "id" => 1,
-          "name" => "Complex 1"
+          "name" => "Complex 1",
+          "_type" => "complex"
         }
       )
     end
@@ -28,10 +29,12 @@ RSpec.describe "ComplexRenderables", :rails, type: :request do
         "complex" => {
           "id" => 1,
           "name" => "Complex 1",
+          "_type" => "complex",
           "_relationships" => {
             "single" => {
               "id" => 11,
-              "name" => "Complex 1-1"
+              "name" => "Complex 1-1",
+              "_type" => "complex"
             }
           }
         }
@@ -49,15 +52,18 @@ RSpec.describe "ComplexRenderables", :rails, type: :request do
         "complex" => {
           "id" => 1,
           "name" => "Complex 1",
+          "_type" => "complex",
           "_relationships" => {
             "multiple" => [
               {
                 "id" => 11,
-                "name" => "Complex 1-1"
+                "name" => "Complex 1-1",
+                "_type" => "complex"
               },
               {
                 "id" => 12,
-                "name" => "Complex 1-2"
+                "name" => "Complex 1-2",
+                "_type" => "complex"
               }
             ]
           }

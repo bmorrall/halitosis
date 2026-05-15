@@ -61,7 +61,7 @@ RSpec.describe Halitosis::Resource do
 
       it "renders the response under the resource name" do
         expect(serializer.render).to eq(
-          foo: {}
+          foo: {_type: "foo"}
         )
       end
 
@@ -69,7 +69,7 @@ RSpec.describe Halitosis::Resource do
         klass.attribute(:bar) { "baz" }
 
         expect(serializer.render).to eq(
-          foo: {bar: "baz"}
+          foo: {bar: "baz", _type: "foo"}
         )
       end
 
@@ -77,7 +77,7 @@ RSpec.describe Halitosis::Resource do
         klass.attribute(:bar, value: "baz")
 
         expect(serializer.render).to eq(
-          foo: {bar: "baz"}
+          foo: {bar: "baz", _type: "foo"}
         )
       end
 
@@ -87,7 +87,7 @@ RSpec.describe Halitosis::Resource do
         allow(resource).to receive(:bar).and_return("baz")
 
         expect(serializer.render).to eq(
-          foo: {bar: "baz"}
+          foo: {bar: "baz", _type: "foo"}
         )
       end
 
@@ -97,7 +97,7 @@ RSpec.describe Halitosis::Resource do
         allow(resource).to receive(:baz).and_return("qux")
 
         expect(serializer.render).to eq(
-          foo: {bar: "qux"}
+          foo: {bar: "qux", _type: "foo"}
         )
       end
 
@@ -109,7 +109,7 @@ RSpec.describe Halitosis::Resource do
         klass.attribute(:bar) { bar }
 
         expect(serializer.render).to eq(
-          foo: {bar: serializer.object_id}
+          foo: {bar: serializer.object_id, _type: "foo"}
         )
       end
 
@@ -121,7 +121,7 @@ RSpec.describe Halitosis::Resource do
         klass.attribute(:bar) { bar }
 
         expect(serializer.render).to eq(
-          foo: {bar: resource.object_id}
+          foo: {bar: resource.object_id, _type: "foo"}
         )
       end
 
@@ -133,7 +133,7 @@ RSpec.describe Halitosis::Resource do
         klass.attribute(:bar) { bar }
 
         expect(serializer.render).to eq(
-          foo: {bar: resource.object_id}
+          foo: {bar: resource.object_id, _type: "foo"}
         )
       end
     end
@@ -159,7 +159,7 @@ RSpec.describe Halitosis::Resource do
         serializer = klass.new(nil)
 
         expect(serializer.render).to match(
-          duck: {name: "Ferdi"}
+          duck: {name: "Ferdi", _type: "duck"}
         )
       end
 
@@ -167,7 +167,7 @@ RSpec.describe Halitosis::Resource do
         serializer = klass.new(nil, include: {favourite_food: true})
 
         expect(serializer.render).to match(
-          duck: {name: "Ferdi", _relationships: {favourite_food: {name: "bread"}}}
+          duck: {name: "Ferdi", _type: "duck", _relationships: {favourite_food: {name: "bread"}}}
         )
       end
     end
@@ -201,7 +201,7 @@ RSpec.describe Halitosis::Resource do
         serializer = klass.new(nil)
 
         expect(serializer.render).to match(
-          duck: {name: "Ferdi"}
+          duck: {name: "Ferdi", _type: "duck"}
         )
       end
 
@@ -209,7 +209,7 @@ RSpec.describe Halitosis::Resource do
         serializer = klass.new(nil, include: {favourite_foods: true})
 
         expect(serializer.render).to match(
-          duck: {name: "Ferdi", _relationships: {favourite_foods: [{name: "bread"}]}}
+          duck: {name: "Ferdi", _type: "duck", _relationships: {favourite_foods: [{name: "bread"}]}}
         )
       end
     end
@@ -249,7 +249,7 @@ RSpec.describe Halitosis::Resource do
         serializer = klass.new(nil)
 
         expect(serializer.render).to match(
-          duck: {name: "Ferdi"}
+          duck: {name: "Ferdi", _type: "duck"}
         )
       end
 
@@ -259,6 +259,7 @@ RSpec.describe Halitosis::Resource do
         expect(serializer.render).to match(
           duck: {
             name: "Ferdi",
+            _type: "duck",
             _relationships: {
               favourite_food: {
                 name: "bread"
@@ -274,6 +275,7 @@ RSpec.describe Halitosis::Resource do
         expect(serializer.render).to match(
           duck: {
             name: "Ferdi",
+            _type: "duck",
             _relationships: {
               favourite_food: {
                 name: "bread",

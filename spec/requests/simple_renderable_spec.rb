@@ -13,7 +13,8 @@ RSpec.describe "SimpleRenderables", :rails, type: :request do
         "simples" => [
           {
             "id" => 1,
-            "name" => "Simple 1"
+            "name" => "Simple 1",
+            "_type" => "simple"
           }
         ]
       )
@@ -31,7 +32,8 @@ RSpec.describe "SimpleRenderables", :rails, type: :request do
       expect(response.parsed_body).to match(
         "simple" => {
           "id" => 1,
-          "name" => "Simple 1"
+          "name" => "Simple 1",
+          "_type" => "simple"
         }
       )
     end

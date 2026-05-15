@@ -68,6 +68,7 @@ serializer.render
 #        id: 1,
 #        title: "Hello World",
 #        body: "...",
+#        _type: "article",
 #        _links: { self: { href: "/articles/1" } }
 #      }
 #    }
@@ -109,7 +110,7 @@ class ArticleSerializer
 end
 
 ArticleSerializer.new(article).render
-# => { article: { id: 1, title: "Hello World" } }
+# => { article: { id: 1, title: "Hello World", _type: "article" } }
 ```
 
 #### 3. Collection
@@ -126,7 +127,7 @@ class ArticlesSerializer
 end
 
 ArticlesSerializer.new(Article.all).render
-# => { articles: [ { id: 1, title: "Hello World" }, ... ] }
+# => { articles: [ { id: 1, title: "Hello World", _type: "article" }, ... ] }
 ```
 
 ### Identifiers
@@ -213,7 +214,7 @@ Suppress all links at render time with `include_links: false`:
 
 ```ruby
 ArticleSerializer.new(article, include_links: false).render
-# => { article: { id: 1, title: "Hello World" } }
+# => { article: { id: 1, title: "Hello World", _type: "article" } }
 ```
 
 ### Relationships
@@ -224,7 +225,7 @@ One-to-one:
 
 ```ruby
 relationship(:author) { UserSerializer.new(article.author) }
-# => { article: { ..., _relationships: { author: { id: 5, name: "Alice" } } } }
+# => { article: { ..., _relationships: { author: { id: 5, name: "Alice", _type: "user" } } } }
 ```
 
 One-to-many (array of serializers):
@@ -309,6 +310,7 @@ ArticleSerializer.new(article).render
 #      article: {
 #        id: 1,
 #        title: "Hello World",
+#        _type: "article",
 #        _meta: {
 #          created_at: "2024-09-30T20:46:00Z",
 #          updated_at: "2024-10-01T08:00:00Z"
@@ -345,6 +347,7 @@ ArticleSerializer.new(article).render
 #      article: {
 #        id: 1,
 #        title: "Hello World",
+#        _type: "article",
 #        _permissions: { edit: true, destroy: false }
 #      }
 #    }
@@ -402,11 +405,11 @@ ArticlesSerializer.new(articles).render
 ```ruby
 # Omit the root wrapper entirely
 ArticleSerializer.new(article, include_root: false).render
-# => { id: 1, title: "Hello World", ... }
+# => { id: 1, title: "Hello World", _type: "article", ... }
 
 # Use a custom root key
 ArticleSerializer.new(article, include_root: "post").render
-# => { post: { id: 1, title: "Hello World", ... } }
+# => { post: { id: 1, title: "Hello World", _type: "article", ... } }
 ```
 
 ### Using with Rails

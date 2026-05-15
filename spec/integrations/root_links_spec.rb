@@ -17,6 +17,7 @@ RSpec.describe "RootLinks" do
 
       expect(serializer.render).to eq(
         simple: {
+          _type: "simple",
           _links: {inline_link: {href: "https://example.com/inline"}}
         },
         _links: {root_link: {href: "https://example.com/root"}}

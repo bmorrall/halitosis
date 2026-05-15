@@ -203,7 +203,7 @@ RSpec.describe Halitosis::Collection do
           end
         end.new([])
 
-        expect(serializer.render).to eq(ducks: [{name: "Ferdi"}])
+        expect(serializer.render).to eq(ducks: [{name: "Ferdi", _type: "example"}])
       end
 
       it "renders nested collection without their fields" do
