@@ -34,6 +34,16 @@ module Halitosis
       @include_options ||= HashUtil.hasherize_include_option(options[:include] || {})
     end
 
+    # @return [nil, Hash] the shared included resources registry, if collect_includes is active
+    #
+    def included_registry
+      if parent
+        parent.included_registry
+      elsif instance.respond_to?(:collect_includes_registry)
+        instance.collect_includes_registry
+      end
+    end
+
     # @return [nil, Halitosis::Context] the parent context, if this instance is an
     #   embedded child
     #

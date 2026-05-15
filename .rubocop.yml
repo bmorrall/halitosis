@@ -30,3 +30,6 @@ RSpec/DescribeClass:
 
 RSpec/NestedGroups:
   Enabled: false
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 7

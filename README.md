@@ -392,6 +392,73 @@ ArticlesSerializer.new(articles).render
 #    }
 ```
 
+### Collecting includes (JSON:API-style sideloading)
+
+Include `collect_includes` in a serializer to hoist included relationships out of the nested `_relationships` structure and into a flat top-level `included` array, deduplicating by type and id. This mirrors the [JSON:API compound document](https://jsonapi.org/format/#document-compound-documents) pattern.
+
+```ruby
+class ArticleSerializer
+  include Halitosis
+  include Halitosis::Relationships
+
+  resource :article
+
+  collect_includes            # enable sideloading on this serializer
+
+  identifier :id
+  attribute :title
+
+  relationship(:author) { AuthorSerializer.new(article.author) }
+end
+```
+
+When a relationship is included, the child serializer's full payload is placed in `included` and a stub (id + `_type`) is left inline:
+
+```ruby
+ArticleSerializer.new(article, include: "author").render
+# => {
+#      article: {
+#        id: 1,
+#        title: "Hello World",
+#        _type: "article",
+#        _relationships: { author: { id: 5, _type: "author" } }
+#      },
+#      included: [
+#        { id: 5, name: "Alice", _type: "author" }
+#      ]
+#    }
+```
+
+If no relationships are included, the `included` key is omitted entirely.
+
+#### Deduplication
+
+When multiple resources reference the same related object, it appears only once in `included`:
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+  include Halitosis::Relationships
+
+  collect_includes
+
+  collection :articles do
+    collection.map { |article| ArticleSerializer.new(article) }
+  end
+end
+
+ArticlesSerializer.new(articles, include: "author").render
+# => {
+#      articles: [
+#        { id: 1, title: "First",  _type: "article", _relationships: { author: { id: 5, _type: "author" } } },
+#        { id: 2, title: "Second", _type: "article", _relationships: { author: { id: 5, _type: "author" } } }
+#      ],
+#      included: [
+#        { id: 5, name: "Alice", _type: "author" }   # appears once despite two references
+#      ]
+#    }
+```
+
 ### Render options summary
 
 | Option | Default | Description |
