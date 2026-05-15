@@ -24,6 +24,16 @@ module Halitosis
       def collection?
         false
       end
+
+      # Returns the default proc used to resolve a field value when no block
+      # or :value option is given. Override in submodules to change the source.
+      #
+      # @param name [Symbol] the field name
+      # @return [Proc]
+      #
+      def default_procedure_for(name)
+        proc { public_send(name) }
+      end
     end
 
     module InstanceMethods
