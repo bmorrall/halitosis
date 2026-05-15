@@ -16,7 +16,7 @@ RSpec.describe Halitosis::Fields do
       fields.add(field)
 
       expect(fields.keys).to eq(["Halitosis::Field"])
-      expect(fields["Halitosis::Field"]).to eq([field])
+      expect(fields["Halitosis::Field"]).to eq({name: field})
     end
   end
 
@@ -55,6 +55,30 @@ RSpec.describe Halitosis::Fields do
       expect { fields.add_singleton(field) }.to raise_error(
         Halitosis::InvalidField, "Halitosis::Field is already defined"
       )
+    end
+  end
+
+  describe "#get_field" do
+    it "returns the field for the given type and name" do
+      fields.add(field)
+
+      expect(fields.get_field(Halitosis::Field, :name)).to eq(field)
+    end
+
+    it "accepts a string name" do
+      fields.add(field)
+
+      expect(fields.get_field(Halitosis::Field, "name")).to eq(field)
+    end
+
+    it "returns nil when the type has no fields" do
+      expect(fields.get_field(Halitosis::Field, :name)).to be_nil
+    end
+
+    it "returns nil when the name is not registered for the type" do
+      fields.add(field)
+
+      expect(fields.get_field(Halitosis::Field, :other)).to be_nil
     end
   end
 
