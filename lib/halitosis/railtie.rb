@@ -24,6 +24,7 @@ module Halitosis
     initializer "halitosis.error_response" do |app|
       app.config.action_dispatch.rescue_responses[InvalidQueryParameter.name] ||= :bad_request
       app.config.action_dispatch.rescue_responses[InvalidSortParameter.name] ||= :bad_request
+      app.config.action_dispatch.rescue_responses[InvalidIncludeParameter.name] ||= :bad_request
     end
 
     initializer "halitosis.renderable" do |_app|

@@ -41,7 +41,7 @@ RSpec.describe Halitosis::Relationships do
           expect do
             serializer.relationships
           end.to raise_error do |exception|
-            expect(exception).to be_an_instance_of(Halitosis::InvalidQueryParameter)
+            expect(exception).to be_an_instance_of(Halitosis::InvalidIncludeParameter)
             expect(exception.message).to match(/does not have a `foo` relationship path/i)
             expect(exception.parameter).to eq("include")
           end
