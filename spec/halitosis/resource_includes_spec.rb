@@ -176,5 +176,64 @@ RSpec.describe Halitosis::ResourceIncludes do
         end
       end
     end
+
+    describe "#validate_includes!" do
+      context "when allow_undeclared_includes is false" do
+        around do |example|
+          original = Halitosis.config.allow_undeclared_includes
+          Halitosis.config.allow_undeclared_includes = false
+          example.run
+        ensure
+          Halitosis.config.allow_undeclared_includes = original
+        end
+
+        it "raises InvalidIncludeParameter for an undeclared nested path" do
+          expect {
+            klass.new(include: "items.unknown").render
+          }.to raise_error(Halitosis::InvalidIncludeParameter, /items\.unknown/)
+        end
+
+        it "raises for an undeclared top-level path when allow_include declarations exist" do
+          expect {
+            klass.new(include: "unknown").render
+          }.to raise_error(Halitosis::InvalidIncludeParameter, /unknown/)
+        end
+
+        it "does not raise for a declared nested path" do
+          expect {
+            klass.new(include: "items.detail").render
+          }.not_to raise_error
+        end
+
+        it "does not raise for the declared top-level path with no nesting" do
+          expect {
+            klass.new(include: "items").render
+          }.not_to raise_error
+        end
+
+        it "does not validate when no allow_include declarations exist" do
+          bare_klass = Class.new do
+            include Halitosis::Base
+            include Halitosis::Preloadable
+            include Halitosis::ResourceRelationships
+            include Halitosis::ResourceIncludes
+
+            relationship(:anything) { nil }
+          end
+
+          expect {
+            bare_klass.new(include: "anything").render
+          }.not_to raise_error
+        end
+      end
+
+      context "when allow_undeclared_includes is true (default)" do
+        it "does not raise for undeclared paths" do
+          expect {
+            klass.new(include: "items.unknown").render
+          }.not_to raise_error
+        end
+      end
+    end
   end
 end

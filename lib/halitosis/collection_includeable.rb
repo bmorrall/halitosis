@@ -16,6 +16,10 @@ module Halitosis
   #   Arity 1    — runtime preload: the block receives the current collection and
   #                must return the preloaded collection.
   #
+  # When +Halitosis.config.allow_undeclared_includes+ is +false+ and at least one
+  # +allow_include+ has been declared, any requested include path not present in
+  # the declared set raises +InvalidIncludeParameter+ at render time.
+  #
   # The preload walk fires the deepest registered field whose path is a prefix of
   # (or equal to) the requested leaf path. Each field fires at most once per render.
   #
@@ -88,6 +92,8 @@ module Halitosis
         item_includes = context.include_options
         return if item_includes.empty?
 
+        validate_includes!(context)
+
         preload_fields = self.class.fields.for_type(CollectionIncludeable::Field)
         return if preload_fields.empty?
 
@@ -106,6 +112,28 @@ module Halitosis
 
             break
           end
+        end
+      end
+
+      # Validate that all requested include leaf paths are in the declared set.
+      # A no-op when +allow_undeclared_includes+ is +true+ or no paths are declared.
+      #
+      # @param context [Halitosis::Context] the render context
+      #
+      # @raise [Halitosis::InvalidIncludeParameter] for any undeclared leaf path
+      #
+      def validate_includes!(context)
+        return if Halitosis.config.allow_undeclared_includes
+        return if self.class.fields.for_type(CollectionIncludeable::Field).empty?
+
+        collect_leaf_paths(context.include_options).each do |leaf_path|
+          next if self.class.fields.get_field(CollectionIncludeable::Field, leaf_path.join("."))
+
+          resource_label = [self.class.resource_type, "collection"].compact.join(" ")
+
+          raise Halitosis::InvalidIncludeParameter.new(
+            "The #{resource_label} does not support the `#{leaf_path.join(".")}` include."
+          )
         end
       end
 

@@ -295,4 +295,68 @@ RSpec.describe Halitosis::CollectionIncludeable do
       end
     end
   end
+
+  describe "#validate_includes!" do
+    let(:items) { [1, 2, 3] }
+
+    context "when allow_undeclared_includes is false" do
+      around do |example|
+        original = Halitosis.config.allow_undeclared_includes
+        Halitosis.config.allow_undeclared_includes = false
+        example.run
+      ensure
+        Halitosis.config.allow_undeclared_includes = original
+      end
+
+      it "raises InvalidIncludeParameter for an undeclared top-level include" do
+        klass.allow_include(:author) { |coll| coll }
+
+        expect {
+          klass.new(items).render(include: {comments: true})
+        }.to raise_error(Halitosis::InvalidIncludeParameter, /comments/)
+      end
+
+      it "raises for an undeclared nested path when only the parent is declared" do
+        klass.allow_include(:author) { |coll| coll }
+
+        expect {
+          klass.new(items).render(include: {author: {avatar: true}})
+        }.to raise_error(Halitosis::InvalidIncludeParameter, /author\.avatar/)
+      end
+
+      it "does not raise when the exact nested path is declared" do
+        klass.allow_include(:author) do
+          allow_include(:avatar) { |coll| coll }
+        end
+
+        expect {
+          klass.new(items).render(include: {author: {avatar: true}})
+        }.not_to raise_error
+      end
+
+      it "does not raise for a declaration-only path with no preload block" do
+        klass.allow_include(:author)
+
+        expect {
+          klass.new(items).render(include: {author: true})
+        }.not_to raise_error
+      end
+
+      it "does not validate when no allow_include declarations exist" do
+        expect {
+          klass.new(items).render(include: {anything: true})
+        }.not_to raise_error
+      end
+    end
+
+    context "when allow_undeclared_includes is true (default)" do
+      it "does not raise for undeclared include paths" do
+        klass.allow_include(:author) { |coll| coll }
+
+        expect {
+          klass.new(items).render(include: {comments: true})
+        }.not_to raise_error
+      end
+    end
+  end
 end
