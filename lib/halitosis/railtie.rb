@@ -7,7 +7,7 @@ module Halitosis
         render(include: params[:include])
       end
 
-      def render_in(view_context)
+      def render_in(view_context, **)
         rendered = render_with_params(view_context.params)
         view_context.render plain: rendered.to_json
       end
