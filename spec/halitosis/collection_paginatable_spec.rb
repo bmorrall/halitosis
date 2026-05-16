@@ -27,8 +27,8 @@ RSpec.describe Halitosis::CollectionPaginatable do
           collection
         end
 
-        paginate_with do |page|
-          collection[page[:offset].to_i, page[:size].to_i]
+        paginate_with do |context, collection, page|
+          collection.drop(page[:offset].to_i).first(page[:size].to_i)
         end
       end
 
@@ -422,14 +422,132 @@ RSpec.describe Halitosis::CollectionPaginatable do
     end
   end
 
-  describe "Halitosis::CollectionPaginatable::Field" do
-    describe "#validate" do
-      it "raises InvalidField when no procedure is set" do
-        field = Halitosis::CollectionPaginatable::Field.new(:pagination, {}, nil)
+  describe ".paginate_links" do
+    it "stores a LinksField singleton" do
+      klass = Class.new do
+        include Halitosis
 
-        expect { field.validate }
-          .to raise_error(Halitosis::InvalidField, /must be defined with a proc/i)
+        collection :items do |collection|
+          collection
+        end
+
+        paginate_by_page(default_page_size: 10) { |collection, number, size| collection }
+        paginate_links(:kaminari) { |_page_number, _qp| "/items" }
       end
+
+      expect(klass.fields.singleton(Halitosis::CollectionPaginatable::LinksField)).not_to be_nil
+    end
+
+    it "stores the adapter in a MetadataField" do
+      klass = Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection
+        end
+
+        paginate_by_page(default_page_size: 10) { |collection, number, size| collection }
+        paginate_links(:will_paginate) { |_page_number, _qp| "/items" }
+      end
+
+      expect(klass.fields.singleton(Halitosis::CollectionPaginatable::MetadataField).adapter)
+        .to eq(Halitosis::CollectionPaginatable::Adapters::WillPaginate)
+    end
+
+    it "falls back to the global config adapter when none is passed" do
+      allow(Halitosis).to receive(:config).and_return(
+        instance_double(Halitosis::Configuration, pagination_adapter: :kaminari, extensions: [])
+      )
+
+      klass = Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection
+        end
+
+        paginate_by_page(default_page_size: 10) { |collection, number, size| collection }
+        paginate_links { |_page_number, _qp| "/items" }
+      end
+
+      expect(klass.fields.singleton(Halitosis::CollectionPaginatable::MetadataField).adapter)
+        .to eq(Halitosis::CollectionPaginatable::Adapters::Kaminari)
+    end
+
+    it "raises InvalidField without a block" do
+      expect do
+        Class.new do
+          include Halitosis
+
+          collection :items do |collection|
+            collection
+          end
+
+          paginate_by_page(default_page_size: 10) { |collection, number, size| collection }
+          paginate_links :kaminari
+        end
+      end.to raise_error(Halitosis::InvalidField, /paginate_links must be defined with a block/i)
+    end
+
+    it "raises InvalidField when the block does not accept exactly 2 arguments" do
+      expect do
+        Class.new do
+          include Halitosis
+
+          collection :items do |collection|
+            collection
+          end
+
+          paginate_by_page(default_page_size: 10) { |collection, number, size| collection }
+          paginate_links(:kaminari) { |page_number| "/items" }
+        end
+      end.to raise_error(Halitosis::InvalidField, /must accept exactly 2 arguments/i)
+    end
+
+    it "raises InvalidField when declared a second time" do
+      expect do
+        Class.new do
+          include Halitosis
+
+          collection :items do |collection|
+            collection
+          end
+
+          paginate_by_page(default_page_size: 10) { |collection, number, size| collection }
+          paginate_links(:kaminari) { |_page_number, _qp| "/items" }
+          paginate_links(:kaminari) { |_page_number, _qp| "/items" }
+        end
+      end.to raise_error(Halitosis::InvalidField, /pagination links are already defined/i)
+    end
+
+    it "raises InvalidField when an adapter is given alongside paginate_with_pagy" do
+      expect do
+        Class.new do
+          include Halitosis
+
+          collection :items do |collection|
+            collection
+          end
+
+          paginate_with_pagy
+          paginate_links(:kaminari) { |_page_number, _qp| "/items" }
+        end
+      end.to raise_error(Halitosis::InvalidField, /adapter must not be set when using paginate_with_pagy/i)
+    end
+
+    it "raises InvalidField when no adapter is configured and none is passed" do
+      expect do
+        Class.new do
+          include Halitosis
+
+          collection :items do |collection|
+            collection
+          end
+
+          paginate_by_page(default_page_size: 10) { |collection, number, size| collection }
+          paginate_links { |_page_number, _qp| "/items" }
+        end
+      end.to raise_error(Halitosis::InvalidField, /requires an adapter/i)
     end
   end
 end

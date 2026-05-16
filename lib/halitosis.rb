@@ -70,7 +70,6 @@ module Halitosis
     #
     def configure
       yield config
-      config.freeze
     end
 
     # Configuration instance

@@ -129,7 +129,7 @@ module Halitosis
     # @return [Object, nil]
     #
     def fetch_local(key)
-      local[key]
+      @local&.[](key)
     end
 
     private

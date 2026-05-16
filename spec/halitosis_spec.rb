@@ -57,11 +57,5 @@ RSpec.describe Halitosis do
         expect(config).to eq(described_class.config)
       end
     end
-
-    it "freezes config after the block" do
-      described_class.configure { |_config| }
-
-      expect(described_class.config).to be_frozen
-    end
   end
 end
