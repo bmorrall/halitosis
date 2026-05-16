@@ -16,3 +16,6 @@ Gemfile.lock
 
 # rspec failure tracking
 .rspec_status
+
+# Local environment variables
+.env
