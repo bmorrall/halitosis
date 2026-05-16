@@ -7,7 +7,10 @@ module Halitosis
     # or a no-argument procedure block for custom ordering.
     #
     class DefaultField < Field
+      attr_reader :sort_string
+
       def initialize(sort_string, procedure)
+        @sort_string = sort_string
         super(:__default__, {}, sort_string ? build_sort_string_procedure(sort_string) : procedure)
       end
 

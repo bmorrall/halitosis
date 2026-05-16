@@ -33,6 +33,7 @@ module Halitosis
     base.extend ClassMethods
 
     base.include Base
+    base.include Includeable
     base.include Identifiers
     base.include Attributes
     base.include Links
@@ -86,6 +87,7 @@ require_relative "halitosis/base"
 require_relative "halitosis/errors"
 require_relative "halitosis/field"
 require_relative "halitosis/fields"
+require_relative "halitosis/includeable"
 require_relative "halitosis/attributes"
 require_relative "halitosis/identifiers"
 require_relative "halitosis/links"

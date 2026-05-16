@@ -80,10 +80,8 @@ module Halitosis
       # @return [Hash, Array] the rendered hash with collection, as an array or a hash under a key
       #
       def render_with_context(context)
-        if (include_root = context.fetch(:include_root) { context.depth.zero? })
-          {
-            root_name(include_root) => render_collection_field(context)
-          }.merge(super)
+        if (key = self.class.collection_field.root_key(context))
+          {key => render_collection_field(context)}.merge(super)
         else
           render_collection_field(context)
         end
@@ -105,12 +103,6 @@ module Halitosis
         value.reject { |child| child.is_a?(Halitosis::Collection) } # Skip nested collections in array
           .map { |child| render_child(child, context, context.include_options) }
           .compact
-      end
-
-      def root_name(include_root)
-        return include_root.to_sym if include_root.is_a?(String) || include_root.is_a?(Symbol)
-
-        self.class.resource_type.to_sym
       end
     end
   end

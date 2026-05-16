@@ -556,6 +556,78 @@ ArticlesSerializer.new(articles).render
 #    }
 ```
 
+#### Building self links with `query_params`
+
+When a `root_link` block accepts one argument, it receives the accumulated `query_params` hash — a flat map of the `sort:`, `filter:`, and `include:` options that were applied during rendering. This makes it straightforward to generate a canonical self link that reflects the current request state without any additional plumbing.
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+
+  collection :articles do |collection|
+    collection.map { |article| ArticleSerializer.new(article) }
+  end
+
+  sortable_by :title do |collection, ascending|
+    collection.order(title: ascending ? :asc : :desc)
+  end
+
+  filterable_by :published do |collection, value|
+    collection.where(published: value == "true")
+  end
+
+  # On collections, `link` is an alias for `root_link`
+  link(:self) do |query_params|
+    query_string = query_params.map { |k, v| "#{k}=#{v}" }.join("&")
+    "/articles?#{query_string}"
+  end
+end
+
+ArticlesSerializer.new(Article.all, sort: "title", filter: { published: "true" }).render[:_links]
+# => { self: { href: "/articles?sort=title&filter=published%3Atrue" } }
+```
+
+`query_params` is empty when no sort, filter, or include options are applied:
+
+```ruby
+ArticlesSerializer.new(Article.all).render[:_links]
+# => { self: { href: "/articles?" } }
+```
+
+Resource serializers support the same convention. When `include:` is passed, it appears in `query_params`:
+
+```ruby
+class ArticleSerializer
+  include Halitosis
+  include Halitosis::Relationships
+
+  resource :article
+
+  identifier :id
+  attribute :title
+
+  relationship(:author) { AuthorSerializer.new(article.author) }
+
+  root_link(:self) do |query_params|
+    query_string = query_params.map { |k, v| "#{k}=#{v}" }.join("&")
+    "/articles/#{article.id}?#{query_string}"
+  end
+end
+
+ArticleSerializer.new(article, include: "author").render[:_links]
+# => { self: { href: "/articles/1?include=author" } }
+```
+
+If you need access to both the full render context and `query_params`, use a two-argument block:
+
+```ruby
+root_link(:self) do |context, query_params|
+  # context is the frozen render-time context; query_params is context.query_params
+  query_string = query_params.map { |k, v| "#{k}=#{v}" }.join("&")
+  "/articles?#{query_string}"
+end
+```
+
 ### Collecting includes (JSON:API-style sideloading)
 
 Include `collect_includes` in a serializer to hoist included relationships out of the nested `_relationships` structure and into a flat top-level `included` array, deduplicating by type and id. This mirrors the [JSON:API compound document](https://jsonapi.org/format/#document-compound-documents) pattern.

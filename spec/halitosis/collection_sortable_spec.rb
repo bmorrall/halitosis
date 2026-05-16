@@ -233,4 +233,52 @@ RSpec.describe Halitosis::CollectionSortable do
       end
     end
   end
+
+  describe "context query_params" do
+    def render_context(serializer)
+      context = serializer.send(:build_context)
+      serializer.render_with_context(context)
+      context
+    end
+
+    it "registers the sort string after rendering with an explicit sort param" do
+      context = render_context(klass.new(["b", "a"], sort: "name"))
+
+      expect(context.query_params[:sort]).to eq("name")
+    end
+
+    it "registers descending direction with a leading minus" do
+      context = render_context(klass.new(["b", "a"], sort: "-name"))
+
+      expect(context.query_params[:sort]).to eq("-name")
+    end
+
+    it "registers multi-field sort strings" do
+      context = render_context(klass.new(["b", "a"], sort: "name,-score"))
+
+      expect(context.query_params[:sort]).to eq("name,-score")
+    end
+
+    it "does not register a sort key when no sort param is given and no default is set" do
+      context = render_context(klass.new(["b", "a"]))
+
+      expect(context.query_params).not_to have_key(:sort)
+    end
+
+    it "registers the sort key when a default_sort string is used" do
+      klass.default_sort("name")
+
+      context = render_context(klass.new(["b", "a"]))
+
+      expect(context.query_params[:sort]).to eq("name")
+    end
+
+    it "does not register a sort key when a block-based default_sort is used" do
+      klass.default_sort { |collection| collection.sort }
+
+      context = render_context(klass.new(["b", "a"]))
+
+      expect(context.query_params).not_to have_key(:sort)
+    end
+  end
 end

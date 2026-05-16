@@ -78,6 +78,7 @@ module Halitosis
         if directives.empty?
           if (default_field = self.class.fields.singleton(CollectionSortable::DefaultField))
             context.collection = default_field.apply_sort(context, context.collection, nil)
+            context.register_query_params(sort: default_field.sort_string) if default_field.sort_string
           end
           return
         end
@@ -85,6 +86,9 @@ module Halitosis
         directives.each do |name, ascending|
           context.collection = apply_sort(context, context.collection, name, ascending)
         end
+
+        sort_string = directives.map { |name, asc| asc ? name : "-#{name}" }.join(",")
+        context.register_query_params(sort: sort_string)
       end
 
       # Look up a declared sort field by name and apply it to +collection+.

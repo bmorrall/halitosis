@@ -17,20 +17,21 @@ module Halitosis
     end
 
     module InstanceMethods
-      # @return [Hash] the rendered hash with meta, if any
+      # @param context [Halitosis::Context] the render context
+      # @param result [Hash] the fully-enveloped render output
+      # @return [Hash]
       #
-      def render(**)
-        super.tap do |result|
-          next unless options.fetch(:include_root) { true }
-
-          value = root_meta
-          result[:_meta] = result.fetch(:_meta, {}).merge(value) if value.any?
+      def render_root(context, result)
+        super.tap do |root|
+          value = root_meta(context)
+          root[:_meta] = root.fetch(:_meta, {}).merge(value) if value.any?
         end
       end
 
+      # @param context [Halitosis::Context] the render context
       # @return [Hash] meta from fields
       #
-      def root_meta(context = build_context)
+      def root_meta(context)
         render_fields(RootMeta::Field, context) do |field, result|
           value = field.value(context)
 

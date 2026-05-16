@@ -69,6 +69,28 @@ module Halitosis
       end
     end
 
+    ### Query params ###
+
+    # Returns a plain hash of normalized query params accumulated during rendering.
+    # Each middleware module (Filterable, Sortable, Includeable) contributes its
+    # slice by calling +register_query_params+.
+    #
+    # @return [Hash]
+    #
+    def query_params
+      (@query_params_registry || {}).freeze
+    end
+
+    # Merge +hash+ into the accumulated query params registry.
+    #
+    # @param hash [Hash]
+    #
+    def register_query_params(hash)
+      @query_params_registry = (@query_params_registry || {}).merge(hash)
+    end
+
+    ### Hierarchy ###
+
     # @return [nil, Halitosis::Context] the parent context, if this instance is an
     #   embedded child
     #
@@ -80,6 +102,14 @@ module Halitosis
     #
     def depth
       @depth ||= parent ? parent.depth + 1 : 0
+    end
+
+    # Returns true when a root envelope should be rendered.
+    #
+    # @return [Boolean]
+    #
+    def include_root?
+      !!fetch(:include_root) { depth.zero? }
     end
 
     private
