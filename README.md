@@ -334,6 +334,46 @@ When using `render_with_params` (the Rails integration helper), both the JSON:AP
 
 If `page[:number]` or `page[:size]` cannot be coerced to an integer, or the block returns `nil`, an `InvalidPaginationParameter` is raised (mapped to `400 Bad Request` by the Rails integration).
 
+### Pagination links
+
+Use `paginate_links` to emit `first`/`last`/`prev`/`next` links alongside a paginated collection. The block receives the target page number and the active `query_params` hash (including sort, filter, and page size):
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+
+  collection :articles do
+    collection.map { |article| ArticleSerializer.new(article) }
+  end
+
+  paginate_by_page default_page_size: 25 do |number, size|
+    collection.page(number).per(size)
+  end
+
+  paginate_links do |page_number, query_params|
+    articles_url(query_params.merge(page: { number: page_number }))
+  end
+end
+```
+
+All four keys (`first`, `last`, `prev`, `next`) are always present in `_links`. Unavailable links — `prev` on the first page and `next` on the last — are emitted as `null`.
+
+The adapter tells Halitosis how to read page metadata from the paginated collection. Set a global default in an initializer:
+
+```ruby
+Halitosis.configure { |c| c.pagination_adapter = :kaminari }
+```
+
+Or override per-serializer by passing the adapter symbol as the first argument:
+
+```ruby
+paginate_links :will_paginate do |page_number, query_params|
+  articles_url(query_params.merge(page: { number: page_number }))
+end
+```
+
+Built-in adapters: `:kaminari`, `:will_paginate`. Any callable that accepts `(collection, context)` and returns `{ current_page:, total_pages: }` also works.
+
 #### Pagy
 
 Use `paginate_with_pagy` instead of `paginate_by_page` when using Pagy. Pagy returns a separate metadata object alongside the records; `paginate_with_pagy` handles both automatically:
