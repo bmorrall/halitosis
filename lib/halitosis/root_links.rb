@@ -17,22 +17,21 @@ module Halitosis
     end
 
     module InstanceMethods
-      # @return [Hash] the rendered hash with link, if any
+      # @param context [Halitosis::Context] the render context
+      # @param result [Hash] the fully-enveloped render output
+      # @return [Hash]
       #
-      def render(**)
-        super.tap do |result|
-          next unless options.fetch(:include_root) { true }
-
-          value = root_links
-          result[:_links] = result.fetch(:_links, {}).merge(value) if value.any?
+      def render_root(context, result)
+        super.tap do |root|
+          value = root_links(context)
+          root[:_links] = root.fetch(:_links, {}).merge(value) if value.any?
         end
       end
 
-      # @return [Hash] link from fields
-      #
+      # @param context [Halitosis::Context] the render context
       # @return [Hash] root_links from fields
       #
-      def root_links(context = build_context)
+      def root_links(context)
         render_fields(RootLinks::Field, context) do |field, result|
           value = field.value(context)
 

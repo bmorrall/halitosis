@@ -9,7 +9,7 @@ module Halitosis
     end
 
     module ClassMethods
-      # @return [Halitosis::RootPermission::Field]
+      # @return [Halitosis::RootPermissions::Field]
       #
       def root_permission(name, **options, &procedure)
         fields.add(RootPermissions::Field.new(name, options, procedure))
@@ -17,21 +17,22 @@ module Halitosis
     end
 
     module InstanceMethods
-      # @return [Hash] the rendered hash with permissions, if any
+      # @param context [Halitosis::Context] the render context
+      # @param result [Hash] the fully-enveloped render output
+      # @return [Hash]
       #
-      def render(**)
-        super.tap do |result|
-          value = root_permissions
-          result[:_permissions] = result.fetch(:_permissions, {}).merge(value) if value.any?
+      def render_root(context, result)
+        super.tap do |root|
+          value = root_permissions(context)
+          root[:_permissions] = root.fetch(:_permissions, {}).merge(value) if value.any?
         end
       end
 
+      # @param context [Halitosis::Context] the render context
       # @return [Hash] permissions from fields
       #
-      def root_permissions(context = build_context)
+      def root_permissions(context)
         render_fields(RootPermissions::Field, context) do |field, result|
-          next unless options.fetch(:include_root) { true }
-
           value = field.value(context)
           result[field.name] = value || false
         end

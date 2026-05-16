@@ -59,7 +59,9 @@ module Halitosis
       # @return [Hash] rendered representation
       #
       def render(**options)
-        render_with_context(build_context(options))
+        context = build_context(options)
+        result = render_with_context(context)
+        context.include_root? ? render_root(context, result) : result
       end
 
       # @param context [Halitosis::Context] the context instance
@@ -67,6 +69,19 @@ module Halitosis
       #
       def render_with_context(_context)
         {}
+      end
+
+      # Called by +render+ after +render_with_context+ when +include_root?+ is
+      # true, allowing root-level decoration (links, meta, permissions) with
+      # access to the pipeline context. Override in submodules to merge
+      # top-level keys into +result+.
+      #
+      # @param _context [Halitosis::Context]
+      # @param result [Hash] the fully-enveloped render output
+      # @return [Hash]
+      #
+      def render_root(_context, result)
+        result
       end
 
       def collection?

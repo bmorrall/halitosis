@@ -24,7 +24,13 @@ module Halitosis
       def define_resource(name)
         self.resource_type = name.to_s
 
+        fields.add_singleton Resource::Field.new(name, {}, nil)
+
         alias_method name, :resource
+      end
+
+      def resource_field
+        fields.singleton(Resource::Field) || raise(InvalidField, "#{name || Resource.name} resource is not defined")
       end
 
       # For resource-based serializers, delegate to the resource by default
@@ -53,19 +59,16 @@ module Halitosis
       def render_with_context(context)
         rendered = super.merge(_type: self.class.resource_type)
 
-        if (include_root = context.fetch(:include_root) { context.depth.zero? })
-          {root_name(include_root, self.class.resource_type) => rendered}
+        if (key = self.class.resource_field.root_key(context))
+          {key => rendered}
         else
           rendered
         end
       end
 
       private
-
-      def root_name(include_root, default)
-        return include_root.to_sym if include_root.is_a?(String) || include_root.is_a?(Symbol)
-        default.to_sym
-      end
     end
   end
 end
+
+require "halitosis/resource/field"

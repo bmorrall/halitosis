@@ -278,4 +278,44 @@ RSpec.describe Halitosis::CollectionFilterable do
       end
     end
   end
+
+  describe "context query_params" do
+    def render_context(serializer)
+      context = serializer.send(:build_context)
+      serializer.render_with_context(context)
+      context
+    end
+
+    it "registers a symbolized filter hash after rendering" do
+      context = render_context(klass.new(items, filter: {name: "Alice"}))
+
+      expect(context.query_params[:filter]).to eq(name: "Alice")
+    end
+
+    it "does not register a filter key when no filter param is present" do
+      context = render_context(klass.new(items))
+
+      expect(context.query_params).to eq({})
+    end
+
+    it "preserves nested filter keys" do
+      ns_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :user do
+          filterable_by :name do |coll, value|
+            coll.select { |i| i[:name] == value }
+          end
+        end
+      end
+
+      context = render_context(ns_klass.new(items, filter: {user: {name: "Alice"}}))
+
+      expect(context.query_params[:filter]).to eq(user: {name: "Alice"})
+    end
+  end
 end
