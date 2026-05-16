@@ -2,6 +2,15 @@
 
 source "https://rubygems.org"
 
+if File.exist?(".env")
+  File.foreach(".env") do |line|
+    next if line.strip.start_with?("#") || line.strip.empty?
+
+    key, value = line.strip.split("=", 2)
+    ENV[key] ||= value
+  end
+end
+
 # Specify your gem's dependencies in halitosis.gemspec
 gemspec
 
