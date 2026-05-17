@@ -1,0 +1,304 @@
+# frozen_string_literal: true
+
+# Reuse the helpers defined in pagination_links_spec.rb if loaded first, or
+# define lightweight stand-ins so this spec can run independently.
+unless defined?(PaginatedSlice)
+  PaginatedSlice = Struct.new(:items, :current_page, :total_pages) do
+    include Enumerable
+
+    def each(&block) = items.each(&block)
+    def prev_page = (current_page > 1) ? current_page - 1 : nil
+    def next_page = (current_page < total_pages) ? current_page + 1 : nil
+    def previous_page = prev_page
+  end
+end
+
+RSpec.describe "Paginatable — paginate_meta" do
+  let :item_klass do
+    Class.new do
+      include Halitosis
+
+      resource :item
+
+      attribute(:id) { resource[:id] }
+    end
+  end
+
+  let(:items) { (1..50).map { |i| {id: i} } }
+
+  def rendered_meta(items, **opts)
+    item_ser = item_klass
+
+    klass = Class.new do
+      include Halitosis
+
+      collection :items do |collection|
+        collection.map { |i| item_ser.new(i) }
+      end
+
+      paginate_by_page default_page_size: 10 do |collection, number, size|
+        offset = (number - 1) * size
+        page_items = collection[offset, size] || []
+        total = (collection.size.to_f / size).ceil
+        PaginatedSlice.new(page_items, number, total)
+      end
+
+      paginate_meta :kaminari
+    end
+
+    klass.new(items, **opts).render
+  end
+
+  context "when on the first page" do
+    subject(:result) { rendered_meta(items, page: {number: 1, size: 10}) }
+
+    let(:meta) { result.fetch(:_meta) }
+
+    it "places _meta at the root level" do
+      expect(result).to have_key(:_meta)
+      expect(result[:items]).to be_an(Array)
+    end
+
+    it "includes first as page 1" do
+      expect(meta[:first]).to eq(1)
+    end
+
+    it "includes last as the final page number" do
+      expect(meta[:last]).to eq(5)
+    end
+
+    it "emits prev as nil" do
+      expect(meta[:prev]).to be_nil
+    end
+
+    it "includes next as page 2" do
+      expect(meta[:next]).to eq(2)
+    end
+  end
+
+  context "when on the last page" do
+    let(:meta) { rendered_meta(items, page: {number: 5, size: 10}).fetch(:_meta) }
+
+    it "includes first as page 1" do
+      expect(meta[:first]).to eq(1)
+    end
+
+    it "includes last as the final page number" do
+      expect(meta[:last]).to eq(5)
+    end
+
+    it "includes prev as page 4" do
+      expect(meta[:prev]).to eq(4)
+    end
+
+    it "emits next as nil" do
+      expect(meta[:next]).to be_nil
+    end
+  end
+
+  context "when on a middle page" do
+    let(:meta) { rendered_meta(items, page: {number: 3, size: 10}).fetch(:_meta) }
+
+    it "includes all four page numbers" do
+      expect(meta[:first]).to eq(1)
+      expect(meta[:last]).to eq(5)
+      expect(meta[:prev]).to eq(2)
+      expect(meta[:next]).to eq(4)
+    end
+  end
+
+  context "when the result is a single page" do
+    let(:few_items) { (1..5).map { |i| {id: i} } }
+    let(:meta) { rendered_meta(few_items, page: {number: 1, size: 10}).fetch(:_meta) }
+
+    it "includes first and last both as page 1" do
+      expect(meta[:first]).to eq(1)
+      expect(meta[:last]).to eq(1)
+    end
+
+    it "emits prev as nil" do
+      expect(meta[:prev]).to be_nil
+    end
+
+    it "emits next as nil" do
+      expect(meta[:next]).to be_nil
+    end
+  end
+
+  context "when no pagination procedure is declared" do
+    it "silently skips meta generation" do
+      item_ser = item_klass
+
+      klass = Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection.map { |i| item_ser.new(i) }
+        end
+
+        paginate_meta :kaminari
+      end
+
+      result = klass.new(items).render
+
+      expect(result).not_to have_key(:_meta)
+    end
+  end
+
+  context "when combined with paginate_links" do
+    it "emits both _links and _meta at the root level" do
+      item_ser = item_klass
+
+      klass = Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection.map { |i| item_ser.new(i) }
+        end
+
+        paginate_by_page default_page_size: 10 do |collection, number, size|
+          offset = (number - 1) * size
+          page_items = collection[offset, size] || []
+          total = (collection.size.to_f / size).ceil
+          PaginatedSlice.new(page_items, number, total)
+        end
+
+        paginate_links :kaminari do |page_number, query_params|
+          size = query_params.dig(:page, :size)
+          page_number.nil? ? nil : "/items?page[number]=#{page_number}&page[size]=#{size}"
+        end
+
+        paginate_meta :kaminari
+      end
+
+      result = klass.new(items, page: {number: 2, size: 10}).render
+
+      expect(result).to have_key(:_links)
+      expect(result).to have_key(:_meta)
+
+      expect(result[:_links][:first]).to eq("/items?page[number]=1&page[size]=10")
+      expect(result[:_meta][:first]).to eq(1)
+      expect(result[:_meta][:prev]).to eq(1)
+      expect(result[:_meta][:next]).to eq(3)
+    end
+  end
+
+  context "when combining with other root_meta fields" do
+    it "merges pagination page numbers into existing _meta" do
+      item_ser = item_klass
+
+      klass = Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection.map { |i| item_ser.new(i) }
+        end
+
+        root_meta(:total_count) { 50 }
+
+        paginate_by_page default_page_size: 10 do |collection, number, size|
+          offset = (number - 1) * size
+          page_items = collection[offset, size] || []
+          total = (collection.size.to_f / size).ceil
+          PaginatedSlice.new(page_items, number, total)
+        end
+
+        paginate_meta :kaminari
+      end
+
+      result = klass.new(items, page: {number: 1, size: 10}).render
+      meta = result.fetch(:_meta)
+
+      expect(meta[:total_count]).to eq(50)
+      expect(meta[:first]).to eq(1)
+      expect(meta[:last]).to eq(5)
+    end
+  end
+
+  context "when no adapter is configured" do
+    it "raises InvalidField at DSL time" do
+      item_ser = item_klass
+
+      expect do
+        Class.new do
+          include Halitosis
+
+          collection :items do |collection|
+            collection.map { |i| item_ser.new(i) }
+          end
+
+          paginate_meta
+        end
+      end.to raise_error(Halitosis::InvalidField, /paginate_meta requires an adapter/)
+    end
+  end
+
+  context "when paginate_meta is declared twice" do
+    it "raises InvalidField at DSL time" do
+      item_ser = item_klass
+
+      expect do
+        Class.new do
+          include Halitosis
+
+          collection :items do |collection|
+            collection.map { |i| item_ser.new(i) }
+          end
+
+          paginate_meta :kaminari
+          paginate_meta :kaminari
+        end
+      end.to raise_error(Halitosis::InvalidField, /pagination meta is already defined/)
+    end
+  end
+
+  context "when a global pagination adapter is configured" do
+    it "uses the config adapter when none is passed" do
+      item_ser = item_klass
+
+      allow(Halitosis.config).to receive(:pagination_adapter).and_return(:kaminari)
+
+      klass = Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection.map { |i| item_ser.new(i) }
+        end
+
+        paginate_by_page default_page_size: 10 do |collection, number, size|
+          offset = (number - 1) * size
+          page_items = collection[offset, size] || []
+          total = (collection.size.to_f / size).ceil
+          PaginatedSlice.new(page_items, number, total)
+        end
+
+        paginate_meta
+      end
+
+      meta = klass.new(items, page: {number: 1, size: 10}).render.fetch(:_meta)
+
+      expect(meta[:first]).to eq(1)
+      expect(meta[:last]).to eq(5)
+    end
+  end
+
+  context "when using paginate_with_pagy" do
+    it "raises InvalidField when an adapter is passed alongside paginate_with_pagy" do
+      item_ser = item_klass
+
+      expect do
+        Class.new do
+          include Halitosis
+
+          collection :items do |collection|
+            collection.map { |i| item_ser.new(i) }
+          end
+
+          paginate_with_pagy
+
+          paginate_meta :kaminari
+        end
+      end.to raise_error(Halitosis::InvalidField, /paginate_meta adapter must not be set when using paginate_with_pagy/)
+    end
+  end
+end
