@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
-if ENV["RAILS_VERSION"].to_s != ""
+rails_version = ENV["RAILS_VERSION"].to_s
+pagination_adapter = ENV["PAGINATION_ADAPTER"].to_s
+
+if rails_version != "" && pagination_adapter.empty?
   require "simplecov"
   SimpleCov.start do
     add_filter "/spec/"
@@ -8,8 +11,6 @@ if ENV["RAILS_VERSION"].to_s != ""
     minimum_coverage line: 100
   end
 end
-
-rails_version = ENV["RAILS_VERSION"].to_s
 
 require "bundler/setup"
 require "bundler"
@@ -32,6 +33,10 @@ RSpec.configure do |config|
   if rails_version.empty?
     config.filter_run_excluding rails: true
     require "halitosis"
+  end
+
+  %w[kaminari will_paginate pagy].each do |adapter|
+    config.filter_run_excluding adapter.to_sym => true unless pagination_adapter == adapter
   end
 end
 

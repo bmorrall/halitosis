@@ -35,3 +35,27 @@ jobs:
           bundler-cache: true
       - name: Run the default task
         run: bundle exec rake
+
+      - name: Run Kaminari adapter specs
+        if: matrix.rails != ''
+        env:
+          PAGINATION_ADAPTER: kaminari
+        run: |
+          bundle install
+          bundle exec rspec --tag kaminari
+
+      - name: Run WillPaginate adapter specs
+        if: matrix.rails != ''
+        env:
+          PAGINATION_ADAPTER: will_paginate
+        run: |
+          bundle install
+          bundle exec rspec --tag will_paginate
+
+      - name: Run Pagy adapter specs
+        if: matrix.rails != ''
+        env:
+          PAGINATION_ADAPTER: pagy
+        run: |
+          bundle install
+          bundle exec rspec --tag pagy
