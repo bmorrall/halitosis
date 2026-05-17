@@ -5,8 +5,8 @@ RSpec.describe Halitosis::CollectionSortable do
     Class.new do
       include Halitosis
 
-      collection :items do |collection|
-        collection
+      collection :items do |items|
+        items
       end
 
       sortable_by :name do |collection, ascending|
@@ -104,8 +104,8 @@ RSpec.describe Halitosis::CollectionSortable do
         multi_klass = Class.new do
           include Halitosis
 
-          collection :items do |collection|
-            collection
+          collection :items do |items|
+            items
           end
 
           sortable_by :name do |collection, ascending|
@@ -140,8 +140,8 @@ RSpec.describe Halitosis::CollectionSortable do
         nil_klass = Class.new do
           include Halitosis
 
-          collection :items do |collection|
-            collection
+          collection :items do |items|
+            items
           end
 
           sortable_by :name do |collection, ascending|
@@ -166,8 +166,8 @@ RSpec.describe Halitosis::CollectionSortable do
         nil_klass = Class.new do
           include Halitosis
 
-          collection :items do |collection|
-            collection
+          collection :items do |items|
+            items
           end
 
           sortable_by :name do |collection, ascending|

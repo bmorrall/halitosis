@@ -1,8 +1,8 @@
 class SortableArticlesSerializer
   include Halitosis
 
-  collection :articles do |collection|
-    collection.map { |article| ArticleSerializer.new(article) }
+  collection :articles do |articles|
+    articles.map { |article| ArticleSerializer.new(article) }
   end
 
   sortable_by :name do |collection, ascending|

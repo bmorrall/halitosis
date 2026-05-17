@@ -30,8 +30,6 @@ module Halitosis
 
         self.resource_type = name.to_s
 
-        alias_method name, :raw_collection
-
         fields.add_singleton Collection::Field.new(name, options, procedure)
       end
 
