@@ -80,45 +80,43 @@ RSpec.describe Halitosis::CollectIncludes do
         end
 
         serializer = klass.new
-        serializer.instance_variable_set(:@_collect_includes_registry, {})
         context = Halitosis::Context.new(serializer, {})
+        context.included_registry = {}
         child = no_id_klass.new
 
         result = serializer.send(:render_child, child, context, {})
         expect(result).to eq(name: "no id")
-        expect(serializer.instance_variable_get(:@_collect_includes_registry)).to be_empty
+        expect(context.included_registry).to be_empty
       end
 
       it "stores the full payload in the registry and returns a stub" do
-        registry = {}
         serializer = klass.new
-        serializer.instance_variable_set(:@_collect_includes_registry, registry)
         context = Halitosis::Context.new(serializer, {})
+        context.included_registry = {}
         child = child_klass.new
 
         result = serializer.send(:render_child, child, context, {})
         expect(result).to eq(id: 42, _type: "child")
-        expect(registry).to eq(["child", 42] => {id: 42, name: "child"})
+        expect(context.included_registry).to eq(["child", 42] => {id: 42, name: "child"})
       end
 
       it "does not re-render a child already in the registry" do
-        registry = {["child", 42] => {id: 42, name: "existing"}}
         serializer = klass.new
-        serializer.instance_variable_set(:@_collect_includes_registry, registry)
         context = Halitosis::Context.new(serializer, {})
+        context.included_registry = {["child", 42] => {id: 42, name: "existing"}}
         child = child_klass.new
 
         expect(child).not_to receive(:render_with_context)
         result = serializer.send(:render_child, child, context, {})
 
         expect(result).to eq(id: 42, _type: "child")
-        expect(registry[["child", 42]][:name]).to eq("existing")
+        expect(context.included_registry[["child", 42]][:name]).to eq("existing")
       end
 
       it "extends child instances with InstanceMethods for recursive stubbing" do
         serializer = klass.new
-        serializer.instance_variable_set(:@_collect_includes_registry, {})
         context = Halitosis::Context.new(serializer, {})
+        context.included_registry = {}
         child = child_klass.new
 
         serializer.send(:render_child, child, context, {})
