@@ -11,7 +11,8 @@ module Halitosis
     private
 
     def render_halitosis_error(error)
-      render json: Halitosis::ParameterExceptionSerializer.new(error), status: :bad_request
+      status = ActionDispatch::ExceptionWrapper.rescue_responses[error.class.name]
+      render json: Halitosis::ParameterExceptionSerializer.new(error), status: status
     end
   end
 end

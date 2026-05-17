@@ -29,11 +29,13 @@ module Halitosis
       Halitosis.config.extensions << ::Rails.application.routes.url_helpers
     end
 
-    initializer "halitosis.error_response" do |app|
-      app.config.action_dispatch.rescue_responses[InvalidQueryParameter.name] ||= :bad_request
-      app.config.action_dispatch.rescue_responses[InvalidSortParameter.name] ||= :bad_request
-      app.config.action_dispatch.rescue_responses[InvalidIncludeParameter.name] ||= :bad_request
-      app.config.action_dispatch.rescue_responses[InvalidFilterParameter.name] ||= :bad_request
+    initializer "halitosis.error_response" do
+      ActionDispatch::ExceptionWrapper.rescue_responses.reverse_merge!(
+        InvalidQueryParameter.name => :bad_request,
+        InvalidSortParameter.name => :bad_request,
+        InvalidIncludeParameter.name => :bad_request,
+        InvalidFilterParameter.name => :bad_request
+      )
     end
 
     initializer "halitosis.renderable" do |_app|
