@@ -24,7 +24,7 @@ module Halitosis
     #   the stored procedure
     #
     def value(context)
-      options.fetch(:value) { context.call_instance(procedure || name) }
+      options.fetch(:value) { call_procedure(context) }
     end
 
     # @return [true, false] whether this Field should be included based on
@@ -48,5 +48,9 @@ module Halitosis
     private
 
     attr_reader :procedure
+
+    def call_procedure(context)
+      context.call_instance(procedure || name)
+    end
   end
 end
