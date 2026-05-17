@@ -36,25 +36,24 @@ RSpec.describe Halitosis::CollectionSortable do
 
   describe ".default_sort" do
     context "with a sort string" do
-      it "stores the default sort string" do
+      it "registers a DefaultField" do
         klass.default_sort("name")
 
-        expect(klass.default_sort_string).to eq("name")
+        expect(klass.fields.singleton(Halitosis::CollectionSortable::DefaultField)).to be_a(Halitosis::CollectionSortable::DefaultField)
       end
 
-      it "stores a descending sort string" do
+      it "registers a DefaultField for a descending sort string" do
         klass.default_sort("-name")
 
-        expect(klass.default_sort_string).to eq("-name")
+        expect(klass.fields.singleton(Halitosis::CollectionSortable::DefaultField)).to be_a(Halitosis::CollectionSortable::DefaultField)
       end
     end
 
     context "with a block" do
-      it "stores the default sort procedure" do
-        the_proc = proc { collection.reverse }
-        klass.default_sort(&the_proc)
+      it "registers a DefaultField" do
+        klass.default_sort { collection.reverse }
 
-        expect(klass.default_sort_procedure).to eq(the_proc)
+        expect(klass.fields.singleton(Halitosis::CollectionSortable::DefaultField)).to be_a(Halitosis::CollectionSortable::DefaultField)
       end
     end
 
@@ -67,50 +66,11 @@ RSpec.describe Halitosis::CollectionSortable do
     end
 
     context "with neither string nor block" do
-      it "stores nothing" do
+      it "stores no default sort field" do
         klass.default_sort
 
-        expect(klass.default_sort_string).to be_nil
-        expect(klass.default_sort_procedure).to be_nil
+        expect(klass.fields.singleton(Halitosis::CollectionSortable::DefaultField)).to be_nil
       end
-    end
-  end
-
-  describe "#validate_sorts!" do
-    let(:serializer) { klass.new(["b", "a"]) }
-
-    it "passes when all requested fields are declared" do
-      expect do
-        serializer.send(:validate_sorts!, [["name", true]])
-      end.not_to raise_error
-    end
-
-    it "passes for multiple known fields" do
-      expect do
-        serializer.send(:validate_sorts!, [["name", true], ["score", false]])
-      end.not_to raise_error
-    end
-
-    it "raises InvalidQueryParameter for an unknown field" do
-      expect do
-        serializer.send(:validate_sorts!, [["unknown", true]])
-      end.to raise_error do |exception|
-        expect(exception).to be_an_instance_of(Halitosis::InvalidSortParameter)
-        expect(exception.message).to match(/can not be sorted by 'unknown'/i)
-        expect(exception.parameter).to eq("sort")
-      end
-    end
-
-    it "reports the first unknown field" do
-      expect do
-        serializer.send(:validate_sorts!, [["name", true], ["bogus", false]])
-      end.to raise_error(Halitosis::InvalidSortParameter, /can not be sorted by 'bogus'/)
-    end
-
-    it "includes the resource type in the error message" do
-      expect do
-        serializer.send(:validate_sorts!, [["nope", true]])
-      end.to raise_error(Halitosis::InvalidSortParameter, /items collection/)
     end
   end
 

@@ -15,8 +15,6 @@ module Halitosis
     end
 
     module ClassMethods
-      attr_reader :default_sort_string, :default_sort_procedure
-
       # Declare a named sort field.
       #
       # The block receives a single Boolean argument: +true+ for ascending,
@@ -53,8 +51,7 @@ module Halitosis
           raise InvalidField, "#{name} default_sort cannot specify both a string and a block"
         end
 
-        @default_sort_string = sort_string.to_s if sort_string
-        @default_sort_procedure = procedure if procedure
+        fields.add_singleton(DefaultField.new(sort_string, procedure)) if sort_string || procedure
       end
     end
 
@@ -69,21 +66,6 @@ module Halitosis
 
       private
 
-      # Validate that all requested sort field names are declared on this serializer.
-      #
-      # @param directives [Array<Array(String, Boolean)>] parsed sort directives
-      #
-      # @raise [Halitosis::InvalidQueryParameter] if an unknown sort field is requested
-      #
-      def validate_sorts!(directives)
-        known_names = self.class.fields.for_type(CollectionSortable::Field).map { |f| f.name.to_s }
-        unknown = directives.map(&:first) - known_names
-
-        return if unknown.none?
-
-        raise_sort_error(unknown.first)
-      end
-
       # Apply sort directives from context to @collection, or fall back to the
       # declared default sort if no sort param is present.
       #
@@ -94,33 +76,36 @@ module Halitosis
         directives = SortUtil.parse_sort_param(sort_param)
 
         if directives.empty?
-          if (default_string = self.class.default_sort_string)
-            directives = SortUtil.parse_sort_param(default_string)
-          elsif (default_proc = self.class.default_sort_procedure)
-            @collection = instance_exec(&default_proc)
-            return
-          else
-            return
+          if (default_field = self.class.fields.singleton(CollectionSortable::DefaultField))
+            @collection = default_field.apply_sort(context, @collection, nil)
           end
+          return
         end
-
-        return if directives.empty?
-
-        validate_sorts!(directives)
-
-        sort_fields = self.class.fields.for_type(CollectionSortable::Field)
 
         directives.each do |name, ascending|
-          field = sort_fields.find { |f| f.name.to_s == name }
-          result = field.apply_sort(context, @collection, ascending)
-
-          if result.nil?
-            sort_token = ascending ? name : "-#{name}"
-            raise_sort_error(sort_token)
-          end
-
-          @collection = result
+          @collection = apply_sort(context, @collection, name, ascending)
         end
+      end
+
+      # Look up a declared sort field by name and apply it to +collection+.
+      #
+      # @param context [Halitosis::Context]
+      # @param collection [Object]
+      # @param name [String] the sort field name
+      # @param ascending [Boolean]
+      # @return [Object] the sorted collection
+      #
+      # @raise [Halitosis::InvalidSortParameter] if the field is unknown or returns nil
+      #
+      def apply_sort(context, collection, name, ascending)
+        sort_token = ascending ? name : "-#{name}"
+        field = self.class.fields.for_type(CollectionSortable::Field).find { |f| f.name.to_s == name.to_s }
+        raise_sort_error(sort_token) unless field
+
+        result = field.apply_sort(context, collection, ascending)
+        raise_sort_error(sort_token) if result.nil?
+
+        result
       end
 
       # Build and raise an InvalidSortParameter for the given sort token.
@@ -141,3 +126,4 @@ end
 
 require "halitosis/sort_util"
 require "halitosis/collection_sortable/field"
+require "halitosis/collection_sortable/default_field"
