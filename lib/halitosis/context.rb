@@ -22,6 +22,18 @@ module Halitosis
       end
     end
 
+    # Evaluate :if/:unless conditional options against the serializer instance
+    #
+    def call_conditional?(options)
+      if options.key?(:if)
+        !!call_instance(options.fetch(:if))
+      elsif options.key?(:unless)
+        !call_instance(options.fetch(:unless))
+      else
+        true
+      end
+    end
+
     ### Options ###
 
     def fetch(...)

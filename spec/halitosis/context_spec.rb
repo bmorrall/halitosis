@@ -104,4 +104,88 @@ RSpec.describe Halitosis::Context do
       expect(context.include_options).to eq({})
     end
   end
+
+  describe "#call_instance" do
+    let(:instance) do
+      Class.new do
+        def some_method = "result"
+      end.new
+    end
+    let(:context) { described_class.new(instance) }
+
+    context "when guard is a Proc" do
+      it "evaluates the proc in the context of the instance" do
+        guard = proc { |_ctx| 42 }
+        expect(context.call_instance(guard)).to eq(42)
+      end
+    end
+
+    context "when guard is a Symbol" do
+      it "sends the method to the instance" do
+        allow(instance).to receive(:some_method).and_return("result")
+        expect(context.call_instance(:some_method)).to eq("result")
+      end
+    end
+
+    context "when guard is a String" do
+      it "sends the method to the instance" do
+        allow(instance).to receive(:some_method).and_return("result")
+        expect(context.call_instance("some_method")).to eq("result")
+      end
+    end
+
+    context "when guard is another value" do
+      it "returns the value as-is" do
+        expect(context.call_instance(true)).to be(true)
+        expect(context.call_instance(false)).to be(false)
+      end
+    end
+  end
+
+  describe "#call_conditional?" do
+    let(:instance) do
+      Class.new do
+        def condition = nil
+      end.new
+    end
+    let(:context) { described_class.new(instance) }
+
+    context "when options has no :if or :unless key" do
+      it "returns true" do
+        expect(context.call_conditional?({})).to be(true)
+      end
+    end
+
+    context "when options has an :if key" do
+      it "returns true when the guard is truthy" do
+        allow(instance).to receive(:condition).and_return(true)
+        expect(context.call_conditional?({if: :condition})).to be(true)
+      end
+
+      it "returns false when the guard is falsy" do
+        allow(instance).to receive(:condition).and_return(false)
+        expect(context.call_conditional?({if: :condition})).to be(false)
+      end
+
+      it "accepts a proc" do
+        expect(context.call_conditional?({if: ->(_ctx) { true }})).to be(true)
+      end
+    end
+
+    context "when options has an :unless key" do
+      it "returns false when the guard is truthy" do
+        allow(instance).to receive(:condition).and_return(true)
+        expect(context.call_conditional?({unless: :condition})).to be(false)
+      end
+
+      it "returns true when the guard is falsy" do
+        allow(instance).to receive(:condition).and_return(false)
+        expect(context.call_conditional?({unless: :condition})).to be(true)
+      end
+
+      it "accepts a proc" do
+        expect(context.call_conditional?({unless: ->(_ctx) { false }})).to be(true)
+      end
+    end
+  end
 end

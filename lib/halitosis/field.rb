@@ -31,13 +31,7 @@ module Halitosis
     #   its conditional guard, if any
     #
     def enabled?(context)
-      if options.key?(:if)
-        !!context.call_instance(options.fetch(:if))
-      elsif options.key?(:unless)
-        !context.call_instance(options.fetch(:unless))
-      else
-        true
-      end
+      context.call_conditional?(options)
     end
 
     # @return [true] if nothing is raised
