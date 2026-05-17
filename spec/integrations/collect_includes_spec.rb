@@ -73,8 +73,8 @@ RSpec.describe "CollectIncludes" do
 
         collect_includes
 
-        collection :articles do |collection|
-          collection.map { |attrs| article_klass.new(attrs) }
+        collection :articles do |articles|
+          articles.map { |attrs| article_klass.new(attrs) }
         end
       end
     end
@@ -252,8 +252,8 @@ RSpec.describe "CollectIncludes" do
 
         collect_includes
 
-        collection :articles do |collection|
-          collection.map { |attrs|
+        collection :articles do |articles|
+          articles.map { |attrs|
             Class.new do
               include Halitosis
               include Halitosis::Relationships

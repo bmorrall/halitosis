@@ -5,8 +5,8 @@ RSpec.describe Halitosis::CollectionFilterable do
     Class.new do
       include Halitosis
 
-      collection :items do |collection|
-        collection
+      collection :items do |items|
+        items
       end
 
       filterable_by :name do |collection, value|
@@ -55,8 +55,8 @@ RSpec.describe Halitosis::CollectionFilterable do
         ns_klass = Class.new do
           include Halitosis
 
-          collection :items do |collection|
-            collection
+          collection :items do |items|
+            items
           end
 
           filterable_by :user do
@@ -75,8 +75,8 @@ RSpec.describe Halitosis::CollectionFilterable do
         ns_klass = Class.new do
           include Halitosis
 
-          collection :items do |collection|
-            collection
+          collection :items do |items|
+            items
           end
 
           filterable_by :a do
@@ -97,8 +97,8 @@ RSpec.describe Halitosis::CollectionFilterable do
         ns_klass = Class.new do
           include Halitosis
 
-          collection :items do |collection|
-            collection
+          collection :items do |items|
+            items
           end
 
           filterable_by :user do
@@ -121,8 +121,8 @@ RSpec.describe Halitosis::CollectionFilterable do
           Class.new do
             include Halitosis
 
-            collection :items do |collection|
-              collection
+            collection :items do |items|
+              items
             end
 
             filterable_by :user do

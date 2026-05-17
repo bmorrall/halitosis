@@ -19,8 +19,8 @@ RSpec.describe "CollectionSortable" do
     Class.new do
       include Halitosis
 
-      collection :items do |collection|
-        collection.map { |i| item_ser.new(i) }
+      collection :items do |items|
+        items.map { |i| item_ser.new(i) }
       end
 
       sortable_by :name do |collection, ascending|
@@ -95,8 +95,8 @@ RSpec.describe "CollectionSortable" do
       Class.new do
         include Halitosis
 
-        collection :items do |collection|
-          collection.map { |i| item_ser.new(i) }
+        collection :items do |items|
+          items.map { |i| item_ser.new(i) }
         end
 
         sortable_by :name do |collection, ascending|
@@ -169,8 +169,8 @@ RSpec.describe "CollectionSortable" do
       unknown_klass = Class.new do
         include Halitosis
 
-        collection :items do |collection|
-          collection
+        collection :items do |items|
+          items
         end
 
         default_sort "unknown"
