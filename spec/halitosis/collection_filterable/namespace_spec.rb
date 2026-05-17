@@ -7,7 +7,7 @@ RSpec.describe Halitosis::CollectionFilterable::Namespace do
     Class.new do
       include Halitosis
 
-      collection :items do
+      collection :items do |collection|
         collection
       end
     end

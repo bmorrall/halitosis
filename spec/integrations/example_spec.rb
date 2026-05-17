@@ -107,7 +107,7 @@ end
 class DucksSerializer
   include Halitosis
 
-  collection :ducks do
+  collection :ducks do |collection|
     collection.map { |duck| DuckSerializer.new(duck) }
   end
 

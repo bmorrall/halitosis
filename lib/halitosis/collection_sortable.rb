@@ -77,13 +77,13 @@ module Halitosis
 
         if directives.empty?
           if (default_field = self.class.fields.singleton(CollectionSortable::DefaultField))
-            @collection = default_field.apply_sort(context, @collection, nil)
+            context.collection = default_field.apply_sort(context, context.collection, nil)
           end
           return
         end
 
         directives.each do |name, ascending|
-          @collection = apply_sort(context, @collection, name, ascending)
+          context.collection = apply_sort(context, context.collection, name, ascending)
         end
       end
 

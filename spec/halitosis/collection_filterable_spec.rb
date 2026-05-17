@@ -5,7 +5,7 @@ RSpec.describe Halitosis::CollectionFilterable do
     Class.new do
       include Halitosis
 
-      collection :items do
+      collection :items do |collection|
         collection
       end
 
@@ -55,7 +55,7 @@ RSpec.describe Halitosis::CollectionFilterable do
         ns_klass = Class.new do
           include Halitosis
 
-          collection :items do
+          collection :items do |collection|
             collection
           end
 
@@ -75,7 +75,7 @@ RSpec.describe Halitosis::CollectionFilterable do
         ns_klass = Class.new do
           include Halitosis
 
-          collection :items do
+          collection :items do |collection|
             collection
           end
 
@@ -97,7 +97,7 @@ RSpec.describe Halitosis::CollectionFilterable do
         ns_klass = Class.new do
           include Halitosis
 
-          collection :items do
+          collection :items do |collection|
             collection
           end
 
@@ -121,7 +121,7 @@ RSpec.describe Halitosis::CollectionFilterable do
           Class.new do
             include Halitosis
 
-            collection :items do
+            collection :items do |collection|
               collection
             end
 
@@ -199,7 +199,7 @@ RSpec.describe Halitosis::CollectionFilterable do
 
   describe "#apply_filters!" do
     def build_context(serializer, options)
-      Halitosis::Context.new(serializer, options)
+      serializer.send(:build_context, options)
     end
 
     context "with no filter param" do
@@ -209,7 +209,7 @@ RSpec.describe Halitosis::CollectionFilterable do
 
         serializer.send(:apply_filters!, context)
 
-        expect(serializer.collection).to eq(items)
+        expect(context.collection).to eq(items)
       end
     end
 
@@ -220,7 +220,7 @@ RSpec.describe Halitosis::CollectionFilterable do
 
         serializer.send(:apply_filters!, context)
 
-        expect(serializer.collection).to eq([{name: "Alice", score: 1}, {name: "Alice", score: 3}])
+        expect(context.collection).to eq([{name: "Alice", score: 1}, {name: "Alice", score: 3}])
       end
 
       it "filters the collection by score" do
@@ -229,7 +229,7 @@ RSpec.describe Halitosis::CollectionFilterable do
 
         serializer.send(:apply_filters!, context)
 
-        expect(serializer.collection).to eq([{name: "Bob", score: 2}])
+        expect(context.collection).to eq([{name: "Bob", score: 2}])
       end
     end
 
@@ -240,7 +240,7 @@ RSpec.describe Halitosis::CollectionFilterable do
 
         serializer.send(:apply_filters!, context)
 
-        expect(serializer.collection).to eq([{name: "Alice", score: 1}])
+        expect(context.collection).to eq([{name: "Alice", score: 1}])
       end
     end
 

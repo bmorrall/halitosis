@@ -92,13 +92,13 @@ module Halitosis
 
         pairs.each do |name, value|
           field = filter_fields.find { |f| f.name.to_s == name }
-          result = field.apply_filter(context, @collection, value)
+          result = field.apply_filter(context, context.collection, value)
 
           if result.nil?
             raise_invalid_filter_value_error(field.name)
           end
 
-          @collection = result
+          context.collection = result
         end
       end
 

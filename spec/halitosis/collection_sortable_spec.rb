@@ -5,7 +5,7 @@ RSpec.describe Halitosis::CollectionSortable do
     Class.new do
       include Halitosis
 
-      collection :items do
+      collection :items do |collection|
         collection
       end
 
@@ -76,7 +76,7 @@ RSpec.describe Halitosis::CollectionSortable do
 
   describe "#apply_sorts!" do
     def build_context(serializer, options)
-      Halitosis::Context.new(serializer, options)
+      serializer.send(:build_context, options)
     end
 
     context "with a sort param" do
@@ -86,7 +86,7 @@ RSpec.describe Halitosis::CollectionSortable do
 
         serializer.send(:apply_sorts!, context)
 
-        expect(serializer.collection).to eq(["a", "b", "c"])
+        expect(context.collection).to eq(["a", "b", "c"])
       end
 
       it "sorts the collection descending" do
@@ -95,7 +95,7 @@ RSpec.describe Halitosis::CollectionSortable do
 
         serializer.send(:apply_sorts!, context)
 
-        expect(serializer.collection).to eq(["c", "b", "a"])
+        expect(context.collection).to eq(["c", "b", "a"])
       end
 
       it "applies multiple sort fields in order" do
@@ -104,7 +104,7 @@ RSpec.describe Halitosis::CollectionSortable do
         multi_klass = Class.new do
           include Halitosis
 
-          collection :items do
+          collection :items do |collection|
             collection
           end
 
@@ -140,7 +140,7 @@ RSpec.describe Halitosis::CollectionSortable do
         nil_klass = Class.new do
           include Halitosis
 
-          collection :items do
+          collection :items do |collection|
             collection
           end
 
@@ -166,7 +166,7 @@ RSpec.describe Halitosis::CollectionSortable do
         nil_klass = Class.new do
           include Halitosis
 
-          collection :items do
+          collection :items do |collection|
             collection
           end
 
@@ -196,7 +196,7 @@ RSpec.describe Halitosis::CollectionSortable do
 
         serializer.send(:apply_sorts!, context)
 
-        expect(serializer.collection).to eq(["b", "a"])
+        expect(context.collection).to eq(["b", "a"])
       end
 
       it "applies the default_sort string via the sort pipeline" do
@@ -207,18 +207,18 @@ RSpec.describe Halitosis::CollectionSortable do
 
         serializer.send(:apply_sorts!, context)
 
-        expect(serializer.collection).to eq(["a", "b", "c"])
+        expect(context.collection).to eq(["a", "b", "c"])
       end
 
       it "applies the default_sort procedure via instance_exec" do
-        klass.default_sort { collection.reverse }
+        klass.default_sort { |collection| collection.reverse }
 
         serializer = klass.new(["a", "b", "c"])
         context = build_context(serializer, {})
 
         serializer.send(:apply_sorts!, context)
 
-        expect(serializer.collection).to eq(["c", "b", "a"])
+        expect(context.collection).to eq(["c", "b", "a"])
       end
     end
 
@@ -229,7 +229,7 @@ RSpec.describe Halitosis::CollectionSortable do
 
         serializer.send(:apply_sorts!, context)
 
-        expect(serializer.collection).to eq(["b", "a"])
+        expect(context.collection).to eq(["b", "a"])
       end
     end
   end
