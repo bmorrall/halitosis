@@ -132,7 +132,7 @@ ArticlesSerializer.new(Article.all).render
 
 ### Sorting collections
 
-Declare sort fields on a collection serializer with `sortable_by`. The block receives a single Boolean — `true` for ascending, `false` for descending — and must return the sorted collection:
+Declare sort fields on a collection serializer with `sortable_by`. The block receives the current collection and a Boolean — `true` for ascending, `false` for descending — and must return the sorted collection:
 
 ```ruby
 class ArticlesSerializer
@@ -142,11 +142,11 @@ class ArticlesSerializer
     collection.map { |article| ArticleSerializer.new(article) }
   end
 
-  sortable_by :title do |ascending|
+  sortable_by :title do |collection, ascending|
     collection.order(title: ascending ? :asc : :desc)
   end
 
-  sortable_by :published_at do |ascending|
+  sortable_by :published_at do |collection, ascending|
     collection.order(published_at: ascending ? :asc : :desc)
   end
 end
@@ -175,7 +175,7 @@ Requesting a field that has not been declared with `sortable_by` raises `Halitos
 Return `nil` from a `sortable_by` block to signal that a particular direction is not supported. Halitosis will raise `InvalidQueryParameter` with the direction-prefixed token, so the client gets a clear error:
 
 ```ruby
-sortable_by :name do |ascending|
+sortable_by :name do |collection, ascending|
   # Only ascending is supported for this field
   collection.order(name: :asc) if ascending
 end
@@ -200,7 +200,7 @@ class ArticlesSerializer
     collection.map { |article| ArticleSerializer.new(article) }
   end
 
-  sortable_by :title do |ascending|
+  sortable_by :title do |collection, ascending|
     collection.order(title: ascending ? :asc : :desc)
   end
 
@@ -214,7 +214,7 @@ end
 
 ### Filtering collections
 
-Declare filter fields on a collection serializer with `filterable_by`. The block receives the value from the `filter` param and must return the filtered collection, or `nil` to signal that the value is invalid:
+Declare filter fields on a collection serializer with `filterable_by`. The block receives the current collection and the value from the `filter` param, and must return the filtered collection, or `nil` to signal that the value is invalid:
 
 ```ruby
 class ArticlesSerializer
@@ -224,11 +224,11 @@ class ArticlesSerializer
     collection.map { |article| ArticleSerializer.new(article) }
   end
 
-  filterable_by :name do |value|
+  filterable_by :name do |collection, value|
     collection.where(name: value)
   end
 
-  filterable_by :published do |value|
+  filterable_by :published do |collection, value|
     collection.where(published: value == "true")
   end
 end
@@ -251,7 +251,7 @@ Requesting a key that has not been declared with `filterable_by` raises `Halitos
 Return `nil` from a `filterable_by` block to signal that the provided value cannot be applied. Halitosis will raise `InvalidFilterParameter` naming the field, without reflecting the user-supplied value back in the message:
 
 ```ruby
-filterable_by :created_after do |date_str|
+filterable_by :created_after do |collection, date_str|
   date = DateTime.parse(date_str) rescue nil
   collection.created_after(date) if date
 end
@@ -272,11 +272,11 @@ Use a zero-arity block to open a namespace and group related filter fields under
 
 ```ruby
 filterable_by :user do
-  filterable_by :name do |value|
+  filterable_by :name do |collection, value|
     collection.joins(:user).where(users: { name: value })
   end
 
-  filterable_by :role do |value|
+  filterable_by :role do |collection, value|
     collection.joins(:user).where(users: { role: value })
   end
 end

@@ -22,11 +22,11 @@ RSpec.describe "Filterable" do
         collection.map { |i| item_ser.new(i) }
       end
 
-      filterable_by :name do |value|
+      filterable_by :name do |collection, value|
         collection.select { |i| i[:name] == value }
       end
 
-      filterable_by :score do |value|
+      filterable_by :score do |collection, value|
         integer_value = Integer(value)
         collection.select { |i| i[:score] == integer_value }
       rescue ArgumentError, TypeError
@@ -119,7 +119,7 @@ RSpec.describe "Filterable" do
 
   context "when combined with sorting" do
     before do
-      klass.sortable_by(:name) { |asc| asc ? collection.sort_by { |i| i[:name] } : collection.sort_by { |i| i[:name] }.reverse }
+      klass.sortable_by(:name) { |collection, asc| asc ? collection.sort_by { |i| i[:name] } : collection.sort_by { |i| i[:name] }.reverse }
     end
 
     it "filters first, then sorts the filtered result" do
@@ -144,11 +144,11 @@ RSpec.describe "Filterable" do
         end
 
         filterable_by :item do
-          filterable_by :name do |value|
+          filterable_by :name do |collection, value|
             collection.select { |i| i[:name] == value }
           end
 
-          filterable_by :score do |value|
+          filterable_by :score do |collection, value|
             integer_value = Integer(value)
             collection.select { |i| i[:score] == integer_value }
           rescue ArgumentError, TypeError

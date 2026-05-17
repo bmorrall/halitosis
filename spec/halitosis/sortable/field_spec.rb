@@ -31,43 +31,39 @@ RSpec.describe Halitosis::Sortable::Field do
   end
 
   describe "#apply_sort" do
-    it "calls instance_exec on the instance with the ascending flag" do
-      received_ascending = nil
+    it "passes collection and ascending flag to the proc" do
+      received = []
 
-      field = described_class.new(:name, {}, proc { |asc|
-        received_ascending = asc
+      field = described_class.new(:name, {}, proc { |col, asc|
+        received = [col, asc]
         "sorted_result"
       })
 
       context = Halitosis::Context.new(Object.new)
-      result = field.apply_sort(context, true)
+      result = field.apply_sort(context, [1, 2, 3], true)
 
-      expect(received_ascending).to be true
+      expect(received).to eq([[1, 2, 3], true])
       expect(result).to eq("sorted_result")
     end
 
     it "passes false for descending" do
       received_ascending = nil
 
-      field = described_class.new(:name, {}, proc { |asc| received_ascending = asc })
-      field.apply_sort(Halitosis::Context.new(Object.new), false)
+      field = described_class.new(:name, {}, proc { |_col, asc| received_ascending = asc })
+      field.apply_sort(Halitosis::Context.new(Object.new), [], false)
 
       expect(received_ascending).to be false
     end
 
     it "evaluates the block in the instance scope" do
-      instance = Class.new do
-        def collection
-          [3, 1, 2]
-        end
-      end.new
+      instance = Class.new.new
 
-      field = described_class.new(:name, {}, proc { |asc|
-        asc ? collection.sort : collection.sort.reverse
+      field = described_class.new(:name, {}, proc { |col, asc|
+        asc ? col.sort : col.sort.reverse
       })
 
-      expect(field.apply_sort(Halitosis::Context.new(instance), true)).to eq([1, 2, 3])
-      expect(field.apply_sort(Halitosis::Context.new(instance), false)).to eq([3, 2, 1])
+      expect(field.apply_sort(Halitosis::Context.new(instance), [3, 1, 2], true)).to eq([1, 2, 3])
+      expect(field.apply_sort(Halitosis::Context.new(instance), [3, 1, 2], false)).to eq([3, 2, 1])
     end
   end
 end

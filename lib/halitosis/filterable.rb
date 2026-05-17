@@ -11,9 +11,9 @@ module Halitosis
       # Declare a named filter field, or open a nested namespace for grouping
       # related filter fields under a dot-prefixed key.
       #
-      # When the block accepts +1+ argument it is a filter implementation: the
-      # block receives the request value and must return the filtered collection,
-      # or +nil+ to signal an invalid value.
+      # When the block accepts +2+ arguments it is a filter implementation: the
+      # block receives the current collection and the request value, and must
+      # return the filtered collection, or +nil+ to signal an invalid value.
       #
       # When the block accepts +0+ arguments it opens a namespace. Calls to
       # +filterable_by+ inside the block are registered with a dot-prefixed name,
@@ -23,14 +23,14 @@ module Halitosis
       # @param name [Symbol, String] the filter field name or namespace prefix
       # @param options [Hash] field options (e.g. +:if+, +:unless+); ignored for namespaces
       #
-      # @example Field (arity 1)
-      #   filterable_by :name do |value|
+      # @example Field (arity 2)
+      #   filterable_by :name do |collection, value|
       #     collection.where(name: value)
       #   end
       #
       # @example Namespace (arity 0)
       #   filterable_by :user do
-      #     filterable_by :name do |value|
+      #     filterable_by :name do |collection, value|
       #       collection.joins(:user).where(users: { name: value })
       #     end
       #   end
@@ -39,13 +39,13 @@ module Halitosis
         case procedure&.arity
         when 0
           Filterable::Namespace.new(name, self).instance_eval(&procedure)
-        when 1
+        when 2
           fields.add(Filterable::Field.new(name, options, procedure))
         when nil
           raise InvalidField, "Filter field #{name} must be defined with a proc"
         else
           raise InvalidField,
-            "Filter field #{name} block must accept 0 arguments (namespace) or 1 argument (filter value)"
+            "Filter field #{name} block must accept 0 arguments (namespace) or 2 arguments (collection, filter value)"
         end
       end
     end
@@ -92,7 +92,7 @@ module Halitosis
 
         pairs.each do |name, value|
           field = filter_fields.find { |f| f.name.to_s == name }
-          result = field.apply_filter(context, value)
+          result = field.apply_filter(context, @collection, value)
 
           if result.nil?
             raise_invalid_filter_value_error(field.name)

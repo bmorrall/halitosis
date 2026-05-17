@@ -31,36 +31,34 @@ RSpec.describe Halitosis::Filterable::Field do
   end
 
   describe "#apply_filter" do
-    it "calls instance_exec on the instance with the value" do
-      received_value = nil
-      field = described_class.new(:name, {}, proc { |v|
-        received_value = v
+    it "passes collection and value to the proc" do
+      received = []
+      field = described_class.new(:name, {}, proc { |col, v|
+        received = [col, v]
         "filtered_result"
       })
 
       context = Halitosis::Context.new(Object.new)
-      result = field.apply_filter(context, "Alice")
+      result = field.apply_filter(context, [1, 2, 3], "Alice")
 
-      expect(received_value).to eq("Alice")
+      expect(received).to eq([[1, 2, 3], "Alice"])
       expect(result).to eq("filtered_result")
     end
 
     it "evaluates the block in the instance scope" do
-      instance = Class.new do
-        def collection = [1, 2, 3, 4, 5]
-      end.new
+      instance = Class.new.new
 
-      field = described_class.new(:min, {}, proc { |v|
-        collection.select { |i| i >= v.to_i }
+      field = described_class.new(:min, {}, proc { |col, v|
+        col.select { |i| i >= v.to_i }
       })
 
-      expect(field.apply_filter(Halitosis::Context.new(instance), "3")).to eq([3, 4, 5])
+      expect(field.apply_filter(Halitosis::Context.new(instance), [1, 2, 3, 4, 5], "3")).to eq([3, 4, 5])
     end
 
     it "returns nil when the block returns nil" do
-      field = described_class.new(:score, {}, proc { |_v| })
+      field = described_class.new(:score, {}, proc { |_col, _v| })
 
-      expect(field.apply_filter(Halitosis::Context.new(Object.new), "bad")).to be_nil
+      expect(field.apply_filter(Halitosis::Context.new(Object.new), [], "bad")).to be_nil
     end
   end
 end
