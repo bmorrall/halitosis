@@ -15,6 +15,10 @@ Rails.application.routes.draw do
   resources :paginatable_articles, only: :index
   resources :linkable_articles, only: :index
 
+  resources :kaminari_articles, only: :index
+  resources :will_paginate_articles, only: :index
+  resources :pagy_articles, only: :index
+
   # Defines the root path route ("/")
   # root "posts#index"
 end

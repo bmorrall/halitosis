@@ -21,6 +21,17 @@ unless rails_version.empty?
   gem "sqlite3", "~> 2.0"
 end
 
+unless ENV["PAGINATION_ADAPTER"].to_s.empty?
+  case ENV["PAGINATION_ADAPTER"]
+  when "kaminari"
+    gem "kaminari"
+  when "will_paginate"
+    gem "will_paginate"
+  when "pagy"
+    gem "pagy"
+  end
+end
+
 gem "rake", "~> 13.0"
 
 gem "rspec", "~> 3.0"
