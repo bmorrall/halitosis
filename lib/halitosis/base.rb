@@ -61,7 +61,11 @@ module Halitosis
       def render(**options)
         context = build_context(options)
         result = render_with_context(context)
-        context.include_root? ? render_root(context, result) : result
+        if context.include_root?
+          render_root(context.freeze, result)
+        else
+          result
+        end
       end
 
       # @param context [Halitosis::Context] the context instance
