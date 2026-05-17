@@ -781,6 +781,7 @@ en:
   halitosis:
     errors:
       "Halitosis::InvalidSortParameter":
+        id: "unsupported_sort_field"
         title: "Unsupported Sort Field"
 ```
 
