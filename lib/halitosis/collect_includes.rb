@@ -3,26 +3,22 @@
 module Halitosis
   module CollectIncludes
     def self.included(base)
-      base.send :include, InstanceMethods
+      base.prepend InstanceMethods
     end
 
     module InstanceMethods
-      # @return [Hash] the rendered hash with a root-level included array
-      #
-      def render(**options)
-        # Stored on the instance rather than in options because options is frozen
-        # and child contexts need to reach this via context.included_registry.
-        @_collect_includes_registry = {}
-
-        super.tap do |result|
-          result[:included] = @_collect_includes_registry.values if @_collect_includes_registry.any?
+      def build_context(options = {})
+        super.tap do |context|
+          context.included_registry = {} unless options[:parent]
         end
-      ensure
-        @_collect_includes_registry = nil
       end
 
-      def collect_includes_registry
-        @_collect_includes_registry
+      # @return [Hash] the rendered hash with a root-level included array
+      #
+      def render_root(context, result)
+        super.tap do |root|
+          root[:included] = context.included_registry.values if context.included_registry.any?
+        end
       end
 
       protected
