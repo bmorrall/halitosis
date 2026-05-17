@@ -59,10 +59,6 @@ module Halitosis
       @include_options ||= HashUtil.hasherize_include_option(options[:include] || {})
     end
 
-    def resource_type
-      instance.class.resource_type
-    end
-
     # @return [nil, Hash] the shared included resources registry, if collect_includes is active
     #
     def included_registry
