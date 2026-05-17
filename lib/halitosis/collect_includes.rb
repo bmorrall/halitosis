@@ -49,10 +49,8 @@ module Halitosis
           return super
         end
 
-        id_fields = child.class.fields.for_type(Identifiers::Field)
-        return super if id_fields.empty?
-
-        id_field = id_fields.first
+        id_field = child.class.fields.singleton(Identifiers::Field)
+        return super unless id_field
         type = child.class.resource_type
 
         child_context = child.build_context(parent: context, include: opts)

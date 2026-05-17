@@ -15,7 +15,7 @@ RSpec.describe Halitosis::Identifiers do
           klass.identifier(:foo)
         end.to change(klass.fields, :size).by(1)
 
-        inserted_field = klass.fields.for_type(Halitosis::Identifiers::Field).last
+        inserted_field = klass.fields.singleton(Halitosis::Identifiers::Field)
         expect(inserted_field).to be_a(Halitosis::Identifiers::Field)
         expect(inserted_field.name).to eq(:foo)
       end

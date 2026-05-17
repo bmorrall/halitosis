@@ -20,5 +20,36 @@ module Halitosis
     def for_type(type)
       fetch(type.name, [])
     end
+
+    # Returns the value stored for the given type key, or +nil+ if nothing
+    # has been registered under that key.
+    #
+    # @param type [Class]
+    # @return [Halitosis::Field, nil]
+    #
+    def singleton(type)
+      self[type.name]
+    end
+
+    # Registers a field that may only exist once per class. Raises
+    # +Halitosis::InvalidField+ if any field of the same type has already been
+    # registered, whether via +add+ or +add_singleton+.
+    #
+    # @param field [Halitosis::Field]
+    # @return [Halitosis::Field]
+    # @raise [Halitosis::InvalidField]
+    #
+    def add_singleton(field)
+      key = field.class.name
+
+      if key?(key)
+        raise Halitosis::InvalidField, "#{field.class.name} is already defined"
+      end
+
+      field.validate
+      field.freeze
+
+      self[key] = field
+    end
   end
 end

@@ -45,7 +45,7 @@ RSpec.describe Halitosis::Collection do
         klass.define_collection(:ducks) { [] }
       end.to change(klass.fields, :size).by(1)
 
-      inserted_field = klass.fields.for_type(Halitosis::Collection::Field).last
+      inserted_field = klass.fields.singleton(Halitosis::Collection::Field)
       expect(inserted_field).to be_a(Halitosis::Collection::Field)
       expect(inserted_field.name).to eq(:ducks)
     end
