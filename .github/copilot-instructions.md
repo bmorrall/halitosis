@@ -1,5 +1,11 @@
 # Copilot Instructions
 
+## Fields
+
+Fields must only be created at DSL time (class definition), never at instance or render time.
+Use `fields.add(...)` inside class-level DSL methods only (e.g. `paginate_with`, `paginate_links`).
+Creating fields dynamically during rendering is not permitted.
+
 ## Serializer immutability
 
 Serializer instances are immutable after `initialize`. Do not read or write instance variables during rendering:
