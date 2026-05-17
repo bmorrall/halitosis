@@ -10,8 +10,8 @@ module Halitosis
         raise InvalidField, "Filter field #{name} must be defined with a proc"
       end
 
-      def apply(instance, value)
-        instance.instance_exec(value, &procedure)
+      def apply_filter(context, value)
+        context.call_instance_with(value, procedure)
       end
     end
   end

@@ -92,7 +92,7 @@ module Halitosis
 
         pairs.each do |name, value|
           field = filter_fields.find { |f| f.name.to_s == name }
-          result = field.apply(self, value)
+          result = field.apply_filter(context, value)
 
           if result.nil?
             raise_invalid_filter_value_error(field.name)

@@ -22,6 +22,19 @@ module Halitosis
       end
     end
 
+    # Like call_instance but forwards args instead of the context
+    #
+    def call_instance_with(*args, guard)
+      case guard
+      when Proc
+        instance.instance_exec(*args, &guard)
+      when Symbol, String
+        instance.send(guard, *args)
+      else
+        guard
+      end
+    end
+
     # Evaluate :if/:unless conditional options against the serializer instance
     #
     def call_conditional?(options)

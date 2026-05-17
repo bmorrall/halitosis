@@ -30,7 +30,7 @@ RSpec.describe Halitosis::Sortable::Field do
     end
   end
 
-  describe "#apply" do
+  describe "#apply_sort" do
     it "calls instance_exec on the instance with the ascending flag" do
       received_ascending = nil
 
@@ -39,8 +39,8 @@ RSpec.describe Halitosis::Sortable::Field do
         "sorted_result"
       })
 
-      instance = Object.new
-      result = field.apply(instance, true)
+      context = Halitosis::Context.new(Object.new)
+      result = field.apply_sort(context, true)
 
       expect(received_ascending).to be true
       expect(result).to eq("sorted_result")
@@ -50,7 +50,7 @@ RSpec.describe Halitosis::Sortable::Field do
       received_ascending = nil
 
       field = described_class.new(:name, {}, proc { |asc| received_ascending = asc })
-      field.apply(Object.new, false)
+      field.apply_sort(Halitosis::Context.new(Object.new), false)
 
       expect(received_ascending).to be false
     end
@@ -66,8 +66,8 @@ RSpec.describe Halitosis::Sortable::Field do
         asc ? collection.sort : collection.sort.reverse
       })
 
-      expect(field.apply(instance, true)).to eq([1, 2, 3])
-      expect(field.apply(instance, false)).to eq([3, 2, 1])
+      expect(field.apply_sort(Halitosis::Context.new(instance), true)).to eq([1, 2, 3])
+      expect(field.apply_sort(Halitosis::Context.new(instance), false)).to eq([3, 2, 1])
     end
   end
 end
