@@ -26,7 +26,7 @@ All mutable render-time state belongs on the `Context` object (or `CollectionCon
 
 ## Raise calls
 
-Always add a blank line after a `raise`, a call to a method that raises (e.g. `raise_*`), or a call to a validate method (e.g. `validate_*!`), when subsequent code follows in the same block:
+Always add a blank line after a `raise`, a call to a method that raises (e.g. `raise_*`), a call to a validate method (e.g. `validate_*!`), or an inline conditional (e.g. `return x if condition`, `value = expr unless condition`), when subsequent code follows in the same block:
 
 ```ruby
 # Correct
