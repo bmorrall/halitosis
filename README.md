@@ -121,7 +121,7 @@ Wraps a collection of items. Declare it with `collection`, providing a block tha
 class ArticlesSerializer
   include Halitosis
 
-  collection :articles do
+  collection :articles do |collection|
     collection.map { |article| ArticleSerializer.new(article) }
   end
 end
@@ -138,7 +138,7 @@ Declare sort fields on a collection serializer with `sortable_by`. The block rec
 class ArticlesSerializer
   include Halitosis
 
-  collection :articles do
+  collection :articles do |collection|
     collection.map { |article| ArticleSerializer.new(article) }
   end
 
@@ -196,7 +196,7 @@ Use `default_sort` to apply a fallback when no `sort` param is provided. It acce
 class ArticlesSerializer
   include Halitosis
 
-  collection :articles do
+  collection :articles do |collection|
     collection.map { |article| ArticleSerializer.new(article) }
   end
 
@@ -220,7 +220,7 @@ Declare filter fields on a collection serializer with `filterable_by`. The block
 class ArticlesSerializer
   include Halitosis
 
-  collection :articles do
+  collection :articles do |collection|
     collection.map { |article| ArticleSerializer.new(article) }
   end
 
@@ -531,14 +531,14 @@ ArticleSerializer.new(article, include_permissions: false).render
 class ArticlesSerializer
   include Halitosis
 
-  collection :articles do
+  collection :articles do |collection|
     collection.map { |article| ArticleSerializer.new(article) }
   end
 
   root_link(:self) { "/articles" }
   root_link(:next, :templated) { "/articles?page={?page}" }
 
-  root_meta(:total) { collection.total_count }
+  root_meta(:total) { raw_collection.total_count }
   root_meta(:per_page, value: 25)
 
   root_permission(:create) { policy.create? }
@@ -606,7 +606,7 @@ class ArticlesSerializer
 
   collect_includes
 
-  collection :articles do
+  collection :articles do |collection|
     collection.map { |article| ArticleSerializer.new(article) }
   end
 end
