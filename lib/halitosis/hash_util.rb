@@ -50,10 +50,11 @@ module Halitosis
     # @return [Hash]
     #
     def symbolize_hash(hash)
-      if hash.respond_to?(:transform_keys)
-        hash.transform_keys(&:to_sym).transform_values(&method(:symbolize_hash))
+      plain = hash.respond_to?(:to_unsafe_h) ? hash.to_unsafe_h : hash
+      if plain.respond_to?(:transform_keys)
+        plain.transform_keys(&:to_sym).transform_values(&method(:symbolize_hash))
       else
-        hash
+        plain
       end
     end
   end

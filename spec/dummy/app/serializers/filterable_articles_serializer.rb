@@ -15,4 +15,8 @@ class FilterableArticlesSerializer
   rescue ArgumentError, TypeError
     nil
   end
+
+  link(:self) do |query_params|
+    filterable_articles_path(query_params)
+  end
 end
