@@ -14,7 +14,7 @@ module Halitosis
 
       base.send :include, InstanceMethods
 
-      base.send :attr_reader, :collection
+      base.send :attr_reader, :raw_collection
 
       base.include CollectionSortable
       base.include CollectionFilterable
@@ -30,7 +30,7 @@ module Halitosis
 
         self.resource_type = name.to_s
 
-        alias_method name, :collection
+        alias_method name, :raw_collection
 
         fields.add_singleton Collection::Field.new(name, options, procedure)
       end
@@ -65,10 +65,18 @@ module Halitosis
       # @param collection [Object] the primary collection
       #
       def initialize(collection, **)
-        @collection = collection
-        @collection_field = self.class.collection_field
+        @raw_collection = collection
+        self.class.collection_field # raises InvalidCollection if not defined
 
         super(**)
+      end
+
+      # @return [Halitosis::CollectionContext] context seeded with the raw collection
+      #
+      def build_context(options = {})
+        ctx = CollectionContext.new(self, HashUtil.deep_merge(@options, options))
+        ctx.collection = @raw_collection
+        ctx
       end
 
       # @return [Hash, Array] the rendered hash with collection, as an array or a hash under a key
@@ -89,12 +97,10 @@ module Halitosis
 
       private
 
-      attr_reader :collection_field
-
       # @return [Hash] collection from fields
       #
       def render_collection_field(context)
-        value = collection_field.value(context)
+        value = self.class.collection_field.value(context)
 
         return render_child(value, context, context.include_options) if value.is_a?(Halitosis::Collection)
 
@@ -113,3 +119,4 @@ module Halitosis
 end
 
 require "halitosis/collection/field"
+require "halitosis/collection_context"

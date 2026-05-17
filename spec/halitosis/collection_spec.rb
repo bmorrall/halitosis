@@ -56,7 +56,7 @@ RSpec.describe Halitosis::Collection do
       klass.define_collection(:ducks) { [] }
 
       serializer = klass.new(collection)
-      expect(serializer.collection).to be(collection)
+      expect(serializer.raw_collection).to be(collection)
     end
 
     it "declares a named collection accessor" do
@@ -108,7 +108,7 @@ RSpec.describe Halitosis::Collection do
     describe "#render" do
       context "with a simple collection" do
         before do
-          klass.define_collection :ducks do
+          klass.define_collection :ducks do |collection|
             collection
           end
         end
@@ -229,7 +229,7 @@ RSpec.describe Halitosis::Collection do
               meta :total, value: 1
               link :self, value: "/ducks"
               permission :read, value: true
-            end.new(collection)
+            end.new(raw_collection)
           end
         end.new([])
 
@@ -241,7 +241,7 @@ RSpec.describe Halitosis::Collection do
           include Halitosis::Base
           include Halitosis::Collection
 
-          define_collection :ducks do
+          define_collection :ducks do |collection|
             [1, "two", true, nil, collection]
           end
         end.new([])
@@ -254,7 +254,7 @@ RSpec.describe Halitosis::Collection do
           include Halitosis::Base
           include Halitosis::Collection
 
-          define_collection :ducks do
+          define_collection :ducks do |collection|
             [self.class.new(collection)]
           end
         end.new([])

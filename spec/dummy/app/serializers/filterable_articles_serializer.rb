@@ -1,8 +1,8 @@
 class FilterableArticlesSerializer
   include Halitosis
 
-  collection :articles do
-    articles.map { |article| ArticleSerializer.new(article) }
+  collection :articles do |collection|
+    collection.map { |article| ArticleSerializer.new(article) }
   end
 
   filterable_by :name do |collection, value|

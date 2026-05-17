@@ -19,7 +19,7 @@ RSpec.describe "CollectionSortable" do
     Class.new do
       include Halitosis
 
-      collection :items do
+      collection :items do |collection|
         collection.map { |i| item_ser.new(i) }
       end
 
@@ -95,7 +95,7 @@ RSpec.describe "CollectionSortable" do
       Class.new do
         include Halitosis
 
-        collection :items do
+        collection :items do |collection|
           collection.map { |i| item_ser.new(i) }
         end
 
@@ -169,7 +169,7 @@ RSpec.describe "CollectionSortable" do
       unknown_klass = Class.new do
         include Halitosis
 
-        collection :items do
+        collection :items do |collection|
           collection
         end
 
@@ -185,13 +185,13 @@ RSpec.describe "CollectionSortable" do
 
   context "with default_sort as a block" do
     it "applies the block when no sort param is provided" do
-      klass.default_sort { collection.reverse }
+      klass.default_sort { |collection| collection.reverse }
 
       expect(rendered_names(klass.new(items).render)).to eq(["cherry", "apple", "banana"])
     end
 
     it "is overridden when a sort param is explicitly provided" do
-      klass.default_sort { collection.reverse }
+      klass.default_sort { |collection| collection.reverse }
 
       expect(rendered_names(klass.new(items, sort: "name").render)).to eq(["apple", "banana", "cherry"])
     end

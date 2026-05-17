@@ -73,7 +73,7 @@ RSpec.describe "CollectIncludes" do
 
         collect_includes
 
-        collection :articles do
+        collection :articles do |collection|
           collection.map { |attrs| article_klass.new(attrs) }
         end
       end
@@ -252,7 +252,7 @@ RSpec.describe "CollectIncludes" do
 
         collect_includes
 
-        collection :articles do
+        collection :articles do |collection|
           collection.map { |attrs|
             Class.new do
               include Halitosis

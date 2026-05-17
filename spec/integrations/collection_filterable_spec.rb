@@ -18,7 +18,7 @@ RSpec.describe "CollectionFilterable" do
     Class.new do
       include Halitosis
 
-      collection :items do
+      collection :items do |collection|
         collection.map { |i| item_ser.new(i) }
       end
 
@@ -139,7 +139,7 @@ RSpec.describe "CollectionFilterable" do
       Class.new do
         include Halitosis
 
-        collection :items do
+        collection :items do |collection|
           collection.map { |i| item_ser.new(i) }
         end
 
