@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe "Filterable" do
+RSpec.describe "CollectionFilterable" do
   let :item_klass do
     Class.new do
       include Halitosis

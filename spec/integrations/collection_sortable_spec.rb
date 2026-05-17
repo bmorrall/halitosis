@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe "Sortable" do
+RSpec.describe "CollectionSortable" do
   # A minimal resource serializer for use inside collection tests
   let :item_klass do
     Class.new do

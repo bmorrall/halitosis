@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Halitosis::Filterable::Field do
+RSpec.describe Halitosis::CollectionFilterable::Field do
   describe "#validate" do
     it "raises InvalidField when no procedure is given" do
       field = described_class.new(:name, {}, nil)

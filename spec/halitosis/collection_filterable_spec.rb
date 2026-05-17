@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Halitosis::Filterable do
+RSpec.describe Halitosis::CollectionFilterable do
   let :klass do
     Class.new do
       include Halitosis
@@ -32,7 +32,7 @@ RSpec.describe Halitosis::Filterable do
 
   describe ".filterable_by" do
     it "adds a Filterable::Field to the class fields" do
-      fields = klass.fields.for_type(Halitosis::Filterable::Field)
+      fields = klass.fields.for_type(Halitosis::CollectionFilterable::Field)
 
       expect(fields.size).to eq(2)
       expect(fields.map(&:name)).to contain_exactly(:name, :score)
@@ -66,7 +66,7 @@ RSpec.describe Halitosis::Filterable do
           end
         end
 
-        fields = ns_klass.fields.for_type(Halitosis::Filterable::Field)
+        fields = ns_klass.fields.for_type(Halitosis::CollectionFilterable::Field)
         expect(fields.size).to eq(1)
         expect(fields.first.name).to eq(:"user.name")
       end
@@ -88,7 +88,7 @@ RSpec.describe Halitosis::Filterable do
           end
         end
 
-        fields = ns_klass.fields.for_type(Halitosis::Filterable::Field)
+        fields = ns_klass.fields.for_type(Halitosis::CollectionFilterable::Field)
         expect(fields.size).to eq(1)
         expect(fields.first.name).to eq(:"a.b.c")
       end
@@ -112,7 +112,7 @@ RSpec.describe Halitosis::Filterable do
           end
         end
 
-        fields = ns_klass.fields.for_type(Halitosis::Filterable::Field)
+        fields = ns_klass.fields.for_type(Halitosis::CollectionFilterable::Field)
         expect(fields.map(&:name)).to contain_exactly(:"user.name", :"user.age")
       end
 
