@@ -8,7 +8,7 @@ Creating fields dynamically during rendering is not permitted.
 
 ## Serializer immutability
 
-Serializer instances are immutable after `initialize`. Do not read or write instance variables during rendering:
+Serializer instances are immutable after `initialize`. **Never add instance variables to the serializer** — not during rendering, not after rendering, not ever. This includes `@collection`, `@query_params`, `@last_context`, or any other state.
 
 ```ruby
 # Correct — pass state through the context
@@ -22,7 +22,7 @@ def apply_sorts!(context)
 end
 ```
 
-All mutable render-time state belongs on the `Context` object (or `CollectionContext` for collection serializers), not on the serializer instance.
+All mutable render-time state belongs exclusively on the `Context` object (or `CollectionContext` for collection serializers), not on the serializer instance.
 
 ## Raise calls
 

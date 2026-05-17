@@ -7,11 +7,20 @@ module Halitosis
     end
 
     module Renderable
+      # Render this serializer using params from a request.
+      #
+      # Supports both JSON:API nested pagination params (+page[number]+/+page[size]+)
+      # and the legacy flat style (+page+ / +per_page+) as a fallback.
+      #
       def render_with_params(params)
+        page = params[:page]
+        page_hash = page.respond_to?(:each_pair) ? {number: page[:number], size: page[:size]} : {number: page, size: params[:per_page]}
+
         render(
           include: params[:include],
           sort: params[:sort],
-          filter: params[:filter]
+          filter: params[:filter],
+          page: page_hash
         )
       end
 
@@ -31,6 +40,7 @@ module Halitosis
 
     initializer "halitosis.error_response" do
       ActionDispatch::ExceptionWrapper.rescue_responses.reverse_merge!(
+        InvalidPaginationParameter.name => :bad_request,
         InvalidQueryParameter.name => :bad_request,
         InvalidSortParameter.name => :bad_request,
         InvalidIncludeParameter.name => :bad_request,

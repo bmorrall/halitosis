@@ -34,4 +34,21 @@ RSpec.describe "Halitosis::ErrorHandling", :rails, type: :request do
       ])
     end
   end
+
+  describe "invalid pagination parameter" do
+    it "returns 400 with a JSON errors array" do
+      get paginatable_articles_path, params: {page: {number: "not-a-number"}}
+
+      expect(response).to have_http_status(:bad_request)
+
+      expect(response.parsed_body["errors"]).to match([
+        {
+          "id" => "invalid_pagination_parameter",
+          "title" => "Invalid Pagination Parameter",
+          "detail" => "The articles collection can not be paginated with the provided 'page[number]' value",
+          "source" => {"parameter" => "page"}
+        }
+      ])
+    end
+  end
 end
