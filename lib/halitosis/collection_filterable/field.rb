@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Halitosis
-  module Filterable
+  module CollectionFilterable
     class Field < Halitosis::Field
       def validate
         super

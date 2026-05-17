@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Halitosis::Sortable do
+RSpec.describe Halitosis::CollectionSortable do
   let :klass do
     Class.new do
       include Halitosis
@@ -21,7 +21,7 @@ RSpec.describe Halitosis::Sortable do
 
   describe ".sortable_by" do
     it "adds a Sortable::Field to the class fields" do
-      fields = klass.fields.for_type(Halitosis::Sortable::Field)
+      fields = klass.fields.for_type(Halitosis::CollectionSortable::Field)
 
       expect(fields.size).to eq(2)
       expect(fields.map(&:name)).to contain_exactly(:name, :score)

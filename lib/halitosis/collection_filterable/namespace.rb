@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Halitosis
-  module Filterable
+  module CollectionFilterable
     # Builder used when a zero-arity block is passed to +filterable_by+.
     # Evaluates the block in its own context, allowing nested +filterable_by+
     # calls that register fields with dot-prefixed names on the target class.
@@ -37,7 +37,7 @@ module Halitosis
         when 0
           Namespace.new(full_name, target_class).instance_eval(&procedure)
         when 2
-          target_class.fields.add(Filterable::Field.new(full_name, options, procedure))
+          target_class.fields.add(CollectionFilterable::Field.new(full_name, options, procedure))
         when nil
           raise InvalidField, "Filter field #{full_name} must be defined with a proc"
         else

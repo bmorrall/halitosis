@@ -7,7 +7,7 @@ module Halitosis
   # +sortable_by+ and optionally a +default_sort+ fallback applied when no sort
   # param is provided at render time.
   #
-  module Sortable
+  module CollectionSortable
     def self.included(base)
       base.extend ClassMethods
 
@@ -31,7 +31,7 @@ module Halitosis
       #   end
       #
       def sortable_by(name, options = {}, &procedure)
-        fields.add(Sortable::Field.new(name, options, procedure))
+        fields.add(CollectionSortable::Field.new(name, options, procedure))
       end
 
       # Declare a default sort applied when no sort param is present.
@@ -76,7 +76,7 @@ module Halitosis
       # @raise [Halitosis::InvalidQueryParameter] if an unknown sort field is requested
       #
       def validate_sorts!(directives)
-        known_names = self.class.fields.for_type(Sortable::Field).map { |f| f.name.to_s }
+        known_names = self.class.fields.for_type(CollectionSortable::Field).map { |f| f.name.to_s }
         unknown = directives.map(&:first) - known_names
 
         return if unknown.none?
@@ -108,7 +108,7 @@ module Halitosis
 
         validate_sorts!(directives)
 
-        sort_fields = self.class.fields.for_type(Sortable::Field)
+        sort_fields = self.class.fields.for_type(CollectionSortable::Field)
 
         directives.each do |name, ascending|
           field = sort_fields.find { |f| f.name.to_s == name }
@@ -140,4 +140,4 @@ module Halitosis
 end
 
 require "halitosis/sort_util"
-require "halitosis/sortable/field"
+require "halitosis/collection_sortable/field"

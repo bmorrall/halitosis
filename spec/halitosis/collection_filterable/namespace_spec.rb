@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Halitosis::Filterable::Namespace do
+RSpec.describe Halitosis::CollectionFilterable::Namespace do
   subject(:namespace) { described_class.new("user", target_class) }
 
   let(:target_class) do
@@ -18,7 +18,7 @@ RSpec.describe Halitosis::Filterable::Namespace do
       it "registers a dot-prefixed Filterable::Field on the target class" do
         namespace.filterable_by(:name) { |col, v| col }
 
-        fields = target_class.fields.for_type(Halitosis::Filterable::Field)
+        fields = target_class.fields.for_type(Halitosis::CollectionFilterable::Field)
         expect(fields.size).to eq(1)
         expect(fields.first.name).to eq(:"user.name")
       end
@@ -26,7 +26,7 @@ RSpec.describe Halitosis::Filterable::Namespace do
       it "passes options through to the field" do
         namespace.filterable_by(:name, if: :admin?) { |col, v| col }
 
-        field = target_class.fields.for_type(Halitosis::Filterable::Field).first
+        field = target_class.fields.for_type(Halitosis::CollectionFilterable::Field).first
         expect(field.options[:if]).to eq(:admin?)
       end
     end
@@ -37,7 +37,7 @@ RSpec.describe Halitosis::Filterable::Namespace do
           filterable_by(:city) { |col, v| col }
         end
 
-        fields = target_class.fields.for_type(Halitosis::Filterable::Field)
+        fields = target_class.fields.for_type(Halitosis::CollectionFilterable::Field)
         expect(fields.size).to eq(1)
         expect(fields.first.name).to eq(:"user.address.city")
       end

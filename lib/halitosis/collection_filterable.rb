@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Halitosis
-  module Filterable
+  module CollectionFilterable
     def self.included(base)
       base.extend ClassMethods
       base.send :include, InstanceMethods
@@ -38,9 +38,9 @@ module Halitosis
       def filterable_by(name, options = {}, &procedure)
         case procedure&.arity
         when 0
-          Filterable::Namespace.new(name, self).instance_eval(&procedure)
+          CollectionFilterable::Namespace.new(name, self).instance_eval(&procedure)
         when 2
-          fields.add(Filterable::Field.new(name, options, procedure))
+          fields.add(CollectionFilterable::Field.new(name, options, procedure))
         when nil
           raise InvalidField, "Filter field #{name} must be defined with a proc"
         else
@@ -68,7 +68,7 @@ module Halitosis
       # @raise [Halitosis::InvalidFilterParameter] if an unknown filter key is requested
       #
       def validate_filters!(pairs)
-        known_names = self.class.fields.for_type(Filterable::Field).map { |f| f.name.to_s }
+        known_names = self.class.fields.for_type(CollectionFilterable::Field).map { |f| f.name.to_s }
         unknown = pairs.map(&:first) - known_names
 
         return if unknown.none?
@@ -88,7 +88,7 @@ module Halitosis
 
         validate_filters!(pairs)
 
-        filter_fields = self.class.fields.for_type(Filterable::Field)
+        filter_fields = self.class.fields.for_type(CollectionFilterable::Field)
 
         pairs.each do |name, value|
           field = filter_fields.find { |f| f.name.to_s == name }
@@ -133,5 +133,5 @@ module Halitosis
 end
 
 require "halitosis/filter_util"
-require "halitosis/filterable/field"
-require "halitosis/filterable/namespace"
+require "halitosis/collection_filterable/field"
+require "halitosis/collection_filterable/namespace"
