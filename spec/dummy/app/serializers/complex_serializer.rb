@@ -17,4 +17,8 @@ class ComplexSerializer
       ComplexSerializer.new(Example.new(id: (complex.id * 10) + 2, name: "#{complex.name}-2"))
     ]
   end
+
+  root_link(:self) do |query_params|
+    complex_renderable_path(complex.id, query_params)
+  end
 end

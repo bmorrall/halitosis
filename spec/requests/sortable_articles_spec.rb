@@ -35,6 +35,7 @@ RSpec.describe "SortableArticles", :rails, type: :request do
 
         expect(response).to have_http_status(:ok)
         expect(response.parsed_body["articles"].size).to eq(3)
+        expect(response.parsed_body.dig("_links", "self", "href")).to eq(sortable_articles_path)
       end
     end
 
@@ -46,6 +47,7 @@ RSpec.describe "SortableArticles", :rails, type: :request do
 
         names = response.parsed_body["articles"].map { |a| a["name"] }
         expect(names).to eq(%w[Alpha Bravo Charlie])
+        expect(response.parsed_body.dig("_links", "self", "href")).to eq(sortable_articles_path(sort: "name"))
       end
 
       it "sorts by name descending" do
@@ -55,6 +57,7 @@ RSpec.describe "SortableArticles", :rails, type: :request do
 
         names = response.parsed_body["articles"].map { |a| a["name"] }
         expect(names).to eq(%w[Charlie Bravo Alpha])
+        expect(response.parsed_body.dig("_links", "self", "href")).to eq(sortable_articles_path(sort: "-name"))
       end
 
       it "sorts by score ascending" do

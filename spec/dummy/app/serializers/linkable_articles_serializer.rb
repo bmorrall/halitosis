@@ -1,4 +1,4 @@
-class SortableArticlesSerializer
+class LinkableArticlesSerializer
   include Halitosis
 
   collection :articles do |articles|
@@ -9,11 +9,7 @@ class SortableArticlesSerializer
     collection.order(name: ascending ? :asc : :desc)
   end
 
-  sortable_by :score do |collection, ascending|
-    collection.order(score: ascending ? :asc : :desc)
-  end
-
   link(:self) do |query_params|
-    sortable_articles_path(query_params)
+    linkable_articles_path(query_params)
   end
 end

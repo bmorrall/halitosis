@@ -8,7 +8,11 @@ module Halitosis
 
     module Renderable
       def render_with_params(params)
-        render(include: params[:include], sort: params[:sort], filter: params[:filter])
+        render(
+          include: params[:include],
+          sort: params[:sort],
+          filter: params[:filter]
+        )
       end
 
       def render_in(view_context, **)

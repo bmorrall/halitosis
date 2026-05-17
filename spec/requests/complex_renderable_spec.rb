@@ -14,7 +14,8 @@ RSpec.describe "ComplexRenderables", :rails, type: :request do
           "id" => 1,
           "name" => "Complex 1",
           "_type" => "complex"
-        }
+        },
+        "_links" => {"self" => {"href" => complex_renderable_path(1)}}
       )
     end
 
@@ -37,7 +38,8 @@ RSpec.describe "ComplexRenderables", :rails, type: :request do
               "_type" => "complex"
             }
           }
-        }
+        },
+        "_links" => {"self" => {"href" => complex_renderable_path(1, include: "single")}}
       )
     end
 
@@ -67,7 +69,8 @@ RSpec.describe "ComplexRenderables", :rails, type: :request do
               }
             ]
           }
-        }
+        },
+        "_links" => {"self" => {"href" => complex_renderable_path(1, include: "multiple")}}
       )
     end
   end

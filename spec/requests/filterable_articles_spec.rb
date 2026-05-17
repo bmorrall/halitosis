@@ -27,6 +27,7 @@ RSpec.describe "FilterableArticles", :rails, type: :request do
 
         expect(response).to have_http_status(:ok)
         expect(response.parsed_body["articles"].size).to eq(3)
+        expect(response.parsed_body.dig("_links", "self", "href")).to eq(filterable_articles_path)
       end
     end
 
@@ -38,6 +39,7 @@ RSpec.describe "FilterableArticles", :rails, type: :request do
 
         names = response.parsed_body["articles"].map { |a| a["name"] }
         expect(names).to eq(["Alpha"])
+        expect(response.parsed_body.dig("_links", "self", "href")).to eq(filterable_articles_path(filter: {name: "Alpha"}))
       end
 
       it "returns an empty list when no articles match" do
@@ -67,6 +69,7 @@ RSpec.describe "FilterableArticles", :rails, type: :request do
 
         names = response.parsed_body["articles"].map { |a| a["name"] }
         expect(names).to eq(["Bravo"])
+        expect(response.parsed_body.dig("_links", "self", "href")).to eq(filterable_articles_path(filter: {name: "Bravo", score: "2"}))
       end
     end
 
