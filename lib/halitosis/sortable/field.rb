@@ -22,8 +22,8 @@ module Halitosis
       #
       # @return [Object] the sorted collection
       #
-      def apply(instance, ascending)
-        instance.instance_exec(ascending, &procedure)
+      def apply_sort(context, ascending)
+        context.call_instance_with(ascending, procedure)
       end
     end
   end

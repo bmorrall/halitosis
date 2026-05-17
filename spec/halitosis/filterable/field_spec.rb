@@ -30,7 +30,7 @@ RSpec.describe Halitosis::Filterable::Field do
     end
   end
 
-  describe "#apply" do
+  describe "#apply_filter" do
     it "calls instance_exec on the instance with the value" do
       received_value = nil
       field = described_class.new(:name, {}, proc { |v|
@@ -38,7 +38,8 @@ RSpec.describe Halitosis::Filterable::Field do
         "filtered_result"
       })
 
-      result = field.apply(Object.new, "Alice")
+      context = Halitosis::Context.new(Object.new)
+      result = field.apply_filter(context, "Alice")
 
       expect(received_value).to eq("Alice")
       expect(result).to eq("filtered_result")
@@ -53,13 +54,13 @@ RSpec.describe Halitosis::Filterable::Field do
         collection.select { |i| i >= v.to_i }
       })
 
-      expect(field.apply(instance, "3")).to eq([3, 4, 5])
+      expect(field.apply_filter(Halitosis::Context.new(instance), "3")).to eq([3, 4, 5])
     end
 
     it "returns nil when the block returns nil" do
       field = described_class.new(:score, {}, proc { |_v| })
 
-      expect(field.apply(Object.new, "bad")).to be_nil
+      expect(field.apply_filter(Halitosis::Context.new(Object.new), "bad")).to be_nil
     end
   end
 end
