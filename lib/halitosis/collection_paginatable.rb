@@ -150,7 +150,11 @@ module Halitosis
         field = self.class.fields.singleton(CollectionPaginatable::Field)
         return unless field
 
-        field.apply_pagination(context)
+        if field.apply_pagination(context).nil?
+          resource_label = [self.class.resource_type, "collection"].compact.join(" ")
+          raise Halitosis::InvalidPaginationParameter,
+            "The #{resource_label} can not be paginated with the provided values"
+        end
 
         if (metadata_field = self.class.fields.singleton(CollectionPaginatable::MetadataField))
           metadata_field.process(context, context.collection) unless metadata_field.fetch_result(context)
