@@ -17,7 +17,7 @@ module Halitosis
       # @return [Halitosis::Identifiers::Field]
       #
       def identifier(name, options = {}, &procedure)
-        if fields.for_type(Identifiers::Field).any?
+        if fields.singleton(Identifiers::Field)
           raise InvalidField, "You can only define one identifier per serializer"
         end
 
@@ -28,7 +28,7 @@ module Halitosis
             procedure = default_procedure_for(name)
           end
         end
-        fields.add(Identifiers::Field.new(name, options, procedure))
+        fields.add_singleton(Identifiers::Field.new(name, options, procedure))
       end
     end
 
@@ -42,9 +42,10 @@ module Halitosis
       # @return [Hash] identifiers from fields
       #
       def identifiers(context = build_context)
-        render_fields(Identifiers::Field, context) do |field, result|
-          result[field.name] = field.value(context)
-        end
+        field = self.class.fields.singleton(Identifiers::Field)
+        return {} unless field&.enabled?(context)
+
+        {field.name => field.value(context)}
       end
     end
   end
