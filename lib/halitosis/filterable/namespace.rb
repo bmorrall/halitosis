@@ -8,7 +8,7 @@ module Halitosis
     #
     # @example
     #   filterable_by :user do
-    #     filterable_by :name do |value|
+    #     filterable_by :name do |collection, value|
     #       collection.joins(:user).where(users: { name: value })
     #     end
     #   end
@@ -36,13 +36,13 @@ module Halitosis
         case procedure&.arity
         when 0
           Namespace.new(full_name, target_class).instance_eval(&procedure)
-        when 1
+        when 2
           target_class.fields.add(Filterable::Field.new(full_name, options, procedure))
         when nil
           raise InvalidField, "Filter field #{full_name} must be defined with a proc"
         else
           raise InvalidField,
-            "Filter field #{full_name} block must accept 0 arguments (namespace) or 1 argument (filter value)"
+            "Filter field #{full_name} block must accept 0 arguments (namespace) or 2 arguments (collection, filter value)"
         end
       end
 

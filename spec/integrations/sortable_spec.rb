@@ -23,11 +23,11 @@ RSpec.describe "Sortable" do
         collection.map { |i| item_ser.new(i) }
       end
 
-      sortable_by :name do |ascending|
+      sortable_by :name do |collection, ascending|
         ascending ? collection.sort_by { |i| i[:name] } : collection.sort_by { |i| i[:name] }.reverse
       end
 
-      sortable_by :length do |ascending|
+      sortable_by :length do |collection, ascending|
         ascending ? collection.sort_by { |i| i[:name].length } : collection.sort_by { |i| i[:name].length }.reverse
       end
     end
@@ -99,7 +99,7 @@ RSpec.describe "Sortable" do
           collection.map { |i| item_ser.new(i) }
         end
 
-        sortable_by :name do |ascending|
+        sortable_by :name do |collection, ascending|
           # only supports ascending — returns nil to signal unsupported direction
           collection.sort_by { |i| i[:name] } if ascending
         end

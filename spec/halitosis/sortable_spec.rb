@@ -9,11 +9,11 @@ RSpec.describe Halitosis::Sortable do
         collection
       end
 
-      sortable_by :name do |ascending|
+      sortable_by :name do |collection, ascending|
         ascending ? collection.sort : collection.sort.reverse
       end
 
-      sortable_by :score do |ascending|
+      sortable_by :score do |collection, ascending|
         ascending ? collection.sort : collection.sort.reverse
       end
     end
@@ -148,12 +148,12 @@ RSpec.describe Halitosis::Sortable do
             collection
           end
 
-          sortable_by :name do |ascending|
+          sortable_by :name do |collection, ascending|
             calls << [:name, ascending]
             collection
           end
 
-          sortable_by :score do |ascending|
+          sortable_by :score do |collection, ascending|
             calls << [:score, ascending]
             collection
           end
@@ -184,7 +184,7 @@ RSpec.describe Halitosis::Sortable do
             collection
           end
 
-          sortable_by :name do |ascending|
+          sortable_by :name do |collection, ascending|
             collection.sort if ascending
             # returns nil for descending — direction not supported
           end
@@ -210,7 +210,7 @@ RSpec.describe Halitosis::Sortable do
             collection
           end
 
-          sortable_by :name do |ascending|
+          sortable_by :name do |collection, ascending|
             collection.sort unless ascending
             # returns nil for ascending — direction not supported
           end

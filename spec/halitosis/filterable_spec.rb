@@ -9,11 +9,11 @@ RSpec.describe Halitosis::Filterable do
         collection
       end
 
-      filterable_by :name do |value|
+      filterable_by :name do |collection, value|
         collection.select { |i| i[:name] == value }
       end
 
-      filterable_by :score do |value|
+      filterable_by :score do |collection, value|
         integer_value = Integer(value)
         collection.select { |i| i[:score] == integer_value }
       rescue ArgumentError, TypeError
@@ -44,10 +44,10 @@ RSpec.describe Halitosis::Filterable do
       end.to raise_error(Halitosis::InvalidField, /filter field title must be defined with a proc/i)
     end
 
-    it "raises InvalidField when the block accepts more than 1 argument" do
+    it "raises InvalidField when the block accepts more than 2 arguments" do
       expect do
-        klass.filterable_by(:title) { |a, b| a }
-      end.to raise_error(Halitosis::InvalidField, /must accept 0 arguments.*or 1 argument/i)
+        klass.filterable_by(:title) { |a, b, c| a }
+      end.to raise_error(Halitosis::InvalidField, /must accept 0 arguments.*or 2 arguments/i)
     end
 
     context "with a zero-arity namespace block" do
@@ -60,7 +60,7 @@ RSpec.describe Halitosis::Filterable do
           end
 
           filterable_by :user do
-            filterable_by :name do |value|
+            filterable_by :name do |collection, value|
               collection.select { |i| i[:name] == value }
             end
           end
@@ -81,7 +81,7 @@ RSpec.describe Halitosis::Filterable do
 
           filterable_by :a do
             filterable_by :b do
-              filterable_by :c do |value|
+              filterable_by :c do |collection, value|
                 collection.select { |i| i[:c] == value }
               end
             end
@@ -102,11 +102,11 @@ RSpec.describe Halitosis::Filterable do
           end
 
           filterable_by :user do
-            filterable_by :name do |v|
+            filterable_by :name do |collection, v|
               collection.select { |i| i[:name] == v }
             end
 
-            filterable_by :age do |v|
+            filterable_by :age do |collection, v|
               collection.select { |i| i[:age] == v.to_i }
             end
           end
@@ -116,7 +116,7 @@ RSpec.describe Halitosis::Filterable do
         expect(fields.map(&:name)).to contain_exactly(:"user.name", :"user.age")
       end
 
-      it "raises InvalidField when a nested block accepts more than 1 argument" do
+      it "raises InvalidField when a nested block accepts more than 2 arguments" do
         expect do
           Class.new do
             include Halitosis
@@ -126,12 +126,12 @@ RSpec.describe Halitosis::Filterable do
             end
 
             filterable_by :user do
-              filterable_by :name do |a, b|
+              filterable_by :name do |a, b, c|
                 a
               end
             end
           end
-        end.to raise_error(Halitosis::InvalidField, /must accept 0 arguments.*or 1 argument/i)
+        end.to raise_error(Halitosis::InvalidField, /must accept 0 arguments.*or 2 arguments/i)
       end
     end
   end

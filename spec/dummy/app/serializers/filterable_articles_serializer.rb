@@ -5,11 +5,11 @@ class FilterableArticlesSerializer
     articles.map { |article| ArticleSerializer.new(article) }
   end
 
-  filterable_by :name do |value|
+  filterable_by :name do |collection, value|
     collection.where(name: value)
   end
 
-  filterable_by :score do |value|
+  filterable_by :score do |collection, value|
     integer_value = Integer(value)
     collection.where(score: integer_value)
   rescue ArgumentError, TypeError

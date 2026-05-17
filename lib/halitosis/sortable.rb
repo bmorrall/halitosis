@@ -112,7 +112,7 @@ module Halitosis
 
         directives.each do |name, ascending|
           field = sort_fields.find { |f| f.name.to_s == name }
-          result = field.apply_sort(context, ascending)
+          result = field.apply_sort(context, @collection, ascending)
 
           if result.nil?
             sort_token = ascending ? name : "-#{name}"
