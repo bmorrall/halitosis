@@ -3,6 +3,8 @@
 module Halitosis
   # Each serializer class has a Fields object that stores the fields that have been defined on it.
   #
+  # Fields must only be created at DSL time (class definition), never at instance or render time.
+  #
   class Fields < Hash
     def add(field)
       type = field.class.name
