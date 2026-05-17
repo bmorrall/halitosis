@@ -334,6 +334,34 @@ When using `render_with_params` (the Rails integration helper), both the JSON:AP
 
 If `page[:number]` or `page[:size]` cannot be coerced to an integer, or the block returns `nil`, an `InvalidPaginationParameter` is raised (mapped to `400 Bad Request` by the Rails integration).
 
+#### Pagy
+
+Use `paginate_with_pagy` instead of `paginate_by_page` when using Pagy. Pagy returns a separate metadata object alongside the records; `paginate_with_pagy` handles both automatically:
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+
+  collection :articles do |collection|
+    collection.map { |article| ArticleSerializer.new(article) }
+  end
+
+  paginate_with_pagy
+end
+```
+
+With no block, `paginate_with_pagy` reads page number and size from the render context automatically. When no `page[:size]` is provided, Pagy uses its own global default (`Pagy::DEFAULT[:limit]`).
+
+If you need to supply extra options to `Pagy::Offset.new` (e.g. a custom count or limit), pass a block that receives `context`, `collection`, and `page_params` and returns a kwargs hash:
+
+```ruby
+paginate_with_pagy do |collection, page_params|
+  { limit: 5 }
+end
+```
+
+Filters and sorts declared on the serializer are still applied to the collection before pagination runs, keeping the full pipeline intact.
+
 ### Pagination links
 
 Use `paginate_links` to emit `first`/`last`/`prev`/`next` links alongside a paginated collection. The block receives the target page number and the active `query_params` hash (including sort, filter, and page size):
@@ -374,9 +402,9 @@ end
 
 Built-in adapters: `:kaminari`, `:will_paginate`. Any callable that accepts `(collection, context)` and returns `{ current_page:, total_pages: }` also works.
 
-#### Pagy
+### Pagination meta
 
-Use `paginate_with_pagy` instead of `paginate_by_page` when using Pagy. Pagy returns a separate metadata object alongside the records; `paginate_with_pagy` handles both automatically:
+Use `paginate_meta` to emit `first`/`last`/`prev`/`next` page numbers as root-level `_meta` keys. Unlike `paginate_links`, no block is required — the raw page numbers are emitted directly:
 
 ```ruby
 class ArticlesSerializer
@@ -386,21 +414,35 @@ class ArticlesSerializer
     collection.map { |article| ArticleSerializer.new(article) }
   end
 
-  paginate_with_pagy
+  paginate_by_page default_page_size: 25 do |collection, number, size|
+    collection.page(number).per(size)
+  end
+
+  paginate_meta
 end
 ```
 
-With no block, `paginate_with_pagy` reads page number and size from the render context automatically. When no `page[:size]` is provided, Pagy uses its own global default (`Pagy::DEFAULT[:limit]`).
+This produces a `_meta` hash at the root level:
 
-If you need to supply extra options to `Pagy::Offset.new` (e.g. a custom count or limit), pass a block that receives `context`, `collection`, and `page_params` and returns a kwargs hash:
+```json
+{
+  "articles": [...],
+  "_meta": { "first": 1, "last": 5, "prev": 2, "next": 4 }
+}
+```
+
+All four keys are always present. Unavailable pages — `prev` on the first page and `next` on the last — are emitted as `null`.
+
+`paginate_meta` accepts the same optional adapter argument as `paginate_links`:
 
 ```ruby
-paginate_with_pagy do |collection, page_params|
-  { limit: 5 }
-end
+paginate_meta :kaminari
+paginate_meta :will_paginate
 ```
 
-Filters and sorts declared on the serializer are still applied to the collection before pagination runs, keeping the full pipeline intact.
+If a global adapter is configured or `paginate_with_pagy` is used, the argument may be omitted.
+
+`paginate_meta` and `paginate_links` may be declared together on the same serializer. In that case both `_links` (URLs) and `_meta` (page numbers) are emitted. `paginate_meta` also merges with any other `root_meta` fields on the serializer.
 
 ### Identifiers
 

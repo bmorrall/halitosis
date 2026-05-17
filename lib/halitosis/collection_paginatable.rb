@@ -21,6 +21,7 @@ module Halitosis
 
       base.send :include, InstanceMethods
       base.send :include, CollectionPaginatable::Links
+      base.send :include, CollectionPaginatable::Meta
     end
 
     module ClassMethods
@@ -202,3 +203,4 @@ require "halitosis/collection_paginatable/metadata_field"
 require "halitosis/collection_paginatable/pagy_helper"
 require "halitosis/collection_paginatable/adapters"
 require "halitosis/collection_paginatable/links"
+require "halitosis/collection_paginatable/meta"
