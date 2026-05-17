@@ -13,3 +13,6 @@ en:
       "Halitosis::InvalidFilterParameter":
         id: invalid_filter_parameter
         title: Invalid Filter Parameter
+      "Halitosis::InvalidPaginationParameter":
+        id: invalid_pagination_parameter
+        title: Invalid Pagination Parameter

@@ -294,6 +294,74 @@ ArticlesSerializer.new(Article.all, filter: { "user.name" => "Alice" }).render
 
 Namespaces can be nested to any depth. A block with no arguments opens a namespace; a block with one argument is a filter implementation. Any other arity raises `InvalidField` at class load time.
 
+### Pagination
+
+Declare server-side pagination on a collection serializer with `paginate_by_page`. The block receives the current `collection`, the resolved `number` (page number), and `size` (items per page), and must return the paginated collection, or `nil` to signal that the values are invalid:
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+
+  collection :articles do |collection|
+    collection.map { |article| ArticleSerializer.new(article) }
+  end
+
+  paginate_by_page default_page_size: 25 do |collection, number, size|
+    collection.page(number).per(size)
+  end
+end
+```
+
+Pagination is controlled by a nested `page:` hash following the [JSON:API recommendation](https://jsonapi.org/format/#fetching-pagination):
+
+| Key | Default | Description |
+| --- | --- | --- |
+| `page[:number]` | `1` | 1-based page number |
+| `page[:size]` | `default_page_size` | Items per page |
+
+```ruby
+# First page with default size
+ArticlesSerializer.new(Article.all).render
+
+# Second page
+ArticlesSerializer.new(Article.all, page: { number: 2 }).render
+
+# Custom page size
+ArticlesSerializer.new(Article.all, page: { number: 1, size: 10 }).render
+```
+
+When using `render_with_params` (the Rails integration helper), both the JSON:API bracket style (`page[number]`/`page[size]`) and the legacy flat style (`page`/`per_page`) are accepted as query parameters.
+
+If `page[:number]` or `page[:size]` cannot be coerced to an integer, or the block returns `nil`, an `InvalidPaginationParameter` is raised (mapped to `400 Bad Request` by the Rails integration).
+
+#### Pagy
+
+Use `paginate_with_pagy` instead of `paginate_by_page` when using Pagy. Pagy returns a separate metadata object alongside the records; `paginate_with_pagy` handles both automatically:
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+
+  collection :articles do |collection|
+    collection.map { |article| ArticleSerializer.new(article) }
+  end
+
+  paginate_with_pagy
+end
+```
+
+With no block, `paginate_with_pagy` reads page number and size from the render context automatically. When no `page[:size]` is provided, Pagy uses its own global default (`Pagy::DEFAULT[:limit]`).
+
+If you need to supply extra options to `Pagy::Offset.new` (e.g. a custom count or limit), pass a block that receives `context`, `collection`, and `page_params` and returns a kwargs hash:
+
+```ruby
+paginate_with_pagy do |collection, page_params|
+  { limit: 5 }
+end
+```
+
+Filters and sorts declared on the serializer are still applied to the collection before pagination runs, keeping the full pipeline intact.
+
 ### Identifiers
 
 Identifiers are rendered before other attributes and are typically used for primary keys:
@@ -556,9 +624,18 @@ ArticlesSerializer.new(articles).render
 #    }
 ```
 
-#### Building self links with `query_params`
+#### Generating links with `query_params`
 
-When a `root_link` block accepts one argument, it receives the accumulated `query_params` hash — a flat map of the `sort:`, `filter:`, and `include:` options that were applied during rendering. This makes it straightforward to generate a canonical self link that reflects the current request state without any additional plumbing.
+When a `root_link` (or `link`) block accepts one argument, it receives the accumulated `query_params` hash — a plain hash of the normalised request params that were active during that render. Each middleware module contributes its slice:
+
+| Key | Contributed by | Shape |
+| --- | --- | --- |
+| `filter:` | `filterable_by` | Symbolised hash, e.g. `{ name: "Alice" }` |
+| `sort:` | `sortable_by` | Reconstructed string, e.g. `"title,-published_at"` |
+| `page:` | `paginate_by_page` | `{ number: Integer, size: Integer }` (always includes defaults) |
+| `include:` | all serializers | Comma-separated string, e.g. `"author,comments"` |
+
+Pass `query_params` directly to a Rails URL helper so that self and pagination links automatically reflect the active filter, sort, and page state:
 
 ```ruby
 class ArticlesSerializer
@@ -568,30 +645,33 @@ class ArticlesSerializer
     collection.map { |article| ArticleSerializer.new(article) }
   end
 
-  sortable_by :title do |collection, ascending|
-    collection.order(title: ascending ? :asc : :desc)
+  filterable_by :name do |value|
+    collection.where(name: value)
   end
 
-  filterable_by :published do |collection, value|
-    collection.where(published: value == "true")
+  sortable_by :published_at do |ascending|
+    collection.order(published_at: ascending ? :asc : :desc)
+  end
+
+  paginate_by_page default_page_size: 25 do |collection, number, size|
+    collection.page(number).per(size)
   end
 
   # On collections, `link` is an alias for `root_link`
   link(:self) do |query_params|
-    query_string = query_params.map { |k, v| "#{k}=#{v}" }.join("&")
-    "/articles?#{query_string}"
+    articles_url(query_params)
+  end
+
+  root_link(:first) do |query_params|
+    articles_url(query_params.merge(page: { number: 1, size: query_params.dig(:page, :size) }))
   end
 end
-
-ArticlesSerializer.new(Article.all, sort: "title", filter: { published: "true" }).render[:_links]
-# => { self: { href: "/articles?sort=title&filter=published%3Atrue" } }
 ```
 
-`query_params` is empty when no sort, filter, or include options are applied:
+When rendered with `filter: { name: "Alice" }, sort: "-published_at", page: { number: 2, size: 10 }`, the `self` link will be:
 
-```ruby
-ArticlesSerializer.new(Article.all).render[:_links]
-# => { self: { href: "/articles?" } }
+```
+/articles?filter[name]=Alice&sort=-published_at&page[number]=2&page[size]=10
 ```
 
 Resource serializers support the same convention. When `include:` is passed, it appears in `query_params`:
@@ -627,6 +707,8 @@ root_link(:self) do |context, query_params|
   "/articles?#{query_string}"
 end
 ```
+
+Keys for middleware that was not triggered (e.g. no `filter` param, or no `paginate_by_page` declaration) are omitted entirely. The `sort:` key is also omitted when a block-based `default_sort` is in effect, since it cannot be reconstructed as a param string. The hash is frozen — use `merge` to build variations of it.
 
 ### Collecting includes (JSON:API-style sideloading)
 
@@ -702,6 +784,7 @@ ArticlesSerializer.new(articles, include: "author").render
 | `include:` | `{}` | Relationships to include (hash, array, or string) |
 | `sort:` | `nil` | Sort fields (string or array; prefix `-` for descending, e.g. `"name,-age"`) |
 | `filter:` | `nil` | Filter key/value pairs as a hash, e.g. `{ name: "Alice" }` |
+| `page:` | `{}` | Pagination hash with optional `number:` (1-based) and `size:` keys |
 | `include_root:` | resource name | Override root key, or `false` to omit the wrapper |
 | `include_links:` | `true` | Set to `false` to omit all `_links` |
 | `include_meta:` | `true` | Set to `false` to omit all `_meta` |
@@ -793,6 +876,26 @@ rescue_from Halitosis::InvalidQueryParameter do |error|
 end
 ```
 
+
+## Configuration
+
+Configure Halitosis via an initializer:
+
+```ruby
+Halitosis.configure do |config|
+  # Modules to include in every serializer class
+  config.extensions = [MyLoggingExtension]
+
+  # Default adapter used when paginating with paginate_by_page or paginate_with.
+  # Accepted values: :kaminari, :will_paginate, or any callable.
+  config.pagination_adapter = :kaminari
+end
+```
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `extensions` | `[]` | Modules included in every serializer class at load time |
+| `pagination_adapter` | `nil` | Default adapter for pagination metadata — `:kaminari`, `:will_paginate`, or a callable |
 
 ## Development
 

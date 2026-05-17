@@ -59,6 +59,10 @@ module Halitosis
       @include_options ||= HashUtil.hasherize_include_option(options[:include] || {})
     end
 
+    def resource_type
+      instance.class.resource_type
+    end
+
     # @return [nil, Hash] the shared included resources registry, if collect_includes is active
     #
     def included_registry
@@ -112,7 +116,36 @@ module Halitosis
       !!fetch(:include_root) { depth.zero? }
     end
 
+    # Store a value in the local context, keyed by +key+. Local data is never
+    # propagated to child contexts. Intended for use by field instances only.
+    #
+    # @param key [Symbol]
+    # @param value [Object]
+    #
+    def store_local(key, value)
+      local[key] = value
+    end
+
+    # Retrieve a value from the local context by +key+.
+    # Intended for use by field instances only.
+    #
+    # @param key [Symbol]
+    # @return [Object, nil]
+    #
+    def fetch_local(key)
+      local[key]
+    end
+
     private
+
+    # A mutable hash for context-local data that is never propagated to child
+    # contexts.
+    #
+    # @return [Hash]
+    #
+    def local
+      @local ||= {}
+    end
 
     attr_reader :instance, :options
   end

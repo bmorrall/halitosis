@@ -34,6 +34,12 @@ module Halitosis
     end
   end
 
+  class InvalidPaginationParameter < InvalidQueryParameter
+    def initialize(message)
+      super(message, "page")
+    end
+  end
+
   class InvalidIncludeParameter < InvalidQueryParameter
     def initialize(message)
       super(message, "include")
