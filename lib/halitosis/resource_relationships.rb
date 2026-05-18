@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Halitosis
-  module Relationships
+  module ResourceRelationships
     def self.included(base)
       base.extend ClassMethods
 
@@ -12,10 +12,10 @@ module Halitosis
       # @param name [Symbol, String]
       # @param options [nil, Hash]
       #
-      # @return [Halitosis::Relationships::Field]
+      # @return [Halitosis::ResourceRelationships::Field]
       #
       def relationship(name, options = {}, &procedure)
-        fields.add(Relationships::Field.new(name, options, procedure))
+        fields.add(ResourceRelationships::Field.new(name, options, procedure))
       end
 
       alias_method :rel, :relationship
@@ -34,7 +34,7 @@ module Halitosis
         # Do not validation non-root collections (as they pass values directly to children)
         validate_relationships!(context) unless collection?
 
-        render_fields(Relationships::Field, context) do |field, result|
+        render_fields(ResourceRelationships::Field, context) do |field, result|
           value = field.value(context)
 
           result[field.name] = relationships_child(field.name.to_s, context, value)
@@ -85,4 +85,4 @@ module Halitosis
   end
 end
 
-require "halitosis/relationships/field"
+require "halitosis/resource_relationships/field"

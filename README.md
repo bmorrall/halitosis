@@ -761,7 +761,6 @@ Resource serializers support the same convention. When `include:` is passed, it 
 ```ruby
 class ArticleSerializer
   include Halitosis
-  include Halitosis::Relationships
 
   resource :article
 
@@ -799,7 +798,6 @@ Include `collect_includes` in a serializer to hoist included relationships out o
 ```ruby
 class ArticleSerializer
   include Halitosis
-  include Halitosis::Relationships
 
   resource :article
 
@@ -838,7 +836,6 @@ When multiple resources reference the same related object, it appears only once 
 ```ruby
 class ArticlesSerializer
   include Halitosis
-  include Halitosis::Relationships
 
   collect_includes
 

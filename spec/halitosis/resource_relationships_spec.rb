@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-RSpec.describe Halitosis::Relationships do
+RSpec.describe Halitosis::ResourceRelationships do
   let :klass do
     Class.new do
       include Halitosis::Base
-      include Halitosis::Relationships
+      include Halitosis::ResourceRelationships
     end
   end
 
-  describe Halitosis::Relationships::ClassMethods do
+  describe Halitosis::ResourceRelationships::ClassMethods do
     describe "#relationship" do
       it "adds simple relationship field" do
-        expect(klass.fields).to receive(:add).with(kind_of(Halitosis::Relationships::Field))
+        expect(klass.fields).to receive(:add).with(kind_of(Halitosis::ResourceRelationships::Field))
 
         klass.relationship(:foo, {}) { "bar" }
       end
@@ -19,14 +19,14 @@ RSpec.describe Halitosis::Relationships do
 
     describe "#rel" do
       it "adds simple relationship field" do
-        expect(klass.fields).to receive(:add).with(kind_of(Halitosis::Relationships::Field))
+        expect(klass.fields).to receive(:add).with(kind_of(Halitosis::ResourceRelationships::Field))
 
         klass.rel(:foo, {}) { "bar" }
       end
     end
   end
 
-  describe Halitosis::Relationships::InstanceMethods do
+  describe Halitosis::ResourceRelationships::InstanceMethods do
     describe "#relationships" do
       describe "when no Relationships are defined" do
         it "returns empty hash when no Relationships are requested" do

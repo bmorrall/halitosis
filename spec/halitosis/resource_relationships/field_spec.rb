@@ -1,4 +1,4 @@
-RSpec.describe Halitosis::Relationships::Field do
+RSpec.describe Halitosis::ResourceRelationships::Field do
   describe "#validate" do
     it "returns true with procedure" do
       result = described_class.new(:name, {}, proc {}).validate
@@ -22,7 +22,7 @@ RSpec.describe Halitosis::Relationships::Field do
     let :klass do
       Class.new {
         include Halitosis::Base
-        include Halitosis::Relationships
+        include Halitosis::ResourceRelationships
       }
     end
 

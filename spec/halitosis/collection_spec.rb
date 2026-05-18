@@ -266,7 +266,7 @@ RSpec.describe Halitosis::Collection do
             [
               Class.new do
                 include Halitosis
-                include Halitosis::Relationships
+                include Halitosis::ResourceRelationships
 
                 attribute :name, value: "Ferdi"
 

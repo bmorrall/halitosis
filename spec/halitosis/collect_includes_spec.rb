@@ -4,7 +4,7 @@ RSpec.describe Halitosis::CollectIncludes do
   let :child_klass do
     Class.new do
       include Halitosis
-      include Halitosis::Relationships
+      include Halitosis::ResourceRelationships
 
       identifier :id, value: 42
       attribute(:name) { "child" }
@@ -18,7 +18,7 @@ RSpec.describe Halitosis::CollectIncludes do
 
     Class.new do
       include Halitosis
-      include Halitosis::Relationships
+      include Halitosis::ResourceRelationships
 
       collect_includes
 
