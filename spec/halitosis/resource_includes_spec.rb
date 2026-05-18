@@ -60,10 +60,12 @@ RSpec.describe Halitosis::ResourceIncludes do
         expect(leaf.procedure).to eq(proc)
       end
 
-      it "assigns the :preload option as the procedure for a builder child" do
+      it "assigns the preload procedure for a builder child" do
         preload_proc = ->(v) { v.reverse }
         klass.allow_include(:accounts) do
-          allow_include(:owner, preload: preload_proc) {}
+          allow_include(:owner) do
+            preload preload_proc
+          end
         end
 
         child = klass.fields.for_type(Halitosis::ResourceIncludes::Field).first.children.first
@@ -71,7 +73,7 @@ RSpec.describe Halitosis::ResourceIncludes do
         expect(child.procedure).to eq(preload_proc)
       end
 
-      it "uses DEFAULT_PROCEDURE for a builder child without :preload" do
+      it "uses DEFAULT_PROCEDURE for a builder child without a preload call" do
         klass.allow_include(:accounts) do
           allow_include(:owner) {}
         end
