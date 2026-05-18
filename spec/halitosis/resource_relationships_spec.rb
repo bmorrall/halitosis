@@ -4,6 +4,7 @@ RSpec.describe Halitosis::ResourceRelationships do
   let :klass do
     Class.new do
       include Halitosis::Base
+      include Halitosis::Preloadable
       include Halitosis::ResourceRelationships
     end
   end
@@ -73,6 +74,19 @@ RSpec.describe Halitosis::ResourceRelationships do
           serializer = klass.new(include: include_opts)
 
           expect(serializer.relationships).to eq(just_nil: nil, empty_array: [], non_repr: nil, child_repr: {})
+        end
+
+        it "passes the stored preload to an arity-1 relationship block" do
+          child_class = Class.new { include Halitosis::Base }
+          klass.rel(:with_preload, {}) { |preloaded| preloaded }
+
+          serializer = klass.new(include: {with_preload: true})
+          context = serializer.send(:build_context)
+          serializer.send(:store_preload, context, :with_preload, proc { child_class.new })
+
+          result = serializer.relationships(context)
+
+          expect(result[:with_preload]).to eq({})
         end
       end
     end
