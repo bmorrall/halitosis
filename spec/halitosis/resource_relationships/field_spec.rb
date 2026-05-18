@@ -1,4 +1,11 @@
 RSpec.describe Halitosis::ResourceRelationships::Field do
+  let :klass do
+    Class.new {
+      include Halitosis::Base
+      include Halitosis::ResourceRelationships
+    }
+  end
+
   describe "#validate" do
     it "returns true with procedure" do
       result = described_class.new(:name, {}, proc {}).validate
@@ -52,6 +59,33 @@ RSpec.describe Halitosis::ResourceRelationships::Field do
       relationship = described_class.new(:foo, {}, proc {})
 
       expect(relationship.send(:enabled?, context)).to be(false)
+    end
+  end
+
+  describe "#value" do
+    context "when the procedure has arity 0" do
+      it "calls the procedure without the preloaded value" do
+        context = klass.new(include: {articles: true}).send(:build_context)
+        field = described_class.new(:articles, {}, proc { "direct" })
+
+        expect(field.value(context)).to eq("direct")
+      end
+    end
+
+    context "when the procedure has arity 1" do
+      it "passes the preloaded value as the first argument" do
+        context = klass.new(include: {articles: true}).send(:build_context)
+        field = described_class.new(:articles, {}, proc { |articles| articles })
+
+        expect(field.value(context, ["preloaded"])).to eq(["preloaded"])
+      end
+
+      it "passes nil when no preloaded value is given" do
+        context = klass.new(include: {articles: true}).send(:build_context)
+        field = described_class.new(:articles, {}, proc { |articles| articles })
+
+        expect(field.value(context, nil)).to be_nil
+      end
     end
   end
 end

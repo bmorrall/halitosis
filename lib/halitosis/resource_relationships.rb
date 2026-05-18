@@ -35,7 +35,8 @@ module Halitosis
         validate_relationships!(context) unless collection?
 
         render_fields(ResourceRelationships::Field, context) do |field, result|
-          value = field.value(context)
+          preloaded = fetch_preload(context, field.name)
+          value = field.value(context, preloaded)
 
           result[field.name] = relationships_child(field.name.to_s, context, value)
         end
