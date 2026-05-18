@@ -57,9 +57,8 @@ module Halitosis
 
     module InstanceMethods
       # @param context [Halitosis::Context] the render context
-      # @return [Hash, Array] the rendered collection, sorted according to the sort param
       #
-      def render_with_context(context)
+      def before_render(context)
         apply_sorts!(context)
         super
       end

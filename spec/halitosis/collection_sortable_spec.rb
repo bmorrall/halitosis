@@ -237,6 +237,7 @@ RSpec.describe Halitosis::CollectionSortable do
   describe "context query_params" do
     def render_context(serializer)
       context = serializer.send(:build_context)
+      serializer.send(:before_render, context)
       serializer.render_with_context(context)
       context
     end
