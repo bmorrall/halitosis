@@ -12,6 +12,7 @@ module Halitosis
       base.extend ClassMethods
 
       base.send :include, ResourceRelationships
+      base.send :include, ResourceIncludes
       base.send :include, InstanceMethods
 
       base.send :attr_reader, :resource
