@@ -20,6 +20,7 @@ Rails.application.routes.draw do
   resources :kaminari_articles, only: :index
   resources :will_paginate_articles, only: :index
   resources :pagy_articles, only: :index
+  resources :pipeline_articles, only: :index
 
   # Defines the root path route ("/")
   # root "posts#index"
