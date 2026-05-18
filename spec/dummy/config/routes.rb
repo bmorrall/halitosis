@@ -10,6 +10,8 @@ Rails.application.routes.draw do
 
   resources :complex_renderables, only: :show
 
+  resources :includeable_examples, only: :show
+
   resources :sortable_articles, only: :index
   resources :filterable_articles, only: :index
   resources :paginatable_articles, only: :index

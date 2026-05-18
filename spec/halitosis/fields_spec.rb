@@ -69,4 +69,29 @@ RSpec.describe Halitosis::Fields do
       expect(fields.singleton(Halitosis::Field)).to be_nil
     end
   end
+
+  describe "#find_by_name" do
+    let(:other_field) { Halitosis::Field.new(:other, {}, nil) }
+
+    before do
+      fields.add(field)
+      fields.add(other_field)
+    end
+
+    it "returns the field matching the given name as a symbol" do
+      expect(fields.find_by_name(Halitosis::Field, :name)).to eq(field)
+    end
+
+    it "returns the field matching the given name as a string" do
+      expect(fields.find_by_name(Halitosis::Field, "name")).to eq(field)
+    end
+
+    it "returns nil when no field matches the name" do
+      expect(fields.find_by_name(Halitosis::Field, :missing)).to be_nil
+    end
+
+    it "returns nil when no fields of the given type exist" do
+      expect(fields.find_by_name(Halitosis::Links::Field, :name)).to be_nil
+    end
+  end
 end

@@ -23,6 +23,17 @@ module Halitosis
       fetch(type.name, [])
     end
 
+    # Returns the first field of +type+ whose +name+ matches +field_name+,
+    # or +nil+ if none is found.
+    #
+    # @param type [Class]
+    # @param field_name [Symbol, String]
+    # @return [Halitosis::Field, nil]
+    #
+    def find_by_name(type, field_name)
+      for_type(type).find { |f| f.name.to_s == field_name.to_s }
+    end
+
     # Returns the value stored for the given type key, or +nil+ if nothing
     # has been registered under that key.
     #
