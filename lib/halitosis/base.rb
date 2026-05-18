@@ -60,12 +60,22 @@ module Halitosis
       #
       def render(**options)
         context = build_context(options)
+        before_render(context)
         result = render_with_context(context)
         if context.include_root?
           render_root(context.freeze, result)
         else
           result
         end
+      end
+
+      # Hook called after the context is built but before rendering begins.
+      # Override in submodules or serializer classes to populate preload
+      # storage or perform other setup.
+      #
+      # @param _context [Halitosis::Context]
+      #
+      def before_render(_context)
       end
 
       # @param context [Halitosis::Context] the context instance
