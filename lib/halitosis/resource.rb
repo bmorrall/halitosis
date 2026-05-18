@@ -35,13 +35,14 @@ module Halitosis
         fields.singleton(Resource::Field) || raise(InvalidField, "#{name || Resource.name} resource is not defined")
       end
 
-      # For resource-based serializers, delegate to the resource by default
+      # For resource-based serializers, call the method on the serializer if it
+      # responds to it, otherwise fall back to the resource.
       #
       # @param name [Symbol] the field name
       # @return [Proc]
       #
       def default_procedure_for(name)
-        proc { resource.public_send(name) }
+        proc { respond_to?(name, true) ? public_send(name) : resource.public_send(name) }
       end
     end
 
@@ -70,24 +71,18 @@ module Halitosis
 
       private
 
-      # When +value_source+ is a String or Symbol and the serializer instance
-      # does not respond to it but the resource does, call it directly on the
-      # resource and cache the result. The serializer takes priority; the
-      # resource is the fallback. Defers to +super+ for procs and for method
-      # names neither object responds to.
+      # When +value_source+ is a String or Symbol, convert it to the default
+      # procedure so the serializer-first, resource-fallback logic in
+      # +default_procedure_for+ is applied consistently. Defers to +super+ for
+      # procs.
       #
       # @param context [Halitosis::Context] the render context
       # @param field_name [Symbol, String] key to store under
       # @param value_source [String, Symbol, Proc] the value to resolve
       #
       def store_preload(context, field_name, value_source)
-        if (value_source.is_a?(Symbol) || value_source.is_a?(String)) &&
-            !respond_to?(value_source, true) &&
-            resource.respond_to?(value_source)
-          value = resource.public_send(value_source)
-          current = context.fetch_local(:includeable_preloads) || {}
-
-          context.store_local(:includeable_preloads, current.merge(field_name.to_sym => value))
+        if value_source.is_a?(Symbol) || value_source.is_a?(String)
+          super(context, field_name, self.class.default_procedure_for(value_source))
         else
           super
         end
