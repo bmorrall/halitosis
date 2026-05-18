@@ -309,7 +309,7 @@ RSpec.describe Halitosis::Resource do
     let(:context) { serializer.send(:build_context) }
 
     describe "#store_preload" do
-      context "when value_source is a symbol and the resource responds to it" do
+      context "when value_source is a symbol and only the resource responds to it" do
         it "calls the method on the resource and stores the result" do
           serializer.send(:store_preload, context, :my_field, :resource_method)
 
@@ -317,7 +317,7 @@ RSpec.describe Halitosis::Resource do
         end
       end
 
-      context "when value_source is a string and the resource responds to it" do
+      context "when value_source is a string and only the resource responds to it" do
         it "calls the method on the resource and stores the result" do
           serializer.send(:store_preload, context, :my_field, "resource_method")
 
@@ -325,8 +325,18 @@ RSpec.describe Halitosis::Resource do
         end
       end
 
+      context "when both the serializer and the resource respond to the method" do
+        it "calls the method on the serializer instance, not the resource" do
+          allow(resource).to receive(:serializer_method).and_return("resource_override")
+
+          serializer.send(:store_preload, context, :my_field, :serializer_method)
+
+          expect(context.fetch_local(:includeable_preloads)).to eq(my_field: "serializer_value")
+        end
+      end
+
       context "when value_source is a symbol the resource does not respond to" do
-        it "falls back to calling the method on the serializer instance" do
+        it "calls the method on the serializer instance" do
           serializer.send(:store_preload, context, :my_field, :serializer_method)
 
           expect(context.fetch_local(:includeable_preloads)).to eq(my_field: "serializer_value")
@@ -334,7 +344,7 @@ RSpec.describe Halitosis::Resource do
       end
 
       context "when value_source is a proc" do
-        it "falls back to evaluating the proc in the context of the serializer instance" do
+        it "evaluates the proc in the context of the serializer instance" do
           serializer.send(:store_preload, context, :my_field, proc { "proc_value" })
 
           expect(context.fetch_local(:includeable_preloads)).to eq(my_field: "proc_value")
