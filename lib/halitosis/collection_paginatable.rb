@@ -150,10 +150,8 @@ module Halitosis
 
     module InstanceMethods
       # @param context [Halitosis::Context] the render context
-      # @return [Hash, Array] the rendered collection, paginated according to
-      #   the +page[:number]+ / +page[:size]+ values in the context
       #
-      def render_with_context(context)
+      def before_render(context)
         apply_pagination!(context)
         super
       end
