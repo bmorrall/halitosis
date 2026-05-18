@@ -150,9 +150,9 @@ RSpec.describe Halitosis::ResourceIncludes do
         end
       end
 
-      context "when items relationship has preload: false" do
+      context "when the relationship has no preload key" do
         before do
-          klass.relationship(:blocked, preload: false) { nil }
+          klass.relationship(:blocked) { nil }
           klass.allow_include(:blocked) do
             allow_include(:detail) { |v| raise "should not be called" }
           end

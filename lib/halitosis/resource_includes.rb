@@ -120,7 +120,7 @@ module Halitosis
           rel_field = find_relationship_field(allow_field.name)
 
           next unless rel_field&.enabled?(context)
-          next if rel_field.options[:preload] == false
+          next unless rel_field.preload?
 
           cache_key = rel_field.preload_key
 
