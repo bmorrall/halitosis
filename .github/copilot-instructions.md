@@ -42,3 +42,17 @@ result
 ```
 
 No blank line is needed when the call is the last line in its block or method.
+
+## Calling procedures on the serializer instance
+
+Never call `instance_exec` directly on a serializer instance. Always use `context.call_instance` or `context.call_instance_with` instead — these are the canonical dispatch points and keep all invocation logic in one place.
+
+```ruby
+# Correct
+context.call_instance_with(collection, procedure)
+
+# Incorrect
+instance.instance_exec(collection, &procedure)
+```
+
+The only permitted use of `instance_exec` is inside `Context#call_instance` and `Context#call_instance_with` themselves.
