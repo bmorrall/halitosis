@@ -29,25 +29,34 @@ module Halitosis
     # inside a builder block.
     #
     class Builder
-      attr_reader :children
+      attr_reader :children, :preload_procedure
 
       def initialize
         @children = []
+        @preload_procedure = nil
+      end
+
+      # Register a preload procedure for this builder scope. Applies when the
+      # path represented by this builder is itself the deepest requested leaf.
+      #
+      # @param proc [Proc] receives the current cached value, returns the new value
+      # @return [self]
+      #
+      def preload(proc)
+        @preload_procedure = proc
+        self
       end
 
       # Declare a supported nested include path.
       #
       # @param name [Symbol, String]
-      # @param options [Hash]
-      # @option options [Proc, nil] :preload procedure for this node when used
-      #   as a builder (arity 0) and the node itself is a leaf. Defaults to
-      #   +Field::DEFAULT_PROCEDURE+.
       # @param block [Proc, nil]
       #   - No block: leaf field with +DEFAULT_PROCEDURE+
       #   - Arity 1: leaf field using the block as the procedure
-      #   - Arity 0: builder block; nested +allow_include+ calls accumulate children
+      #   - Arity 0: builder block; nested +allow_include+ and +preload+ calls
+      #     configure the child
       #
-      def allow_include(name, options = {}, &block)
+      def allow_include(name, &block)
         field = if block.nil?
           ResourceIncludes::Field.new(name, nil, [])
         elsif block.arity == 1
@@ -55,7 +64,7 @@ module Halitosis
         else
           sub_builder = Builder.new
           sub_builder.instance_eval(&block)
-          ResourceIncludes::Field.new(name, options[:preload], sub_builder.children)
+          ResourceIncludes::Field.new(name, sub_builder.preload_procedure, sub_builder.children)
         end
 
         @children << field
