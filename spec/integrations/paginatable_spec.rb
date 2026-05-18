@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 RSpec.describe "Paginatable" do
+  before { allow(Halitosis.config).to receive(:pagination_adapter).and_return(:kaminari) }
+
   let :item_klass do
     Class.new do
       include Halitosis

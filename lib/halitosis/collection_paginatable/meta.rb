@@ -8,20 +8,20 @@ module Halitosis
     #
     # Automatically included by +CollectionPaginatable+. Requires
     # +CollectionPaginatable+ to be present on the same class, as it relies on
-    # the +MetadataField+ hook to obtain normalised page metadata regardless of
+    # the +CollectionPaginatable::Field+ singleton to obtain normalised page metadata regardless of
     # the pagination backend.
     #
     # == Usage
     #
-    # Declare +paginate_meta+ alongside a pagination method:
+    # Declare the adapter on the pagination method, then add +paginate_meta+:
     #
-    #   paginate_by_page default_page_size: 25 do |collection, number, size|
+    #   paginate_by_page :kaminari, default_page_size: 25 do |collection, number, size|
     #     collection.page(number).per(size)
     #   end
     #
-    #   paginate_meta :kaminari
+    #   paginate_meta
     #
-    # The adapter argument may be omitted when a global default is configured:
+    # The adapter may also be set globally:
     #
     #   Halitosis.configure { |c| c.pagination_adapter = :kaminari }
     #
@@ -52,44 +52,24 @@ module Halitosis
         # Declare pagination page-number meta (+first+/+last+/+prev+/+next+)
         # for this collection serializer.
         #
-        # @param adapter [Symbol, #call, nil] +:kaminari+, +:will_paginate+, or
-        #   any callable. Omit when using +paginate_with_pagy+ (adapter inferred
-        #   automatically) or when a global default is set via
-        #   +Halitosis.config.pagination_adapter+.
+        # The adapter must be declared on the pagination method itself (e.g.
+        # +paginate_by_page :kaminari+ or +paginate_with :kaminari+), or set
+        # globally via +Halitosis.config.pagination_adapter+. When using
+        # +paginate_with_pagy+ the adapter is set automatically.
         #
-        # @example Using with a global adapter
+        # @example
         #   paginate_meta
         #
-        # @example Using with an explicit adapter
-        #   paginate_meta :kaminari
-        #
-        def paginate_meta(adapter = nil)
+        def paginate_meta
           if fields.singleton(CollectionPaginatable::PaginationMetaField)
             raise InvalidField, "#{name} pagination meta is already defined"
           end
 
-          unless fields.singleton(CollectionPaginatable::MetadataField)
-            if adapter
-              fields.add_singleton(CollectionPaginatable::MetadataField.new(CollectionPaginatable::Adapters.resolve(adapter)))
-            else
-              config_adapter = Halitosis.config.pagination_adapter
-
-              unless config_adapter
-                raise InvalidField,
-                  "#{name} paginate_meta requires an adapter. " \
-                  "Pass one as an argument, set Halitosis.config.pagination_adapter, or use paginate_with_pagy."
-              end
-
-              fields.add_singleton(CollectionPaginatable::MetadataField.new(CollectionPaginatable::Adapters.resolve(config_adapter)))
-            end
-          end
-
-          # :nocov:
-          if fields.singleton(CollectionPaginatable::MetadataField)&.adapter == CollectionPaginatable::Adapters::Pagy && adapter
+          unless fields.singleton(CollectionPaginatable::Field)
             raise InvalidField,
-              "#{name} paginate_meta adapter must not be set when using paginate_with_pagy"
+              "#{name} paginate_meta must be declared after paginate_by_page, " \
+              "paginate_with, or paginate_with_pagy"
           end
-          # :nocov:
 
           fields.add_singleton(CollectionPaginatable::PaginationMetaField.new)
         end
@@ -130,7 +110,7 @@ module Halitosis
         # @return [Hash, nil]
         #
         def extract_pagination_page_numbers(context)
-          metadata_field = self.class.fields.singleton(CollectionPaginatable::MetadataField)
+          metadata_field = self.class.fields.singleton(CollectionPaginatable::Field)
           metadata_field.page_numbers(context)
         end
       end

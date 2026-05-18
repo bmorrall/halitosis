@@ -7,11 +7,11 @@ module Halitosis
     # Its presence in the fields registry is the sentinel that determines
     # whether pagination links should be emitted at render time. A serializer
     # that declares +paginate_with_pagy+ (or another pagination method) but
-    # omits +paginate_links+ will have a +MetadataField+ but no +LinksField+,
+    # omits +paginate_links+ will have a +CollectionPaginatable::Field+ but no +LinksField+,
     # and no +_links+ output will be produced.
     #
-    # Contrast with +CollectionPaginatable::MetadataField+, which answers
-    # "how do I get page numbers?" — this field answers
+    # Contrast with +CollectionPaginatable::Field+, which holds the pagination
+    # procedure and adapter — this field answers
     # "how do I build a URL for a given page number?".
     #
     class LinksField < Halitosis::Field

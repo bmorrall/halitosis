@@ -9,7 +9,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
         collection
       end
 
-      paginate_by_page default_page_size: 10 do |collection, number, size|
+      paginate_by_page :kaminari, default_page_size: 10 do |collection, number, size|
         offset = (number - 1) * size
         collection[offset, size] || []
       end
@@ -19,6 +19,8 @@ RSpec.describe Halitosis::CollectionPaginatable do
   let(:items) { (1..50).map { |i| {id: i} } }
 
   describe ".paginate_with" do
+    before { allow(Halitosis.config).to receive(:pagination_adapter).and_return(:kaminari) }
+
     it "stores the pagination procedure" do
       klass = Class.new do
         include Halitosis
@@ -110,6 +112,8 @@ RSpec.describe Halitosis::CollectionPaginatable do
   end
 
   describe ".paginate_by_page" do
+    before { allow(Halitosis.config).to receive(:pagination_adapter).and_return(:kaminari) }
+
     it "stores the pagination procedure" do
       expect(klass.fields.singleton(Halitosis::CollectionPaginatable::Field)).not_to be_nil
     end
@@ -159,6 +163,8 @@ RSpec.describe Halitosis::CollectionPaginatable do
   end
 
   describe "#apply_pagination!" do
+    before { allow(Halitosis.config).to receive(:pagination_adapter).and_return(:kaminari) }
+
     it "paginates using default_page_size when no page params are given" do
       serializer = klass.new(items)
       context = serializer.send(:build_context, {})
@@ -252,7 +258,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
       end
     end
 
-    context "when a MetadataField singleton is registered" do
+    context "when a pagination adapter is configured" do
       let :klass_with_metadata do
         adapter = ->(collection) { {total: collection.size} }
 
@@ -263,22 +269,20 @@ RSpec.describe Halitosis::CollectionPaginatable do
             collection
           end
 
-          paginate_by_page default_page_size: 10 do |collection, number, size|
+          paginate_by_page adapter, default_page_size: 10 do |collection, number, size|
             offset = (number - 1) * size
             collection[offset, size] || []
           end
-
-          fields.add_singleton(Halitosis::CollectionPaginatable::MetadataField.new(adapter))
         end
       end
 
-      it "stores the paginated result on the context via the MetadataField" do
+      it "stores the paginated result on the context" do
         serializer = klass_with_metadata.new(items)
         context = serializer.send(:build_context, {page: {number: 2, size: 5}})
         serializer.send(:apply_pagination!, context)
 
-        metadata_field = klass_with_metadata.fields.singleton(Halitosis::CollectionPaginatable::MetadataField)
-        expect(metadata_field.fetch_result(context)).to eq({total: 5})
+        field = klass_with_metadata.fields.singleton(Halitosis::CollectionPaginatable::Field)
+        expect(field.fetch_result(context)).to eq({total: 5})
       end
     end
   end
@@ -387,8 +391,8 @@ RSpec.describe Halitosis::CollectionPaginatable do
         context = serializer.send(:build_context, {page: {number: 2, size: 15}})
         serializer.send(:apply_pagination!, context)
 
-        metadata_field = pagy_klass.fields.singleton(Halitosis::CollectionPaginatable::MetadataField)
-        expect(metadata_field.fetch_result(context)).to eq(
+        field = pagy_klass.fields.singleton(Halitosis::CollectionPaginatable::Field)
+        expect(field.fetch_result(context)).to eq(
           current_page: 2, total_pages: 5, prev_page: 1, next_page: 3
         )
         expect(context.query_params[:page]).to eq(number: 2, size: 15)
@@ -431,14 +435,14 @@ RSpec.describe Halitosis::CollectionPaginatable do
           collection
         end
 
-        paginate_by_page(default_page_size: 10) { |collection, number, size| collection }
-        paginate_links(:kaminari) { |_page_number, _qp| "/items" }
+        paginate_by_page(:kaminari, default_page_size: 10) { |collection, number, size| collection }
+        paginate_links { |_page_number, _qp| "/items" }
       end
 
       expect(klass.fields.singleton(Halitosis::CollectionPaginatable::LinksField)).not_to be_nil
     end
 
-    it "stores the adapter in a MetadataField" do
+    it "stores the resolved adapter on the Field" do
       klass = Class.new do
         include Halitosis
 
@@ -446,11 +450,11 @@ RSpec.describe Halitosis::CollectionPaginatable do
           collection
         end
 
-        paginate_by_page(default_page_size: 10) { |collection, number, size| collection }
-        paginate_links(:will_paginate) { |_page_number, _qp| "/items" }
+        paginate_by_page(:will_paginate, default_page_size: 10) { |collection, number, size| collection }
+        paginate_links { |_page_number, _qp| "/items" }
       end
 
-      expect(klass.fields.singleton(Halitosis::CollectionPaginatable::MetadataField).adapter)
+      expect(klass.fields.singleton(Halitosis::CollectionPaginatable::Field).options[:adapter])
         .to eq(Halitosis::CollectionPaginatable::Adapters::WillPaginate)
     end
 
@@ -470,7 +474,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
         paginate_links { |_page_number, _qp| "/items" }
       end
 
-      expect(klass.fields.singleton(Halitosis::CollectionPaginatable::MetadataField).adapter)
+      expect(klass.fields.singleton(Halitosis::CollectionPaginatable::Field).options[:adapter])
         .to eq(Halitosis::CollectionPaginatable::Adapters::Kaminari)
     end
 
@@ -483,8 +487,8 @@ RSpec.describe Halitosis::CollectionPaginatable do
             collection
           end
 
-          paginate_by_page(default_page_size: 10) { |collection, number, size| collection }
-          paginate_links :kaminari
+          paginate_by_page(:kaminari, default_page_size: 10) { |collection, number, size| collection }
+          paginate_links
         end
       end.to raise_error(Halitosis::InvalidField, /paginate_links must be defined with a block/i)
     end
@@ -498,8 +502,8 @@ RSpec.describe Halitosis::CollectionPaginatable do
             collection
           end
 
-          paginate_by_page(default_page_size: 10) { |collection, number, size| collection }
-          paginate_links(:kaminari) { |page_number| "/items" }
+          paginate_by_page(:kaminari, default_page_size: 10) { |collection, number, size| collection }
+          paginate_links { |page_number| "/items" }
         end
       end.to raise_error(Halitosis::InvalidField, /must accept exactly 2 arguments/i)
     end
@@ -513,29 +517,16 @@ RSpec.describe Halitosis::CollectionPaginatable do
             collection
           end
 
-          paginate_by_page(default_page_size: 10) { |collection, number, size| collection }
-          paginate_links(:kaminari) { |_page_number, _qp| "/items" }
-          paginate_links(:kaminari) { |_page_number, _qp| "/items" }
+          paginate_by_page(:kaminari, default_page_size: 10) { |collection, number, size| collection }
+          paginate_links { |_page_number, _qp| "/items" }
+          paginate_links { |_page_number, _qp| "/items" }
         end
       end.to raise_error(Halitosis::InvalidField, /pagination links are already defined/i)
     end
 
-    it "raises InvalidField when an adapter is given alongside paginate_with_pagy" do
-      expect do
-        Class.new do
-          include Halitosis
-
-          collection :items do |collection|
-            collection
-          end
-
-          paginate_with_pagy
-          paginate_links(:kaminari) { |_page_number, _qp| "/items" }
-        end
-      end.to raise_error(Halitosis::InvalidField, /adapter must not be set when using paginate_with_pagy/i)
-    end
-
     it "raises InvalidField when no adapter is configured and none is passed" do
+      allow(Halitosis.config).to receive(:pagination_adapter).and_return(nil)
+
       expect do
         Class.new do
           include Halitosis
@@ -548,6 +539,60 @@ RSpec.describe Halitosis::CollectionPaginatable do
           paginate_links { |_page_number, _qp| "/items" }
         end
       end.to raise_error(Halitosis::InvalidField, /requires an adapter/i)
+    end
+  end
+
+  describe ".paginate_meta" do
+    it "stores a PaginationMetaField singleton" do
+      klass = Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection
+        end
+
+        paginate_by_page :kaminari, default_page_size: 10 do |collection, number, size|
+          offset = (number - 1) * size
+          collection[offset, size] || []
+        end
+
+        paginate_meta
+      end
+
+      expect(klass.fields.singleton(Halitosis::CollectionPaginatable::PaginationMetaField)).not_to be_nil
+    end
+
+    it "raises InvalidField when declared before pagination is set up" do
+      expect do
+        Class.new do
+          include Halitosis
+
+          collection :items do |collection|
+            collection
+          end
+
+          paginate_meta
+        end
+      end.to raise_error(Halitosis::InvalidField, /must be declared after/i)
+    end
+
+    it "raises InvalidField when declared a second time" do
+      expect do
+        Class.new do
+          include Halitosis
+
+          collection :items do |collection|
+            collection
+          end
+
+          paginate_by_page :kaminari, default_page_size: 10 do |collection, number, size|
+            collection
+          end
+
+          paginate_meta
+          paginate_meta
+        end
+      end.to raise_error(Halitosis::InvalidField, /pagination meta is already defined/i)
     end
   end
 end
