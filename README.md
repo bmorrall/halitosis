@@ -564,6 +564,34 @@ rel(:author) { UserSerializer.new(article.author) }
 rel(:comments) { article.comments.map { |c| CommentSerializer.new(c) } }
 ```
 
+#### Preloading relationship values
+
+Use the `preload:` option to name a method that will be called once and cached for the duration of the render. The cached value is passed as the first argument to the relationship block:
+
+```ruby
+# The :author_record method is called once and its result passed to the block
+relationship(:author, preload: :author_record) do |author|
+  UserSerializer.new(author)
+end
+
+def author_record
+  article.author # called once even if multiple relationships share the key
+end
+```
+
+Multiple relationships can share the same `preload:` key — the method is evaluated only once:
+
+```ruby
+rel(:author,       preload: :author_data) { |data| UserSerializer.new(data) }
+rel(:author_links, preload: :author_data) { |data| data.links }
+```
+
+Use `preload: false` to opt out of preloading entirely. Any value that was manually stored under the field name is still used, but the method will not be called automatically:
+
+```ruby
+relationship(:author, preload: false) { UserSerializer.new(article.author) }
+```
+
 #### Including relationships
 
 Pass `include:` when instantiating to request relationships. Excluded relationships are not evaluated:

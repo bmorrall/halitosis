@@ -29,13 +29,18 @@ module Halitosis
         context.store_local(:includeable_preloads, current.merge(field_name.to_sym => value))
       end
 
-      # Retrieve a previously stored preloaded value for +field_name+.
+      # Retrieve a previously stored preloaded value for +field_name+, lazily
+      # evaluating and storing it first if it has not yet been preloaded.
+      # The value is evaluated by calling the method named by +field_name+ on
+      # the serializer instance via +store_preload+.
       #
       # @param context [Halitosis::Context] the render context
       # @param field_name [Symbol, String]
       # @return [Object, nil]
       #
       def fetch_preload(context, field_name)
+        store_preload(context, field_name, field_name.to_sym) unless preloaded?(context, field_name)
+
         (context.fetch_local(:includeable_preloads) || {})[field_name.to_sym]
       end
 

@@ -72,12 +72,20 @@ RSpec.describe Halitosis::Preloadable do
         expect(serializer.send(:fetch_preload, context, :my_field)).to eq("value")
       end
 
-      it "returns nil for an unknown field" do
-        expect(serializer.send(:fetch_preload, context, :unknown)).to be_nil
+      it "lazily evaluates the serializer method and caches the value on first access" do
+        expect(serializer.send(:fetch_preload, context, :computed_value)).to eq("from_instance")
+
+        expect(serializer.send(:preloaded?, context, :computed_value)).to be true
       end
 
-      it "returns nil when no preloads have been stored at all" do
-        expect(serializer.send(:fetch_preload, context, :any)).to be_nil
+      it "does not re-evaluate the method on subsequent fetches" do
+        call_count = 0
+        klass.define_method(:counted_value) { call_count += 1 }
+
+        serializer.send(:fetch_preload, context, :counted_value)
+        serializer.send(:fetch_preload, context, :counted_value)
+
+        expect(call_count).to eq(1)
       end
 
       it "returns nil when the stored value is nil" do

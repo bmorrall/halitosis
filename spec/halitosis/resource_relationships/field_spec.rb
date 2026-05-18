@@ -88,4 +88,45 @@ RSpec.describe Halitosis::ResourceRelationships::Field do
       end
     end
   end
+
+  describe "#preload_key" do
+    it "defaults to the field name" do
+      field = described_class.new(:articles, {}, proc {})
+
+      expect(field.preload_key).to eq(:articles)
+    end
+
+    it "returns the preload option as a symbol when set" do
+      field = described_class.new(:articles, {preload: :user_articles}, proc {})
+
+      expect(field.preload_key).to eq(:user_articles)
+    end
+
+    it "converts a string preload option to a symbol" do
+      field = described_class.new(:articles, {preload: "user_articles"}, proc {})
+
+      expect(field.preload_key).to eq(:user_articles)
+    end
+
+    it "defaults to the field name when preload: false" do
+      field = described_class.new(:articles, {preload: false}, proc {})
+
+      expect(field.preload_key).to eq(:articles)
+    end
+  end
+
+  describe "#validate", "preload option" do
+    it "raises when preload option is not a String, Symbol, or false" do
+      expect {
+        described_class.new(:articles, {preload: 123}, proc {}).validate
+      }.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidField)
+        expect(exception.message).to eq("Relationship articles preload option must be a Symbol, String, or false")
+      end
+    end
+
+    it "is valid with preload: false" do
+      expect(described_class.new(:articles, {preload: false}, proc {}).validate).to be(true)
+    end
+  end
 end
