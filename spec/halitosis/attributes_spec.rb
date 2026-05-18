@@ -20,18 +20,6 @@ RSpec.describe Halitosis::Attributes do
         expect(inserted_field.name).to eq(:foo)
       end
     end
-
-    describe "#property" do
-      it "defines a attribute field" do
-        expect do
-          klass.property(:bar)
-        end.to change(klass.fields, :size).by(1)
-
-        inserted_field = klass.fields.for_type(Halitosis::Attributes::Field).last
-        expect(inserted_field).to be_a(Halitosis::Attributes::Field)
-        expect(inserted_field.name).to eq(:bar)
-      end
-    end
   end
 
   describe Halitosis::Attributes::InstanceMethods do

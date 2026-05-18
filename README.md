@@ -531,13 +531,6 @@ def count_words
 end
 ```
 
-Attributes also support the legacy `property` alias:
-
-```ruby
-property :title
-property(:summary) { article.body.truncate(100) }
-```
-
 #### Conditionals
 
 Use `if` or `unless` to conditionally include any field:
