@@ -387,6 +387,24 @@ When using `render_with_params` (the Rails integration helper), both the JSON:AP
 
 If `page[:number]` or `page[:size]` cannot be coerced to an integer, or the block returns `nil`, an `InvalidPaginationParameter` is raised (mapped to `400 Bad Request` by the Rails integration).
 
+#### Pagination adapter
+
+The adapter tells Halitosis how to read page metadata from the paginated collection. Set a global default in an initializer:
+
+```ruby
+Halitosis.configure { |c| c.pagination_adapter = :kaminari }
+```
+
+Or pass the adapter symbol as the first argument to `paginate_by_page` or `paginate_with`:
+
+```ruby
+paginate_by_page :will_paginate, default_page_size: 25 do |collection, number, size|
+  collection.paginate(page: number, per_page: size)
+end
+```
+
+Built-in adapters: `:kaminari`, `:will_paginate`. Any callable that accepts the paginated collection and returns `{ current_page:, total_pages:, prev_page:, next_page: }` also works.
+
 #### Pagy
 
 Use `paginate_with_pagy` instead of `paginate_by_page` when using Pagy. Pagy returns a separate metadata object alongside the records; `paginate_with_pagy` handles both automatically:
@@ -438,26 +456,6 @@ end
 ```
 
 All four keys (`first`, `last`, `prev`, `next`) are always present in `_links`. Unavailable links — `prev` on the first page and `next` on the last — are emitted as `null`.
-
-The adapter tells Halitosis how to read page metadata from the paginated collection. Set a global default in an initializer:
-
-```ruby
-Halitosis.configure { |c| c.pagination_adapter = :kaminari }
-```
-
-Or pass the adapter symbol as the first argument to `paginate_by_page` or `paginate_with`:
-
-```ruby
-paginate_by_page :will_paginate, default_page_size: 25 do |collection, number, size|
-  collection.paginate(page: number, per_page: size)
-end
-
-paginate_links do |page_number, query_params|
-  articles_url(query_params.merge(page: { number: page_number }))
-end
-```
-
-Built-in adapters: `:kaminari`, `:will_paginate`. Any callable that accepts the paginated collection and returns `{ current_page:, total_pages:, prev_page:, next_page: }` also works.
 
 `paginate_links` must be declared after the pagination method (`paginate_by_page`, `paginate_with`, or `paginate_with_pagy`).
 
