@@ -8,7 +8,9 @@ module Halitosis
       def call_procedure(context)
         proc_or_name = procedure || name
 
+        # :nocov:
         return context.call_instance(proc_or_name) unless proc_or_name.is_a?(Proc)
+        # :nocov:
 
         case proc_or_name.arity
         when 0

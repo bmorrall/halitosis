@@ -133,4 +133,22 @@ RSpec.describe "RootLinks" do
       expect(serializer.render[:_links][:self]).to eq(href: "/items/99?")
     end
   end
+
+  context "when a root_link block returns nil" do
+    let(:resource_klass) do
+      Class.new do
+        include Halitosis
+
+        resource :item
+
+        root_link(:conditional) { nil }
+      end
+    end
+
+    it "omits the link from the output" do
+      result = resource_klass.new(Object.new).render
+
+      expect(result).not_to have_key(:_links)
+    end
+  end
 end

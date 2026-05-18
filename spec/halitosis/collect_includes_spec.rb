@@ -63,6 +63,16 @@ RSpec.describe Halitosis::CollectIncludes do
         Halitosis::Context.new(klass.new, {})
       end
 
+      it "falls back to super when child is not a Halitosis::Base instance" do
+        plain_child = Object.new
+        serializer = klass.new
+        context = Halitosis::Context.new(serializer, {})
+        context.included_registry = {}
+
+        result = serializer.send(:render_child, plain_child, context, {})
+        expect(result).to be_nil
+      end
+
       it "falls back to super when no included_registry on context" do
         serializer = klass.new
         child = child_klass.new
@@ -121,6 +131,18 @@ RSpec.describe Halitosis::CollectIncludes do
 
         serializer.send(:render_child, child, context, {})
         expect(child).to be_a(Halitosis::CollectIncludes::InstanceMethods) # rubocop:disable RSpec/DescribedClass
+      end
+
+      it "does not re-extend a child already extended with InstanceMethods" do
+        serializer = klass.new
+        context = Halitosis::Context.new(serializer, {})
+        context.included_registry = {}
+        child = child_klass.new
+        child.extend(Halitosis::CollectIncludes::InstanceMethods) # rubocop:disable RSpec/DescribedClass
+
+        # child is already extended — must not call extend again
+        expect(child).not_to receive(:extend)
+        serializer.send(:render_child, child, context, {})
       end
     end
   end

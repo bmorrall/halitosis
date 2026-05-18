@@ -65,4 +65,12 @@ RSpec.describe Halitosis::CollectionPaginatable::Adapters do
       )
     end
   end
+
+  describe "Pagy" do
+    subject(:adapter) { described_class::Pagy }
+
+    it "returns nil when called with nil" do
+      expect(adapter.call(nil)).to be_nil
+    end
+  end
 end

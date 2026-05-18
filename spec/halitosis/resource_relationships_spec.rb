@@ -306,4 +306,17 @@ RSpec.describe Halitosis::ResourceRelationships do
       end
     end
   end
+
+  describe Halitosis::ResourceRelationships::Field do
+    describe "#enabled?" do
+      it "returns false when the base conditional guard fails" do
+        klass.relationship(:guarded, if: proc { false }) { "value" }
+
+        field = klass.fields.find_by_name(described_class, :guarded)
+        context = klass.new.send(:build_context)
+
+        expect(field.enabled?(context)).to be false
+      end
+    end
+  end
 end
