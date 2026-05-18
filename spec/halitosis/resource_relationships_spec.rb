@@ -77,7 +77,13 @@ RSpec.describe Halitosis::ResourceRelationships do
         end
 
         it "passes the stored preload to an arity-1 relationship block" do
-          child_class = Class.new { include Halitosis::Base }
+          child_class = Class.new {
+            include Halitosis::Base
+            include Halitosis::Attributes
+
+            attribute(:id, value: 1)
+          }
+
           klass.rel(:with_preload, {}) { |preloaded| preloaded }
 
           serializer = klass.new(include: {with_preload: true})
@@ -86,7 +92,84 @@ RSpec.describe Halitosis::ResourceRelationships do
 
           result = serializer.relationships(context)
 
-          expect(result[:with_preload]).to eq({})
+          expect(result[:with_preload]).to eq(id: 1)
+        end
+
+        it "uses the preload: option key for the preload lookup" do
+          child_class = Class.new {
+            include Halitosis::Base
+            include Halitosis::Attributes
+
+            attribute(:id, value: 2)
+          }
+
+          klass.rel(:articles, {preload: :user_articles}) { |preloaded| preloaded }
+
+          serializer = klass.new(include: {articles: true})
+          context = serializer.send(:build_context)
+          serializer.send(:store_preload, context, :user_articles, proc { child_class.new })
+
+          result = serializer.relationships(context)
+
+          expect(result[:articles]).to eq(id: 2)
+        end
+
+        it "evaluates a shared preload key once across multiple relationships" do
+          call_count = 0
+          child_class = Class.new {
+            include Halitosis::Base
+            include Halitosis::Attributes
+
+            attribute(:id, value: 42)
+          }
+
+          klass.rel(:rel_a, {preload: :shared}) { |data| data }
+          klass.rel(:rel_b, {preload: :shared}) { |data| data }
+          klass.rel(:rel_c, {preload: :shared}) { |data| data }
+
+          klass.define_method(:shared) do
+            call_count += 1
+            child_class.new
+          end
+
+          serializer = klass.new(include: {rel_a: true, rel_b: true, rel_c: true})
+          result = serializer.relationships
+
+          expect(call_count).to eq(1)
+          expect(result[:rel_a]).to eq(id: 42)
+          expect(result[:rel_b]).to eq(id: 42)
+          expect(result[:rel_c]).to eq(id: 42)
+        end
+
+        it "uses a manually stored value even when preload: false" do
+          child_class = Class.new {
+            include Halitosis::Base
+            include Halitosis::Attributes
+
+            attribute(:id, value: 99)
+          }
+
+          klass.rel(:opted_out, {preload: false}) { |preloaded| preloaded }
+
+          serializer = klass.new(include: {opted_out: true})
+          context = serializer.send(:build_context)
+          serializer.send(:store_preload, context, :opted_out, proc { child_class.new })
+
+          result = serializer.relationships(context)
+
+          expect(result[:opted_out]).to eq(id: 99)
+        end
+
+        it "does not lazy-load when preload: false and nothing is stored" do
+          call_count = 0
+
+          klass.rel(:opted_out, {preload: false}) { |preloaded| preloaded }
+          klass.define_method(:opted_out) { call_count += 1 }
+
+          serializer = klass.new(include: {opted_out: true})
+          serializer.relationships
+
+          expect(call_count).to eq(0)
         end
       end
     end

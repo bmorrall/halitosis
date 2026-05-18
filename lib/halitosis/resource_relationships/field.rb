@@ -10,15 +10,35 @@ module Halitosis
       def validate
         super
 
+        if options.key?(:preload) && options[:preload] != false &&
+            !options[:preload].is_a?(Symbol) && !options[:preload].is_a?(String)
+          raise InvalidField, "Relationship #{name} preload option must be a Symbol, String, or false"
+        end
+
         return true if procedure
 
         raise InvalidField, "Relationship #{name} must be defined with a proc"
+      end
+
+      # The key used to look up a stored preload value for this field.
+      # Defaults to the field name, but can be overridden with the +preload:+ option.
+      #
+      # @return [Symbol]
+      #
+      def preload_key
+        (options.fetch(:preload, name) || name).to_sym
       end
 
       # Check whether this definition should be included for the given instance
       #
       # @param instance [Object]
       #
+      # @return [true, false] whether an explicit +preload:+ option was given with a usable key
+      #
+      def preload?
+        !!options[:preload]
+      end
+
       # @return [true, false]
       #
       def enabled?(context)
