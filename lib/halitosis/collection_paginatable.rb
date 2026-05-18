@@ -36,17 +36,22 @@ module Halitosis
       # strategy. Use +paginate_with+ when you need full control over how the
       # page hash is interpreted (e.g. cursor or offset pagination).
       #
+      # @param adapter [Symbol, #call, nil] the pagination metadata adapter
+      #   (e.g. +:kaminari+, +:will_paginate+, or any callable). Required when
+      #   using +paginate_links+ or +paginate_meta+ unless a global default is
+      #   set via +Halitosis.config.pagination_adapter+.
+      #
       # @example
-      #   paginate_with do |context, collection, page|
+      #   paginate_with :kaminari do |context, collection, page|
       #     collection.after(page[:cursor]).limit(page[:size] || 25)
       #   end
       #
-      def paginate_with(&procedure)
+      def paginate_with(adapter = nil, &procedure)
         unless procedure
           raise InvalidField, "#{name} paginate_with must be defined with a block"
         end
 
-        add_pagination_field(&procedure)
+        add_pagination_field(adapter, &procedure)
       end
 
       # Declare page-number / page-size pagination for this collection serializer.
@@ -58,19 +63,23 @@ module Halitosis
       # +default_page_size+ is required and is used as the +size+ value when
       # none is provided at render time.
       #
+      # @param adapter [Symbol, #call, nil] the pagination metadata adapter
+      #   (e.g. +:kaminari+, +:will_paginate+, or any callable). Required when
+      #   using +paginate_links+ or +paginate_meta+ unless a global default is
+      #   set via +Halitosis.config.pagination_adapter+.
       # @param default_page_size [Integer] the default number of items per page
       #
       # @example
-      #   paginate_by_page default_page_size: 25 do |collection, number, size|
+      #   paginate_by_page :kaminari, default_page_size: 25 do |collection, number, size|
       #     collection.page(number).per(size)
       #   end
       #
-      def paginate_by_page(default_page_size:, &procedure)
+      def paginate_by_page(adapter = nil, default_page_size:, &procedure)
         unless procedure
           raise InvalidField, "#{name} paginate_by_page must be defined with a block"
         end
 
-        add_pagination_field do |context, collection, page_params|
+        add_pagination_field(adapter) do |context, collection, page_params|
           number = parse_page_integer(page_params[:number], default: 1, param: :"page[number]")
           size = parse_page_integer(page_params[:size], default: default_page_size, param: :"page[size]")
 
@@ -104,28 +113,35 @@ module Halitosis
       # by pagination metadata helpers.
       #
       def paginate_with_pagy(&procedure)
-        add_pagination_field do |context, collection, page_params|
+        add_pagination_field(CollectionPaginatable::Adapters::Pagy) do |context, collection, page_params|
           extra_kwargs = procedure ? context.call_instance_with(collection, page_params, procedure) || {} : {}
 
           pagy_obj, records = CollectionPaginatable::PagyHelper.pagy(collection, page_params, **extra_kwargs)
 
-          self.class.fields.singleton(CollectionPaginatable::MetadataField).process(context, pagy_obj)
+          self.class.fields.singleton(CollectionPaginatable::Field).process(context, pagy_obj)
           context.register_query_params(page: {number: pagy_obj.page, size: pagy_obj.limit})
 
           records
         end
-
-        fields.add_singleton(CollectionPaginatable::MetadataField.new(CollectionPaginatable::Adapters::Pagy))
       end
 
       private
 
-      def add_pagination_field(&block)
+      def add_pagination_field(adapter = nil, &block)
         if fields.singleton(CollectionPaginatable::Field)
           raise InvalidField, "#{name} pagination is already defined"
         end
 
-        field = CollectionPaginatable::Field.new(:pagination, {}, block)
+        resolved_adapter = adapter || Halitosis.config.pagination_adapter
+
+        unless resolved_adapter
+          raise InvalidField,
+            "#{name} pagination requires an adapter. " \
+            "Pass one as the first argument (e.g. paginate_by_page :kaminari, ...) " \
+            "or set Halitosis.config.pagination_adapter."
+        end
+
+        field = CollectionPaginatable::Field.new(:pagination, {adapter: CollectionPaginatable::Adapters.resolve(resolved_adapter)}, block)
         fields.add_singleton(field)
 
         field
@@ -158,9 +174,7 @@ module Halitosis
             "The #{resource_label} can not be paginated with the provided values"
         end
 
-        if (metadata_field = self.class.fields.singleton(CollectionPaginatable::MetadataField))
-          metadata_field.process(context, context.collection) unless metadata_field.fetch_result(context)
-        end
+        field.process(context, context.collection) unless field.fetch_result(context)
       end
 
       # Parse a value to a positive Integer, falling back to the default on nil.
@@ -199,7 +213,6 @@ module Halitosis
 end
 
 require "halitosis/collection_paginatable/field"
-require "halitosis/collection_paginatable/metadata_field"
 require "halitosis/collection_paginatable/pagy_helper"
 require "halitosis/collection_paginatable/adapters"
 require "halitosis/collection_paginatable/links"

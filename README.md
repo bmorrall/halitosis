@@ -359,7 +359,7 @@ class ArticlesSerializer
     collection.map { |article| ArticleSerializer.new(article) }
   end
 
-  paginate_by_page default_page_size: 25 do |collection, number, size|
+  paginate_by_page :kaminari, default_page_size: 25 do |collection, number, size|
     collection.page(number).per(size)
   end
 end
@@ -427,7 +427,7 @@ class ArticlesSerializer
     collection.map { |article| ArticleSerializer.new(article) }
   end
 
-  paginate_by_page default_page_size: 25 do |number, size|
+  paginate_by_page :kaminari, default_page_size: 25 do |collection, number, size|
     collection.page(number).per(size)
   end
 
@@ -445,15 +445,21 @@ The adapter tells Halitosis how to read page metadata from the paginated collect
 Halitosis.configure { |c| c.pagination_adapter = :kaminari }
 ```
 
-Or override per-serializer by passing the adapter symbol as the first argument:
+Or pass the adapter symbol as the first argument to `paginate_by_page` or `paginate_with`:
 
 ```ruby
-paginate_links :will_paginate do |page_number, query_params|
+paginate_by_page :will_paginate, default_page_size: 25 do |collection, number, size|
+  collection.paginate(page: number, per_page: size)
+end
+
+paginate_links do |page_number, query_params|
   articles_url(query_params.merge(page: { number: page_number }))
 end
 ```
 
-Built-in adapters: `:kaminari`, `:will_paginate`. Any callable that accepts `(collection, context)` and returns `{ current_page:, total_pages: }` also works.
+Built-in adapters: `:kaminari`, `:will_paginate`. Any callable that accepts the paginated collection and returns `{ current_page:, total_pages:, prev_page:, next_page: }` also works.
+
+`paginate_links` must be declared after the pagination method (`paginate_by_page`, `paginate_with`, or `paginate_with_pagy`).
 
 ### Pagination meta
 
@@ -467,7 +473,7 @@ class ArticlesSerializer
     collection.map { |article| ArticleSerializer.new(article) }
   end
 
-  paginate_by_page default_page_size: 25 do |collection, number, size|
+  paginate_by_page :kaminari, default_page_size: 25 do |collection, number, size|
     collection.page(number).per(size)
   end
 
@@ -486,14 +492,7 @@ This produces a `_meta` hash at the root level:
 
 All four keys are always present. Unavailable pages — `prev` on the first page and `next` on the last — are emitted as `null`.
 
-`paginate_meta` accepts the same optional adapter argument as `paginate_links`:
-
-```ruby
-paginate_meta :kaminari
-paginate_meta :will_paginate
-```
-
-If a global adapter is configured or `paginate_with_pagy` is used, the argument may be omitted.
+`paginate_meta` must be declared after the pagination method (`paginate_by_page`, `paginate_with`, or `paginate_with_pagy`).
 
 `paginate_meta` and `paginate_links` may be declared together on the same serializer. In that case both `_links` (URLs) and `_meta` (page numbers) are emitted. `paginate_meta` also merges with any other `root_meta` fields on the serializer.
 

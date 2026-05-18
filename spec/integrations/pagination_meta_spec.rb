@@ -36,14 +36,14 @@ RSpec.describe "Paginatable — paginate_meta" do
         collection.map { |i| item_ser.new(i) }
       end
 
-      paginate_by_page default_page_size: 10 do |collection, number, size|
+      paginate_by_page :kaminari, default_page_size: 10 do |collection, number, size|
         offset = (number - 1) * size
         page_items = collection[offset, size] || []
         total = (collection.size.to_f / size).ceil
         PaginatedSlice.new(page_items, number, total)
       end
 
-      paginate_meta :kaminari
+      paginate_meta
     end
 
     klass.new(items, **opts).render
@@ -126,22 +126,20 @@ RSpec.describe "Paginatable — paginate_meta" do
   end
 
   context "when no pagination procedure is declared" do
-    it "silently skips meta generation" do
+    it "raises InvalidField at DSL time" do
       item_ser = item_klass
 
-      klass = Class.new do
-        include Halitosis
+      expect do
+        Class.new do
+          include Halitosis
 
-        collection :items do |collection|
-          collection.map { |i| item_ser.new(i) }
+          collection :items do |collection|
+            collection.map { |i| item_ser.new(i) }
+          end
+
+          paginate_meta
         end
-
-        paginate_meta :kaminari
-      end
-
-      result = klass.new(items).render
-
-      expect(result).not_to have_key(:_meta)
+      end.to raise_error(Halitosis::InvalidField, /must be declared after/i)
     end
   end
 
@@ -156,19 +154,19 @@ RSpec.describe "Paginatable — paginate_meta" do
           collection.map { |i| item_ser.new(i) }
         end
 
-        paginate_by_page default_page_size: 10 do |collection, number, size|
+        paginate_by_page :kaminari, default_page_size: 10 do |collection, number, size|
           offset = (number - 1) * size
           page_items = collection[offset, size] || []
           total = (collection.size.to_f / size).ceil
           PaginatedSlice.new(page_items, number, total)
         end
 
-        paginate_links :kaminari do |page_number, query_params|
+        paginate_links do |page_number, query_params|
           size = query_params.dig(:page, :size)
           page_number.nil? ? nil : "/items?page[number]=#{page_number}&page[size]=#{size}"
         end
 
-        paginate_meta :kaminari
+        paginate_meta
       end
 
       result = klass.new(items, page: {number: 2, size: 10}).render
@@ -196,14 +194,14 @@ RSpec.describe "Paginatable — paginate_meta" do
 
         root_meta(:total_count) { 50 }
 
-        paginate_by_page default_page_size: 10 do |collection, number, size|
+        paginate_by_page :kaminari, default_page_size: 10 do |collection, number, size|
           offset = (number - 1) * size
           page_items = collection[offset, size] || []
           total = (collection.size.to_f / size).ceil
           PaginatedSlice.new(page_items, number, total)
         end
 
-        paginate_meta :kaminari
+        paginate_meta
       end
 
       result = klass.new(items, page: {number: 1, size: 10}).render
@@ -227,9 +225,14 @@ RSpec.describe "Paginatable — paginate_meta" do
             collection.map { |i| item_ser.new(i) }
           end
 
+          paginate_by_page(default_page_size: 10) { |collection, number, size|
+            offset = (number - 1) * size
+            collection[offset, size] || []
+          }
+
           paginate_meta
         end
-      end.to raise_error(Halitosis::InvalidField, /paginate_meta requires an adapter/)
+      end.to raise_error(Halitosis::InvalidField, /requires an adapter/i)
     end
   end
 
@@ -245,8 +248,13 @@ RSpec.describe "Paginatable — paginate_meta" do
             collection.map { |i| item_ser.new(i) }
           end
 
-          paginate_meta :kaminari
-          paginate_meta :kaminari
+          paginate_by_page :kaminari, default_page_size: 10 do |collection, number, size|
+            offset = (number - 1) * size
+            collection[offset, size] || []
+          end
+
+          paginate_meta
+          paginate_meta
         end
       end.to raise_error(Halitosis::InvalidField, /pagination meta is already defined/)
     end
@@ -279,26 +287,6 @@ RSpec.describe "Paginatable — paginate_meta" do
 
       expect(meta[:first]).to eq(1)
       expect(meta[:last]).to eq(5)
-    end
-  end
-
-  context "when using paginate_with_pagy" do
-    it "raises InvalidField when an adapter is passed alongside paginate_with_pagy" do
-      item_ser = item_klass
-
-      expect do
-        Class.new do
-          include Halitosis
-
-          collection :items do |collection|
-            collection.map { |i| item_ser.new(i) }
-          end
-
-          paginate_with_pagy
-
-          paginate_meta :kaminari
-        end
-      end.to raise_error(Halitosis::InvalidField, /paginate_meta adapter must not be set when using paginate_with_pagy/)
     end
   end
 end

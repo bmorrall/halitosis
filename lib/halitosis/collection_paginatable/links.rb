@@ -11,26 +11,26 @@ module Halitosis
     #
     # == Usage
     #
-    # Declare +paginate_links+ alongside a pagination method and provide a
-    # 2-arity block:
+    # Declare the adapter on the pagination method, then add +paginate_links+
+    # with a 2-arity block:
     #
-    #   paginate_links :kaminari do |page_number, query_params|
+    #   paginate_by_page :kaminari, default_page_size: 25 do |collection, number, size|
+    #     collection.page(number).per(size)
+    #   end
+    #
+    #   paginate_links do |page_number, query_params|
     #     articles_url(query_params.merge(page: { number: page_number }))
     #   end
     #
-    # The adapter argument may be omitted when a global default is configured:
+    # The adapter may also be set globally:
     #
     #   Halitosis.configure { |c| c.pagination_adapter = :kaminari }
     #
     # == Pagy Integration
     #
-    # Use +paginate_with_pagy+ instead of +paginate_by_page+ when using Pagy.
-    # The block must return +[pagy, records]+. The adapter is inferred
-    # automatically and must not be passed to +paginate_links+:
+    # Use +paginate_with_pagy+ — the adapter is inferred automatically:
     #
-    #   paginate_with_pagy do
-    #     pagy(collection)
-    #   end
+    #   paginate_with_pagy
     #
     #   paginate_links do |page_number, query_params|
     #     articles_url(query_params.merge(page: { number: page_number }))
@@ -56,22 +56,17 @@ module Halitosis
         # All four keys are always present in the output; unavailable links are
         # emitted as JSON +null+.
         #
-        # @param adapter [Symbol, #call, nil] +:kaminari+, +:will_paginate+, or any
-        #   callable. Omit when using +paginate_with_pagy+ (adapter inferred automatically)
-        #   or when a global default is set via +Halitosis.config.pagination_adapter+.
-        #   Must not be provided when +paginate_with_pagy+ is used.
+        # The adapter must be declared on the pagination method itself (e.g.
+        # +paginate_by_page :kaminari+ or +paginate_with :kaminari+), or set
+        # globally via +Halitosis.config.pagination_adapter+. When using
+        # +paginate_with_pagy+ the adapter is set automatically.
         #
-        # @example Using with Kaminari (global adapter configured)
+        # @example
         #   paginate_links do |page_number, query_params|
         #     articles_url(query_params.merge(page: { number: page_number }))
         #   end
         #
-        # @example Using with a per-serializer adapter
-        #   paginate_links :will_paginate do |page_number, query_params|
-        #     articles_url(query_params.merge(page: { number: page_number }))
-        #   end
-        #
-        def paginate_links(adapter = nil, &procedure)
+        def paginate_links(&procedure)
           unless procedure
             raise InvalidField, "#{name} paginate_links must be defined with a block"
           end
@@ -81,27 +76,14 @@ module Halitosis
               "#{name} paginate_links block must accept exactly 2 arguments (page_number, query_params)"
           end
 
-          if fields.singleton(CollectionPaginatable::MetadataField)&.adapter == CollectionPaginatable::Adapters::Pagy && adapter
-            raise InvalidField,
-              "#{name} paginate_links adapter must not be set when using paginate_with_pagy"
-          end
-
           if fields.singleton(CollectionPaginatable::LinksField)
             raise InvalidField, "#{name} pagination links are already defined"
           end
 
-          if adapter
-            fields.add_singleton(CollectionPaginatable::MetadataField.new(CollectionPaginatable::Adapters.resolve(adapter)))
-          elsif !fields.singleton(CollectionPaginatable::MetadataField)
-            config_adapter = Halitosis.config.pagination_adapter
-
-            unless config_adapter
-              raise InvalidField,
-                "#{name} paginate_links requires an adapter. " \
-                "Pass one as an argument, set Halitosis.config.pagination_adapter, or use paginate_with_pagy."
-            end
-
-            fields.add_singleton(CollectionPaginatable::MetadataField.new(CollectionPaginatable::Adapters.resolve(config_adapter)))
+          unless fields.singleton(CollectionPaginatable::Field)
+            raise InvalidField,
+              "#{name} paginate_links must be declared after paginate_by_page, " \
+              "paginate_with, or paginate_with_pagy"
           end
 
           fields.add_singleton(CollectionPaginatable::LinksField.new(:pagination_links, {}, procedure))
@@ -141,17 +123,14 @@ module Halitosis
           result[:_links] = result.fetch(:_links, {}).merge(links)
         end
 
-        # Obtain normalised pagination metadata for link generation.
-        #
-        # Asks the +CollectionPaginatable::MetadataField+ for metadata first (covers Pagy and any
-        # custom metadata proc). Falls back to the adapter when no metadata proc
-        # is configured. Raises +InvalidField+ when neither is available.
+        # Obtain normalised pagination metadata for link generation from
+        # the +CollectionPaginatable::Field+ singleton.
         #
         # @param context [Halitosis::Context]
         # @return [Hash, nil]
         #
         def extract_pagination_metadata(context)
-          metadata_field = self.class.fields.singleton(CollectionPaginatable::MetadataField)
+          metadata_field = self.class.fields.singleton(CollectionPaginatable::Field)
           metadata_field.page_numbers(context)
         end
       end

@@ -47,14 +47,14 @@ RSpec.describe "Paginatable — paginate_links" do
         collection.map { |i| item_ser.new(i) }
       end
 
-      paginate_by_page default_page_size: 10 do |collection, number, size|
+      paginate_by_page :kaminari, default_page_size: 10 do |collection, number, size|
         offset = (number - 1) * size
         page_items = collection[offset, size] || []
         total = (collection.size.to_f / size).ceil
         PaginatedSlice.new(page_items, number, total)
       end
 
-      paginate_links :kaminari do |page_number, query_params|
+      paginate_links do |page_number, query_params|
         size = query_params.dig(:page, :size)
         page_number.nil? ? nil : "/items?page[number]=#{page_number}&page[size]=#{size}"
       end
@@ -159,14 +159,14 @@ RSpec.describe "Paginatable — paginate_links" do
           ascending ? collection.sort_by { |i| i[:id] } : collection.sort_by { |i| -i[:id] }
         end
 
-        paginate_by_page default_page_size: 10 do |collection, number, size|
+        paginate_by_page :kaminari, default_page_size: 10 do |collection, number, size|
           offset = (number - 1) * size
           page_items = collection[offset, size] || []
           total = [(collection.size.to_f / size).ceil, 1].max
           PaginatedSlice.new(page_items, number, total)
         end
 
-        paginate_links :kaminari do |page_number, qp|
+        paginate_links do |page_number, qp|
           page_number.nil? ? nil : "/items?captured=#{qp.to_json}"
         end
       end
@@ -182,24 +182,22 @@ RSpec.describe "Paginatable — paginate_links" do
   end
 
   context "when no pagination procedure is declared" do
-    it "silently skips link generation" do
+    it "raises InvalidField at DSL time" do
       item_ser = item_klass
 
-      klass = Class.new do
-        include Halitosis
+      expect do
+        Class.new do
+          include Halitosis
 
-        collection :items do |collection|
-          collection.map { |i| item_ser.new(i) }
+          collection :items do |collection|
+            collection.map { |i| item_ser.new(i) }
+          end
+
+          paginate_links do |page_number, _qp|
+            page_number.nil? ? nil : "/items?page=#{page_number}"
+          end
         end
-
-        paginate_links :kaminari do |page_number, _qp|
-          page_number.nil? ? nil : "/items?page=#{page_number}"
-        end
-      end
-
-      result = klass.new(items).render
-
-      expect(result).not_to have_key(:_links)
+      end.to raise_error(Halitosis::InvalidField, /must be declared after/i)
     end
   end
 
@@ -348,14 +346,14 @@ RSpec.describe "Paginatable — paginate_links" do
           collection.map { |n| node_klass.new(n) }
         end
 
-        paginate_by_page default_page_size: 2 do |collection, number, size|
+        paginate_by_page :kaminari, default_page_size: 2 do |collection, number, size|
           offset = (number - 1) * size
           page_items = collection[offset, size] || []
           total = (collection.size.to_f / size).ceil
           PaginatedSlice.new(page_items, number, total)
         end
 
-        paginate_links :kaminari do |page_number, _qp|
+        paginate_links do |page_number, _qp|
           page_number.nil? ? nil : "/nodes?page[number]=#{page_number}"
         end
       end
