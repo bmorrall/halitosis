@@ -106,7 +106,7 @@ class ArticleSerializer
   resource :article   # exposes the resource as `article` inside the serializer
 
   identifier :id      # calls article.id
-  attribute :title    # calls article.title
+  attribute :title    # calls serializer#title if defined, otherwise article.title
 end
 
 ArticleSerializer.new(article).render
@@ -512,7 +512,7 @@ Only one identifier may be defined per serializer.
 Attributes can be defined in several ways:
 
 ```ruby
-# Delegate to the resource method of the same name
+# Calls serializer#title if defined, otherwise delegates to the resource
 attribute :title
 
 # Inline block

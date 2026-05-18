@@ -91,6 +91,29 @@ RSpec.describe Halitosis::Resource do
         )
       end
 
+      it "prefers a serializer method over the resource for attributes without a block" do
+        klass.attribute(:bar)
+
+        allow(resource).to receive(:bar).and_return("resource_value")
+
+        def serializer.bar
+          "serializer_value"
+        end
+
+        expect(serializer.render).to eq(
+          foo: {bar: "serializer_value", _type: "foo"}
+        )
+      end
+
+      it "raises when the serializer method is private" do
+        klass.attribute(:bar)
+
+        klass.define_method(:bar) { "private_serializer_value" }
+        klass.send(:private, :bar)
+
+        expect { serializer.render }.to raise_error(NoMethodError, /private method/)
+      end
+
       it "delegates to the named resource method when value is a symbol" do
         klass.attribute(:bar, value: :baz)
 
