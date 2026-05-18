@@ -39,6 +39,7 @@ module Halitosis
     base.include Links
     base.include Meta
     base.include Permissions
+    base.include Preloadable
     base.include Relationships
     base.include RootLinks
     base.include RootMeta
@@ -93,6 +94,7 @@ require_relative "halitosis/identifiers"
 require_relative "halitosis/links"
 require_relative "halitosis/meta"
 require_relative "halitosis/permissions"
+require_relative "halitosis/preloadable"
 require_relative "halitosis/relationships"
 require_relative "halitosis/root_links"
 require_relative "halitosis/root_meta"
