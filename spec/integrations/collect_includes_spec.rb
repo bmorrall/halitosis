@@ -18,7 +18,7 @@ RSpec.describe "CollectIncludes" do
 
     Class.new do
       include Halitosis
-      include Halitosis::Relationships
+      include Halitosis::ResourceRelationships
 
       resource :article
 
@@ -69,7 +69,7 @@ RSpec.describe "CollectIncludes" do
 
       Class.new do
         include Halitosis
-        include Halitosis::Relationships
+        include Halitosis::ResourceRelationships
 
         collect_includes
 
@@ -129,7 +129,7 @@ RSpec.describe "CollectIncludes" do
 
       Class.new do
         include Halitosis
-        include Halitosis::Relationships
+        include Halitosis::ResourceRelationships
 
         resource :article
 
@@ -154,7 +154,7 @@ RSpec.describe "CollectIncludes" do
 
       Class.new do
         include Halitosis
-        include Halitosis::Relationships
+        include Halitosis::ResourceRelationships
 
         resource :author
 
@@ -177,7 +177,7 @@ RSpec.describe "CollectIncludes" do
 
       klass = Class.new do
         include Halitosis
-        include Halitosis::Relationships
+        include Halitosis::ResourceRelationships
 
         resource :article
 
@@ -224,7 +224,7 @@ RSpec.describe "CollectIncludes" do
 
       klass = Class.new do
         include Halitosis
-        include Halitosis::Relationships
+        include Halitosis::ResourceRelationships
 
         collect_includes
 
@@ -256,7 +256,7 @@ RSpec.describe "CollectIncludes" do
           articles.map { |attrs|
             Class.new do
               include Halitosis
-              include Halitosis::Relationships
+              include Halitosis::ResourceRelationships
 
               resource :article
 
@@ -304,7 +304,7 @@ RSpec.describe "CollectIncludes" do
 
       klass = Class.new do
         include Halitosis
-        include Halitosis::Relationships
+        include Halitosis::ResourceRelationships
 
         resource :article
 

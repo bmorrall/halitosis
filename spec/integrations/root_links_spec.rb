@@ -89,7 +89,7 @@ RSpec.describe "RootLinks" do
     let(:resource_klass) do
       Class.new do
         include Halitosis
-        include Halitosis::Relationships
+        include Halitosis::ResourceRelationships
 
         resource :item
 

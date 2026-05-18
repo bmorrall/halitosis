@@ -2,7 +2,7 @@ RSpec.describe Halitosis::Resource do
   let(:klass) {
     Class.new {
       include Halitosis
-      include Halitosis::Relationships
+      include Halitosis::ResourceRelationships
       include Halitosis::Resource
     }
   }
@@ -223,7 +223,7 @@ RSpec.describe Halitosis::Resource do
         klass.relationship(:favourite_food) do
           Class.new {
             include Halitosis
-            include Halitosis::Relationships
+            include Halitosis::ResourceRelationships
 
             attribute(:name, value: "bread")
 

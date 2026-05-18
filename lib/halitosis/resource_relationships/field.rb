@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Halitosis
-  module Relationships
+  module ResourceRelationships
     class Field < Halitosis::Field
       # @return [true] if nothing is raised
       #
