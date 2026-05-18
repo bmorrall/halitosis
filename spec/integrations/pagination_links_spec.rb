@@ -292,9 +292,7 @@ RSpec.describe "Paginatable — paginate_links" do
       end
 
       serializer = klass.new(pagy_items, page: {number: 1, size: 10})
-      context = serializer.send(:build_context)
-      serializer.send(:before_render, context)
-      serializer.send(:render_with_context, context)
+      context = render_context(serializer)
 
       expect(context.query_params[:page]).to eq(number: 1, size: 10)
     end
