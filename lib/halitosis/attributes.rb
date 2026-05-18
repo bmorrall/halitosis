@@ -9,16 +9,6 @@ module Halitosis
     end
 
     module ClassMethods
-      # Legacy alias for attribute
-      #
-      # @param name [Symbol, String]
-      # @param options [nil, Hash]
-      #
-      # @return [Halitosis::Attributes::Field]
-      def property(...)
-        attribute(...)
-      end
-
       # Rails-style attribute definition
       #
       # @param name [Symbol, String]
