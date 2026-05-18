@@ -65,3 +65,6 @@ module Halitosis
     end
   end
 end
+
+require "halitosis/includeable/field"
+require "halitosis/includeable/builder"
