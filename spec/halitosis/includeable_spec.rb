@@ -9,12 +9,6 @@ RSpec.describe Halitosis::Includeable do
   end
 
   describe "context query_params — include param" do
-    def render_context(serializer)
-      context = serializer.send(:build_context)
-      serializer.render_with_context(context)
-      context
-    end
-
     it "does not register an include key when no include param is present" do
       context = render_context(serializer_klass.new)
 

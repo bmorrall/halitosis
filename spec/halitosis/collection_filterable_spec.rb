@@ -280,13 +280,6 @@ RSpec.describe Halitosis::CollectionFilterable do
   end
 
   describe "context query_params" do
-    def render_context(serializer)
-      context = serializer.send(:build_context)
-      serializer.send(:before_render, context)
-      serializer.render_with_context(context)
-      context
-    end
-
     it "registers a symbolized filter hash after rendering" do
       context = render_context(klass.new(items, filter: {name: "Alice"}))
 

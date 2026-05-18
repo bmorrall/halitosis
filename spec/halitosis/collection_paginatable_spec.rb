@@ -290,36 +290,28 @@ RSpec.describe Halitosis::CollectionPaginatable do
   describe "#query_params" do
     it "returns page params with defaults when no page is provided" do
       serializer = klass.new(items)
-      context = serializer.send(:build_context)
-      serializer.send(:before_render, context)
-      serializer.send(:render_with_context, context)
+      context = render_context(serializer)
 
       expect(context.query_params[:page]).to eq(number: 1, size: 10)
     end
 
     it "reflects the provided page[number]" do
       serializer = klass.new(items, page: {number: 3})
-      context = serializer.send(:build_context)
-      serializer.send(:before_render, context)
-      serializer.send(:render_with_context, context)
+      context = render_context(serializer)
 
       expect(context.query_params[:page]).to eq(number: 3, size: 10)
     end
 
     it "reflects the provided page[size]" do
       serializer = klass.new(items, page: {size: 5})
-      context = serializer.send(:build_context)
-      serializer.send(:before_render, context)
-      serializer.send(:render_with_context, context)
+      context = render_context(serializer)
 
       expect(context.query_params[:page]).to eq(number: 1, size: 5)
     end
 
     it "reflects both page[number] and page[size]" do
       serializer = klass.new(items, page: {number: 2, size: 20})
-      context = serializer.send(:build_context)
-      serializer.send(:before_render, context)
-      serializer.send(:render_with_context, context)
+      context = render_context(serializer)
 
       expect(context.query_params[:page]).to eq(number: 2, size: 20)
     end
@@ -334,9 +326,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
       end
 
       serializer = unpaginated_klass.new(items)
-      context = serializer.send(:build_context)
-      serializer.send(:before_render, context)
-      serializer.send(:render_with_context, context)
+      context = render_context(serializer)
 
       expect(context.query_params).not_to have_key(:page)
     end
