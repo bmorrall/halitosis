@@ -23,7 +23,13 @@ module Halitosis
       # @param value_source [String, Symbol, Proc] evaluated via +context.call_instance+
       #
       def store_preload(context, field_name, value_source)
-        value = context.call_instance(value_source)
+        procedure = case value_source
+        when Symbol, String
+          self.class.default_procedure_for(value_source.to_sym)
+        else
+          value_source
+        end
+        value = context.call_instance(procedure)
         current = context.fetch_local(:includeable_preloads) || {}
 
         context.store_local(:includeable_preloads, current.merge(field_name.to_sym => value))

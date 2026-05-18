@@ -68,25 +68,6 @@ module Halitosis
           rendered
         end
       end
-
-      private
-
-      # When +value_source+ is a String or Symbol, convert it to the default
-      # procedure so the serializer-first, resource-fallback logic in
-      # +default_procedure_for+ is applied consistently. Defers to +super+ for
-      # procs.
-      #
-      # @param context [Halitosis::Context] the render context
-      # @param field_name [Symbol, String] key to store under
-      # @param value_source [String, Symbol, Proc] the value to resolve
-      #
-      def store_preload(context, field_name, value_source)
-        if value_source.is_a?(Symbol) || value_source.is_a?(String)
-          super(context, field_name, self.class.default_procedure_for(value_source))
-        else
-          super
-        end
-      end
     end
   end
 end
