@@ -28,6 +28,23 @@ module Halitosis
         decorate_render :relationships, context, super
       end
 
+      # Pre-populate the preload cache for any enabled relationship fields
+      # that declare a +preload:+ key. Fields sharing the same +preload_key+
+      # are evaluated only once. Already-stored values are left untouched,
+      # allowing callers to supply preloads manually before +render+ is called.
+      #
+      # @param context [Halitosis::Context]
+      #
+      def before_render(context)
+        super
+
+        self.class.fields.for_type(ResourceRelationships::Field).each do |field|
+          next unless field.preload? && field.enabled?(context)
+
+          fetch_preload(context, field.preload_key)
+        end
+      end
+
       # @return [Hash] hash of rendered resources to include
       #
       def relationships(context = build_context)

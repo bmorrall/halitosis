@@ -78,6 +78,27 @@ RSpec.describe Halitosis::Base do
       end
     end
 
+    describe "#before_render" do
+      it "is called during render" do
+        call_count = 0
+        resource_serializer.define_method(:before_render) { |_ctx| call_count += 1 }
+
+        resource_serializer.new.render
+
+        expect(call_count).to eq(1)
+      end
+
+      it "receives the built context" do
+        received_context = nil
+        resource_serializer.define_method(:before_render) { |ctx| received_context = ctx }
+
+        serializer = resource_serializer.new
+        serializer.render
+
+        expect(received_context).to be_a(Halitosis::Context)
+      end
+    end
+
     describe "#to_xml", skip: "XML output not yet implemented" do
       it "converts rendered serializer to json" do
         expect(resource_serializer.new.to_xml).to eq(

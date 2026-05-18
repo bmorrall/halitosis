@@ -174,6 +174,48 @@ RSpec.describe Halitosis::ResourceRelationships do
       end
     end
 
+    describe "#before_render" do
+      it "pre-populates preload storage for enabled preload: fields before rendering" do
+        populated_before_render = nil
+        child_class = Class.new {
+          include Halitosis::Base
+          include Halitosis::Attributes
+
+          attribute(:id, value: 7)
+        }
+
+        klass.rel(:item, {preload: :item_data}) { |data| data }
+        klass.define_method(:item_data) { child_class.new }
+
+        original_render_with_context = klass.instance_method(:render_with_context)
+        klass.define_method(:render_with_context) do |ctx|
+          populated_before_render = send(:preloaded?, ctx, :item_data)
+          original_render_with_context.bind_call(self, ctx)
+        end
+
+        serializer = klass.new(include: {item: true})
+        serializer.render
+
+        expect(populated_before_render).to be(true)
+      end
+
+      it "does not pre-populate preloads for excluded relationship fields" do
+        call_count = 0
+        child_class = Class.new { include Halitosis::Base }
+
+        klass.rel(:item, {preload: :item_data}) { |data| data }
+        klass.define_method(:item_data) {
+          call_count += 1
+          child_class.new
+        }
+
+        # item is NOT included
+        klass.new(include: {}).render
+
+        expect(call_count).to eq(0)
+      end
+    end
+
     describe "#relationships_child" do
       let :serializer do
         klass.new
