@@ -294,6 +294,59 @@ ArticlesSerializer.new(Article.all, filter: { "user.name" => "Alice" }).render
 
 Namespaces can be nested to any depth. A block with no arguments opens a namespace; a block with one argument is a filter implementation. Any other arity raises `InvalidField` at class load time.
 
+### Preloading collection includes
+
+Use `allow_include` on a collection serializer to declare which include paths are accepted and attach a preload block that fires before the collection is rendered. This is the standard way to prevent N+1 queries when nested relationships are requested on a collection.
+
+The block receives the current collection and must return the preloaded collection:
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+
+  collection :articles do |collection|
+    collection.map { |article| ArticleSerializer.new(article) }
+  end
+
+  allow_include(:author) { |coll| coll.includes(:author) }
+end
+
+ArticlesSerializer.new(Article.all, include: "author").render
+```
+
+The block fires before sorting, filtering, and pagination run, so the preloaded collection flows through the entire pipeline.
+
+Omitting the block registers the path as allowed with no preload — the collection passes through unchanged:
+
+```ruby
+allow_include(:author)  # declaration only
+```
+
+#### Namespace block with nested paths
+
+Use an arity-0 block to open a namespace. Inside it, use `preload` to attach a procedure for the parent path and nested `allow_include` calls to declare child paths:
+
+```ruby
+allow_include(:author) do
+  preload ->(coll) { coll.includes(:author) }
+  allow_include(:avatar)  { |coll| coll.includes(author: :avatar) }
+  allow_include(:summary) { |coll| coll.includes(author: :summary) }
+end
+```
+
+The preload walk fires the **deepest** matching block for each requested leaf path. When `include: "author.avatar"` is requested, only the `:avatar` block fires. When `include: "author"` alone is requested, the `preload` block fires. Each block fires at most once per render, even when multiple leaves share the same ancestor.
+
+Namespaces can be nested to any depth:
+
+```ruby
+allow_include(:author) do
+  allow_include(:publications) do
+    preload ->(coll) { coll.includes(author: :publications) }
+    allow_include(:journal) { |coll| coll.includes(author: { publications: :journal }) }
+  end
+end
+```
+
 ### Pagination
 
 Declare server-side pagination on a collection serializer with `paginate_by_page`. The block receives the current `collection`, the resolved `number` (page number), and `size` (items per page), and must return the paginated collection, or `nil` to signal that the values are invalid:
@@ -590,6 +643,56 @@ Use `preload: false` to opt out of preloading entirely. Any value that was manua
 
 ```ruby
 relationship(:author, preload: false) { UserSerializer.new(article.author) }
+```
+
+#### Preloading nested includes
+
+When a relationship exposes deeply nested associations, use `allow_include` to declare which nested paths are supported and how to enrich the preload cache when those paths are requested. This prevents N+1 queries as the render walks into nested relationships.
+
+`allow_include` takes a top-level relationship name and a builder block. Each nested `allow_include` declaration accepts an arity-1 block that receives the current cached preload value and returns the enriched one:
+
+```ruby
+class ArticleSerializer
+  include Halitosis
+
+  resource :article
+
+  relationship :author, preload: :author_record do |author|
+    UserSerializer.new(author)
+  end
+
+  allow_include :author do
+    allow_include(:avatar)  { |author| author.includes(:avatar) }
+    allow_include(:summary) { |author| author.includes(:summary) }
+  end
+
+  def author_record
+    article.author
+  end
+end
+```
+
+When `include: "author.avatar"` is requested, the `:avatar` procedure is called with the cached `:author_record` value and its return value replaces it in the preload cache for the duration of the render. The relationship block then receives the enriched value.
+
+Procedures compose: if `include: "author.avatar,author.summary"` is requested, both procedures run in turn on the same cached value.
+
+When a builder node is itself a potential leaf (i.e. the deepest requested path), call `preload` inside the block to register its procedure:
+
+```ruby
+allow_include :author do
+  allow_include(:publications) do
+    preload ->(v) { v.includes(:publications) }
+    allow_include(:journal) { |v| v.includes(publications: :journal) }
+  end
+end
+```
+
+Omitting the block on a nested `allow_include` registers it as a pass-through — the cached value is returned unchanged:
+
+```ruby
+allow_include :author do
+  allow_include(:avatar)  # declaration only, no preload enrichment
+end
 ```
 
 #### Including relationships
