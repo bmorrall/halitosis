@@ -25,7 +25,7 @@ RSpec.describe Halitosis::CollectionIncludeable do
       it "adds the path to fields as a nil-proc field" do
         klass.allow_include(:author) { |coll| coll }
 
-        expect(klass.fields.get_field(Halitosis::CollectionIncludeable::Field, :author)).not_to be_nil
+        expect(klass.fields.find_by_name(Halitosis::CollectionIncludeable::Field, :author)).not_to be_nil
       end
 
       it "returns nil" do
@@ -38,7 +38,7 @@ RSpec.describe Halitosis::CollectionIncludeable do
       it "adds the path to fields as a pass-through field without a preload" do
         klass.allow_include(:author)
 
-        field = klass.fields.get_field(Halitosis::CollectionIncludeable::Field, :author)
+        field = klass.fields.find_by_name(Halitosis::CollectionIncludeable::Field, :author)
         expect(field).not_to be_nil
 
         ctx = instance_double(Halitosis::CollectionContext, collection: [1, 2, 3])
@@ -57,7 +57,7 @@ RSpec.describe Halitosis::CollectionIncludeable do
           preload ->(coll) { coll }
         end
 
-        expect(klass.fields.get_field(Halitosis::CollectionIncludeable::Field, :author)).not_to be_nil
+        expect(klass.fields.find_by_name(Halitosis::CollectionIncludeable::Field, :author)).not_to be_nil
       end
 
       it "preload replaces the nil-proc declaration field, leaving exactly one field with a proc" do
@@ -99,9 +99,9 @@ RSpec.describe Halitosis::CollectionIncludeable do
           allow_include(:summary) { |coll| coll }
         end
 
-        expect(klass.fields.get_field(Halitosis::CollectionIncludeable::Field, :author)).not_to be_nil
-        expect(klass.fields.get_field(Halitosis::CollectionIncludeable::Field, :"author.avatar")).not_to be_nil
-        expect(klass.fields.get_field(Halitosis::CollectionIncludeable::Field, :"author.summary")).not_to be_nil
+        expect(klass.fields.find_by_name(Halitosis::CollectionIncludeable::Field, :author)).not_to be_nil
+        expect(klass.fields.find_by_name(Halitosis::CollectionIncludeable::Field, :"author.avatar")).not_to be_nil
+        expect(klass.fields.find_by_name(Halitosis::CollectionIncludeable::Field, :"author.summary")).not_to be_nil
       end
 
       it "registers a preload field alongside nested fields" do
@@ -130,8 +130,8 @@ RSpec.describe Halitosis::CollectionIncludeable do
           allow_include(:avatar)
         end
 
-        expect(klass.fields.get_field(Halitosis::CollectionIncludeable::Field, :author)).not_to be_nil
-        expect(klass.fields.get_field(Halitosis::CollectionIncludeable::Field, :"author.avatar")).not_to be_nil
+        expect(klass.fields.find_by_name(Halitosis::CollectionIncludeable::Field, :author)).not_to be_nil
+        expect(klass.fields.find_by_name(Halitosis::CollectionIncludeable::Field, :"author.avatar")).not_to be_nil
       end
 
       it "raises InvalidField when a nested allow_include block has wrong arity" do

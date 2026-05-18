@@ -14,7 +14,7 @@ module Halitosis
       field.freeze
 
       self[type] ||= {}
-      self[type][field.name] = field
+      self[type][field.name.to_s.freeze] = field
 
       field
     end
@@ -26,22 +26,11 @@ module Halitosis
     # Returns a single field by type and name, or +nil+ if not found.
     #
     # @param type [Class]
-    # @param name [Symbol, String]
-    # @return [Halitosis::Field, nil]
-    #
-    def get_field(type, name)
-      fetch(type.name, {})[name.to_sym]
-    end
-
-    # Returns the first field of +type+ whose +name+ matches +field_name+,
-    # or +nil+ if none is found.
-    #
-    # @param type [Class]
     # @param field_name [Symbol, String]
     # @return [Halitosis::Field, nil]
     #
     def find_by_name(type, field_name)
-      for_type(type).find { |f| f.name.to_s == field_name.to_s }
+      fetch(type.name, {})[field_name.to_s]
     end
 
     # Returns the value stored for the given type key, or +nil+ if nothing
