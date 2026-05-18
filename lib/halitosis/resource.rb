@@ -67,6 +67,27 @@ module Halitosis
       end
 
       private
+
+      # When +value_source+ is a String or Symbol and the resource responds to
+      # that method, call it directly on the resource and cache the result.
+      # Falls back to +super+ for procs and for method names the resource does
+      # not respond to (which dispatches to the serializer instance instead).
+      #
+      # @param context [Halitosis::Context] the render context
+      # @param field_name [Symbol, String] key to store under
+      # @param value_source [String, Symbol, Proc] the value to resolve
+      #
+      def store_preload(context, field_name, value_source)
+        if (value_source.is_a?(Symbol) || value_source.is_a?(String)) &&
+            resource.respond_to?(value_source)
+          value = resource.public_send(value_source)
+          current = context.fetch_local(:includeable_preloads) || {}
+
+          context.store_local(:includeable_preloads, current.merge(field_name.to_sym => value))
+        else
+          super
+        end
+      end
     end
   end
 end
