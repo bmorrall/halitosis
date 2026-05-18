@@ -103,7 +103,7 @@ module Halitosis
       #
       def apply_sort(context, collection, name, ascending)
         sort_token = ascending ? name : "-#{name}"
-        field = self.class.fields.for_type(CollectionSortable::Field).find { |f| f.name.to_s == name.to_s }
+        field = self.class.fields.find_by_name(CollectionSortable::Field, name)
         raise_sort_error(sort_token) unless field
 
         result = field.apply_sort(context, collection, ascending)

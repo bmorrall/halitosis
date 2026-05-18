@@ -90,10 +90,8 @@ module Halitosis
 
         context.register_query_params(filter: HashUtil.symbolize_hash(filter_param))
 
-        filter_fields = self.class.fields.for_type(CollectionFilterable::Field)
-
         pairs.each do |name, value|
-          field = filter_fields.find { |f| f.name.to_s == name }
+          field = self.class.fields.find_by_name(CollectionFilterable::Field, name)
           result = field.apply_filter(context, context.collection, value)
 
           if result.nil?

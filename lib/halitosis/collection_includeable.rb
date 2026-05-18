@@ -88,15 +88,12 @@ module Halitosis
         item_includes = context.include_options
         return if item_includes.empty?
 
-        preload_fields = self.class.fields.for_type(CollectionIncludeable::Field)
-        return if preload_fields.empty?
-
         applied = []
 
         collect_leaf_paths(item_includes).each do |leaf_path|
           leaf_path.length.downto(1) do |len|
             candidate = leaf_path[0, len].join(".")
-            next unless (field = preload_fields.find { |f| f.name.to_s == candidate })
+            next unless (field = self.class.fields.find_by_name(CollectionIncludeable::Field, candidate))
 
             unless applied.include?(candidate)
               result = field.apply(context)

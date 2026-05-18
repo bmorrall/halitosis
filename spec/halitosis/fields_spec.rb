@@ -16,7 +16,7 @@ RSpec.describe Halitosis::Fields do
       fields.add(field)
 
       expect(fields.keys).to eq(["Halitosis::Field"])
-      expect(fields["Halitosis::Field"]).to eq({name: field})
+      expect(fields["Halitosis::Field"]).to eq({"name" => field})
     end
   end
 
@@ -58,42 +58,6 @@ RSpec.describe Halitosis::Fields do
     end
   end
 
-  describe "#get_field" do
-    it "returns the field for the given type and name" do
-      fields.add(field)
-
-      expect(fields.get_field(Halitosis::Field, :name)).to eq(field)
-    end
-
-    it "accepts a string name" do
-      fields.add(field)
-
-      expect(fields.get_field(Halitosis::Field, "name")).to eq(field)
-    end
-
-    it "returns nil when the type has no fields" do
-      expect(fields.get_field(Halitosis::Field, :name)).to be_nil
-    end
-
-    it "returns nil when the name is not registered for the type" do
-      fields.add(field)
-
-      expect(fields.get_field(Halitosis::Field, :other)).to be_nil
-    end
-  end
-
-  describe "#singleton" do
-    it "returns the registered singleton field for the given type" do
-      fields.add_singleton(field)
-
-      expect(fields.singleton(Halitosis::Field)).to eq(field)
-    end
-
-    it "returns nil when no singleton field has been registered for the type" do
-      expect(fields.singleton(Halitosis::Field)).to be_nil
-    end
-  end
-
   describe "#find_by_name" do
     let(:other_field) { Halitosis::Field.new(:other, {}, nil) }
 
@@ -116,6 +80,18 @@ RSpec.describe Halitosis::Fields do
 
     it "returns nil when no fields of the given type exist" do
       expect(fields.find_by_name(Halitosis::Links::Field, :name)).to be_nil
+    end
+  end
+
+  describe "#singleton" do
+    it "returns the registered singleton field for the given type" do
+      fields.add_singleton(field)
+
+      expect(fields.singleton(Halitosis::Field)).to eq(field)
+    end
+
+    it "returns nil when no singleton field has been registered for the type" do
+      expect(fields.singleton(Halitosis::Field)).to be_nil
     end
   end
 end
