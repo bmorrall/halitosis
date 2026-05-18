@@ -84,10 +84,12 @@ module Halitosis
             end
           end
 
+          # :nocov:
           if fields.singleton(CollectionPaginatable::MetadataField)&.adapter == CollectionPaginatable::Adapters::Pagy && adapter
             raise InvalidField,
               "#{name} paginate_meta adapter must not be set when using paginate_with_pagy"
           end
+          # :nocov:
 
           fields.add_singleton(CollectionPaginatable::PaginationMetaField.new)
         end

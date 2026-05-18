@@ -92,6 +92,15 @@ RSpec.describe Halitosis::ResourceIncludes do
 
         expect(child.procedure).to eq(Halitosis::ResourceIncludes::Field::DEFAULT_PROCEDURE)
       end
+
+      it "builds an empty field when called without a block" do
+        klass.allow_include(:accounts)
+
+        field = klass.fields.for_type(Halitosis::ResourceIncludes::Field).first
+
+        expect(field.name).to eq(:accounts)
+        expect(field.children).to be_empty
+      end
     end
   end
 
@@ -173,6 +182,55 @@ RSpec.describe Halitosis::ResourceIncludes do
           serializer.before_render(context)
 
           expect(context.fetch_local(:includeable_preloads)[:items_data]).to eq(%w[a b c])
+        end
+      end
+
+      context "when allow_include is declared for a name with no matching relationship field" do
+        before do
+          klass.allow_include(:orphan) do
+            allow_include(:child) { |v| v }
+          end
+        end
+
+        let(:include_param) { "orphan.child" }
+
+        it "skips the allow_include field gracefully" do
+          expect { serializer.before_render(context) }.not_to raise_error
+        end
+      end
+
+      context "when the relationship has an :if guard that returns false" do
+        before do
+          klass.relationship(:guarded, preload: :guarded_data, if: :show_guarded?) { |v| v }
+          klass.allow_include(:guarded) do
+            allow_include(:child) { |v| raise "should not be called" }
+          end
+          klass.define_method(:guarded_data) { %w[x y] }
+          klass.define_method(:show_guarded?) { false }
+        end
+
+        let(:include_param) { "guarded.child" }
+
+        it "skips processing for the disabled relationship" do
+          expect { serializer.before_render(context) }.not_to raise_error
+        end
+      end
+
+      context "with three levels of nesting (items.detail.meta)" do
+        before do
+          klass.allow_include(:items) do
+            allow_include(:detail) do
+              allow_include(:meta) { |items| items.map { |i| "#{i}:meta" } }
+            end
+          end
+        end
+
+        let(:include_param) { "items.detail.meta" }
+
+        it "applies the deepest procedure" do
+          serializer.before_render(context)
+
+          expect(context.fetch_local(:includeable_preloads)[:items_data]).to eq(%w[a:meta b:meta c:meta])
         end
       end
     end
