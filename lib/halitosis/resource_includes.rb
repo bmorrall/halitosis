@@ -112,45 +112,36 @@ module Halitosis
       private
 
       def process_resource_includes(context)
-        self.class.fields.for_type(ResourceIncludes::Field).each do |allow_field|
-          nested_opts = context.include_options[allow_field.name.to_s]
+        context.include_options.each_key do |name|
+          allow_field = self.class.fields.find_by_name(ResourceIncludes::Field, name)
 
-          next unless nested_opts
+          next unless allow_field
+          next unless preloaded?(context, name)
 
-          rel_field = find_relationship_field(allow_field.name)
-
-          next unless rel_field&.enabled?(context)
-          next unless rel_field.preload?
-
-          cache_key = rel_field.preload_key
-
-          traverse_include_tree(context, allow_field.children, nested_opts, cache_key)
+          traverse_include_tree(context, allow_field.children, context.include_options[name], name.to_sym)
         end
       end
 
-      def traverse_include_tree(context, fields, include_opts, cache_key)
-        fields.each do |field|
-          child_opts = include_opts[field.name.to_s]
+      def traverse_include_tree(context, children, include_opts, cache_key)
+        include_opts.each_key do |name|
+          field = children.find { |f| f.name.to_s == name }
 
-          next unless child_opts
+          next unless field
 
           apply_include_procedure(context, field, cache_key)
 
-          traverse_include_tree(context, field.children, child_opts, cache_key) if child_opts.any?
+          traverse_include_tree(context, field.children, include_opts[name], cache_key) if include_opts[name].any?
         end
       end
 
       def apply_include_procedure(context, field, cache_key)
         current = fetch_preload(context, cache_key)
+        return if current.nil?
+
         new_value = context.call_instance_with(current, field.procedure)
 
         preloads = context.fetch_local(:includeable_preloads) || {}
         context.store_local(:includeable_preloads, preloads.merge(cache_key.to_sym => new_value))
-      end
-
-      def find_relationship_field(name)
-        self.class.fields
-          .find_by_name(ResourceRelationships::Field, name)
       end
     end
   end

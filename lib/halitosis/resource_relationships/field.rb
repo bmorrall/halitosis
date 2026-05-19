@@ -29,14 +29,16 @@ module Halitosis
         (options.fetch(:preload, name) || name).to_sym
       end
 
-      # Check whether this definition should be included for the given instance
+      # Returns +true+ only when a usable +preload:+ option was given *and*
+      # the field is enabled for the given context.
       #
-      # @param instance [Object]
+      # @param context [Halitosis::Context]
+      # @return [true, false]
       #
-      # @return [true, false] whether an explicit +preload:+ option was given with a usable key
-      #
-      def preload?
-        !!options[:preload]
+      def preload?(context)
+        return false unless options[:preload]
+
+        enabled?(context)
       end
 
       # @return [true, false]

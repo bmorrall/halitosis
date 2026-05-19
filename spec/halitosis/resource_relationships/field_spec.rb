@@ -89,6 +89,29 @@ RSpec.describe Halitosis::ResourceRelationships::Field do
     end
   end
 
+  describe "#preload?" do
+    it "returns true when preload option is set and field is enabled" do
+      context = klass.new(include: {articles: true}).send(:build_context)
+      field = described_class.new(:articles, {preload: :user_articles}, proc {})
+
+      expect(field.preload?(context)).to be(true)
+    end
+
+    it "returns false when preload option is set but field is not included" do
+      context = klass.new(include: {}).send(:build_context)
+      field = described_class.new(:articles, {preload: :user_articles}, proc {})
+
+      expect(field.preload?(context)).to be(false)
+    end
+
+    it "returns false when preload: false even if field is enabled" do
+      context = klass.new(include: {articles: true}).send(:build_context)
+      field = described_class.new(:articles, {preload: false}, proc {})
+
+      expect(field.preload?(context)).to be(false)
+    end
+  end
+
   describe "#preload_key" do
     it "defaults to the field name" do
       field = described_class.new(:articles, {}, proc {})
