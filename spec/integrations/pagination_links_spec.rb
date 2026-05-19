@@ -73,6 +73,10 @@ RSpec.describe "Paginatable — paginate_links" do
       expect(result[:items]).to be_an(Array)
     end
 
+    it "includes self pointing to page 1" do
+      expect(links[:self]).to eq(href: "/items?page[number]=1&page[size]=10")
+    end
+
     it "includes first pointing to page 1" do
       expect(links[:first]).to eq(href: "/items?page[number]=1&page[size]=10")
     end
@@ -92,6 +96,10 @@ RSpec.describe "Paginatable — paginate_links" do
 
   context "when on the last page" do
     let(:links) { rendered_links(items, page: {number: 5, size: 10}).fetch(:_links) }
+
+    it "includes self pointing to page 5" do
+      expect(links[:self]).to eq(href: "/items?page[number]=5&page[size]=10")
+    end
 
     it "includes first pointing to page 1" do
       expect(links[:first]).to eq(href: "/items?page[number]=1&page[size]=10")
@@ -113,7 +121,8 @@ RSpec.describe "Paginatable — paginate_links" do
   context "when on a middle page" do
     let(:links) { rendered_links(items, page: {number: 3, size: 10}).fetch(:_links) }
 
-    it "includes all four links with valid URLs" do
+    it "includes all five links with valid URLs" do
+      expect(links[:self]).to eq(href: "/items?page[number]=3&page[size]=10")
       expect(links[:first]).to eq(href: "/items?page[number]=1&page[size]=10")
       expect(links[:last]).to eq(href: "/items?page[number]=5&page[size]=10")
       expect(links[:prev]).to eq(href: "/items?page[number]=2&page[size]=10")
@@ -126,6 +135,10 @@ RSpec.describe "Paginatable — paginate_links" do
 
     let(:few_items) { (1..5).map { |i| {id: i} } }
 
+    it "includes self pointing to page 1" do
+      expect(links[:self]).to eq(href: "/items?page[number]=1&page[size]=10")
+    end
+
     it "includes first and last both pointing to page 1" do
       expect(links[:first]).to eq(href: "/items?page[number]=1&page[size]=10")
       expect(links[:last]).to eq(href: "/items?page[number]=1&page[size]=10")
@@ -137,6 +150,18 @@ RSpec.describe "Paginatable — paginate_links" do
 
     it "emits next as nil" do
       expect(links[:next]).to be_nil
+    end
+  end
+
+  context "when page size is not explicitly set" do
+    let(:links) { rendered_links(items, page: {number: 3}).fetch(:_links) }
+
+    it "uses the default page size in all link urls" do
+      expect(links[:self]).to eq(href: "/items?page[number]=3&page[size]=10")
+      expect(links[:first]).to eq(href: "/items?page[number]=1&page[size]=10")
+      expect(links[:last]).to eq(href: "/items?page[number]=5&page[size]=10")
+      expect(links[:prev]).to eq(href: "/items?page[number]=2&page[size]=10")
+      expect(links[:next]).to eq(href: "/items?page[number]=4&page[size]=10")
     end
   end
 
@@ -370,6 +395,7 @@ RSpec.describe "Paginatable — paginate_links" do
       expect(result).to have_key(:nodes)
       expect(result[:nodes]).to be_an(Array)
 
+      expect(result[:_links][:self]).to eq(href: "/nodes?page[number]=1")
       expect(result[:_links][:first]).to eq(href: "/nodes?page[number]=1")
       expect(result[:_links][:last]).to eq(href: "/nodes?page[number]=2")
       expect(result[:_links][:prev]).to be_nil

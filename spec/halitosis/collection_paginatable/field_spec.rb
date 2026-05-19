@@ -38,7 +38,7 @@ RSpec.describe Halitosis::CollectionPaginatable::Field do
       field.process(context, double)
 
       expect(field.page_numbers(context)).to eq(
-        first: 1, last: 3, prev: nil, next: 2
+        self: 1, first: 1, last: 3, prev: nil, next: 2
       )
     end
 

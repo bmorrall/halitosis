@@ -73,6 +73,7 @@ module Halitosis
         return unless m
 
         {
+          self: m[:current_page],
           first: 1,
           last: m[:total_pages],
           prev: m[:prev_page],
