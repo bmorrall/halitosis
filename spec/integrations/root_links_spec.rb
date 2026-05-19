@@ -150,4 +150,60 @@ RSpec.describe "RootLinks" do
       expect(result).not_to have_key(:_links)
     end
   end
+
+  context "with a resource serializer declaring a profile link" do
+    let(:child_klass) do
+      Class.new do
+        include Halitosis
+
+        resource :item
+
+        profile "https://docs.example.com/item"
+      end
+    end
+
+    let(:parent_klass) do
+      child = child_klass
+
+      Class.new do
+        include Halitosis
+
+        resource :parent
+
+        relationship(:item) { child.new(Object.new) }
+      end
+    end
+
+    it "includes the profile link inside the resource envelope when rendered at the root" do
+      result = child_klass.new(Object.new).render
+
+      expect(result.dig(:item, :_links, :profile)).to eq(href: "https://docs.example.com/item")
+    end
+
+    it "omits the profile link when rendered as a nested relationship" do
+      result = parent_klass.new(Object.new).render
+
+      expect(result.dig(:parent, :_relationships, :item, :_links)).to be_nil
+    end
+  end
+
+  context "with a collection serializer declaring a profile link" do
+    let(:collection_klass) do
+      Class.new do
+        include Halitosis
+
+        collection :items do
+          []
+        end
+
+        profile "https://docs.example.com/items"
+      end
+    end
+
+    it "includes the profile link in root _links" do
+      result = collection_klass.new([]).render
+
+      expect(result.dig(:_links, :profile)).to eq(href: "https://docs.example.com/items")
+    end
+  end
 end

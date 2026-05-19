@@ -14,6 +14,19 @@ module Halitosis
       def link(name, *, &procedure)
         fields.add(Links::Field.new(name, *, procedure))
       end
+
+      # Declare a HAL +profile+ link for this resource.
+      #
+      # The link is only emitted when the serializer is rendered as the root
+      # resource (i.e. not nested inside another serializer as a relationship).
+      #
+      # @param url [String] the profile URL
+      #
+      def profile(url)
+        raise InvalidField, "#{name} profile requires a URL" unless url
+
+        link :profile, value: url, if: ->(ctx) { ctx.root? }
+      end
     end
 
     module InstanceMethods

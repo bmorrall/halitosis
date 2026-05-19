@@ -38,6 +38,23 @@ RSpec.describe Halitosis::Context do
     end
   end
 
+  describe "#root?" do
+    context "when no parent is present" do
+      it "returns true" do
+        context = described_class.new(nil)
+        expect(context.root?).to be(true)
+      end
+    end
+
+    context "when a parent is present" do
+      it "returns false" do
+        parent = described_class.new(nil)
+        context = described_class.new(nil, parent: parent)
+        expect(context.root?).to be(false)
+      end
+    end
+  end
+
   describe "#include_options" do
     it "stringifies nested keys" do
       context = described_class.new(nil, include: {some: {options: 1}})

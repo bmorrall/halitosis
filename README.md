@@ -585,6 +585,49 @@ ArticleSerializer.new(article, include_links: false).render
 # => { article: { id: 1, title: "Hello World" } }
 ```
 
+#### Profile link
+
+Use `profile` to declare a [HAL profile](https://datatracker.ietf.org/doc/html/draft-kelly-json-hal-11#section-5.6) link pointing to documentation for the resource type (e.g. your API docs):
+
+```ruby
+class ArticleSerializer
+  include Halitosis
+
+  profile "https://docs.example.com/resources/articles"
+
+  resource :article
+end
+```
+
+This adds a `profile` entry to `_links`:
+
+```json
+{
+  "article": {
+    "_links": {
+      "self": { "href": "/articles/1" },
+      "profile": { "href": "https://docs.example.com/resources/articles" }
+    }
+  }
+}
+```
+
+The profile link is only emitted when the serializer is rendered as the root resource. It is suppressed when the serializer appears as a nested relationship inside another serializer.
+
+For collection serializers, `profile` adds the link to the root-level `_links`:
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+
+  profile "https://docs.example.com/resources/articles"
+
+  collection :articles do
+    collection.map { |a| ArticleSerializer.new(a) }
+  end
+end
+```
+
 ### Relationships
 
 Relationships allow embedding associated serializers inside `_relationships`. They are **opt-in**: they are only rendered when explicitly requested.
