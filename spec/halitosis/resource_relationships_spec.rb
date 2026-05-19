@@ -25,6 +25,37 @@ RSpec.describe Halitosis::ResourceRelationships do
         klass.rel(:foo, {}) { "bar" }
       end
     end
+
+    describe "link: option" do
+      let :full_klass do
+        Class.new do
+          include Halitosis
+
+          resource :item
+        end
+      end
+
+      it "registers a Links::Field alongside the relationship for a proc" do
+        full_klass.relationship(:author, link: -> { "/people/1" }) { nil }
+
+        link_field = full_klass.fields.find_by_name(Halitosis::Links::Field, :author)
+        expect(link_field).to be_a(Halitosis::Links::Field)
+      end
+
+      it "registers a Links::Field alongside the relationship for a static string" do
+        full_klass.relationship(:docs, link: "/people") { nil }
+
+        link_field = full_klass.fields.find_by_name(Halitosis::Links::Field, :docs)
+        expect(link_field).to be_a(Halitosis::Links::Field)
+      end
+
+      it "does not pass link: through to the relationship field options" do
+        full_klass.relationship(:author, link: -> { "/people/1" }) { nil }
+
+        rel_field = full_klass.fields.find_by_name(Halitosis::ResourceRelationships::Field, :author)
+        expect(rel_field.options).not_to have_key(:link)
+      end
+    end
   end
 
   describe Halitosis::ResourceRelationships::InstanceMethods do
