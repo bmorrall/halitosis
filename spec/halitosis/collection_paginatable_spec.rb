@@ -363,7 +363,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
     end
 
     describe "at render time" do
-      let(:pagy_obj) { double(page: 2, limit: 15, pages: 5, previous: 1, next: 3) }
+      let(:pagy_obj) { double(page: 2, limit: 15, count: 75, pages: 5, previous: 1, next: 3) }
       let(:records) { [1, 2, 3] }
       let :pagy_klass do
         Class.new do
@@ -388,7 +388,8 @@ RSpec.describe Halitosis::CollectionPaginatable do
 
         field = pagy_klass.fields.singleton(Halitosis::CollectionPaginatable::Field)
         expect(field.fetch_result(context)).to eq(
-          current_page: 2, total_pages: 5, prev_page: 1, next_page: 3
+          current_page: 2, total_pages: 5, per_page: 15, total_entries: 75,
+          prev_page: 1, next_page: 3
         )
         expect(context.query_params[:page]).to eq(number: 2, size: 15)
       end

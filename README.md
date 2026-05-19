@@ -456,6 +456,14 @@ end
 
 All five keys (`self`, `first`, `last`, `prev`, `next`) are always present in `_links` as Link Objects with an `href` key. `self` points to the current page. Unavailable links — `prev` on the first page and `next` on the last — are emitted as `null`.
 
+Pass `only:` to limit which keys are emitted:
+
+```ruby
+paginate_links only: %i[self next] do |page_number, query_params|
+  articles_url(query_params.merge(page: { number: page_number }))
+end
+```
+
 ```json
 {
   "articles": [...],
@@ -473,7 +481,7 @@ All five keys (`self`, `first`, `last`, `prev`, `next`) are always present in `_
 
 ### Pagination meta
 
-Use `paginate_meta` to emit `first`/`last`/`prev`/`next` page numbers as root-level `_meta` keys. Unlike `paginate_links`, no block is required — the raw page numbers are emitted directly:
+Use `paginate_meta` to emit `self`, `first`, `last`, `prev`, and `next` page numbers as root-level `_meta` keys. Unlike `paginate_links`, no block is required — the values are emitted directly from the pagination adapter:
 
 ```ruby
 class ArticlesSerializer
@@ -496,11 +504,17 @@ This produces a `_meta` hash at the root level:
 ```json
 {
   "articles": [...],
-  "_meta": { "self": 3, "first": 1, "last": 5, "prev": 2, "next": 4 }
+  "_meta": { "self": 2, "first": 1, "last": 5, "prev": 1, "next": 3 }
 }
 ```
 
-All five keys are always present. `self` is the current page number. Unavailable pages — `prev` on the first page and `next` on the last — are emitted as `null`.
+All five keys are always present. Unavailable page numbers (`prev` on the first page, `next` on the last) are emitted as `null`.
+
+Pass `only:` to emit a custom subset of keys. The full available pool also includes `current_page`, `per_page`, `total_entries`, and `total_pages`:
+
+```ruby
+paginate_meta only: %i[current_page total_pages]
+```
 
 `paginate_meta` must be declared after the pagination method (`paginate_by_page`, `paginate_with`, or `paginate_with_pagy`).
 

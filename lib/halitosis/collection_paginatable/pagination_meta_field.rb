@@ -10,6 +10,27 @@ module Halitosis
     # each page number. This field simply emits the raw integers (or +nil+).
     #
     class PaginationMetaField
+      # Keys emitted by default when no +only:+ option is given.
+      DEFAULT_KEYS = %i[self first last prev next].freeze
+
+      def initialize(only: nil)
+        @only = only
+      end
+
+      # Filter meta hash to only the requested keys.
+      #
+      # When no +only:+ option was given the default navigational keys
+      # (+self+/+first+/+last+/+prev+/+next+) are returned. Pass +only:+ to select
+      # any subset of the full available pool, which also includes
+      # +current_page+, +per_page+, +total_entries+, and +total_pages+.
+      #
+      # @param meta [Hash]
+      # @return [Hash]
+      #
+      def filter(meta)
+        meta.slice(*Array(@only).map(&:to_sym))
+      end
+
       # @return [true]
       def validate = true
     end

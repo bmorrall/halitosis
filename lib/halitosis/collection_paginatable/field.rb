@@ -59,6 +59,23 @@ module Halitosis
         context.fetch_local(:collection_paginatable_metadata_result)
       end
 
+      # Returns collection metadata for use in +paginate_meta+.
+      #
+      # @param context [Halitosis::Context] the render context
+      # @return [Hash, nil]
+      #
+      def collection_meta(context)
+        m = metadata(context)
+        return unless m
+
+        {
+          current_page: m[:current_page],
+          per_page: m[:per_page] || context.query_params.dig(:page, :size),
+          total_entries: m[:total_entries],
+          total_pages: m[:total_pages]
+        }
+      end
+
       # Returns the four navigational page numbers derived from the normalised
       # metadata. Keys are +:first+, +:last+, +:prev+, +:next+; unavailable
       # links (+prev+ on page 1, +next+ on last page) are +nil+.
