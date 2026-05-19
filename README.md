@@ -661,6 +661,52 @@ rel(:author) { UserSerializer.new(article.author) }
 rel(:comments) { article.comments.map { |c| CommentSerializer.new(c) } }
 ```
 
+#### Relationship links
+
+Pass `link:` to declare a HAL link alongside the relationship. The link appears in `_links` unconditionally — even when the relationship itself is not included. This lets clients discover the URL for a relationship without having to request the full nested payload.
+
+```ruby
+relationship(:author, link: -> { author_path(resource[:author_id]) }) do
+  UserSerializer.new(resource[:author])
+end
+```
+
+Output without `include: :author`:
+
+```json
+{
+  "article": {
+    "_links": { "author": { "href": "/people/5" } }
+  }
+}
+```
+
+Output with `include: :author`:
+
+```json
+{
+  "article": {
+    "_links": { "author": { "href": "/people/5" } },
+    "_relationships": { "author": { "name": "Alice" } }
+  }
+}
+```
+
+A static string can be used when the URL does not depend on the resource:
+
+```ruby
+relationship(:docs, link: "/docs/articles") { nil }
+```
+
+The `link:` value respects the same `if:` / `unless:` guards as the relationship itself — if the relationship is hidden, the link is hidden too:
+
+```ruby
+relationship(:author, if: :can_view_author?, link: -> { author_path(resource[:author_id]) }) do
+  UserSerializer.new(resource[:author])
+end
+```
+
+
 #### Preloading relationship values
 
 Use `preload: true` to call a method matching the relationship name once and cache the result for the duration of the render. The cached value is passed as the first argument to the relationship block:

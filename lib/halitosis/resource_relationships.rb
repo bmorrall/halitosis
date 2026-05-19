@@ -15,6 +15,24 @@ module Halitosis
       # @return [Halitosis::ResourceRelationships::Field]
       #
       def relationship(name, options = {}, &procedure)
+        if (link_value = options.delete(:link))
+          link_opts = {}
+          link_opts[:if] = options[:if] if options.key?(:if)
+          link_opts[:unless] = options[:unless] if options.key?(:unless)
+
+          if link_value.is_a?(Proc)
+            # Lambdas enforce arity; call_instance passes context as the first arg,
+            # so wrap a 0-arity lambda in a regular proc that absorbs the context arg.
+            if link_value.lambda?
+              captured = link_value
+              link_value = proc { instance_exec(&captured) }
+            end
+            link(name, link_opts, &link_value)
+          else
+            link(name, link_opts.merge(value: link_value))
+          end
+        end
+
         fields.add(ResourceRelationships::Field.new(name, options, procedure))
       end
 
