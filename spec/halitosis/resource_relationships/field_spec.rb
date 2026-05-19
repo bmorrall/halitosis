@@ -136,20 +136,30 @@ RSpec.describe Halitosis::ResourceRelationships::Field do
 
       expect(field.preload_key).to eq(:articles)
     end
+
+    it "defaults to the field name when preload: true" do
+      field = described_class.new(:articles, {preload: true}, proc {})
+
+      expect(field.preload_key).to eq(:articles)
+    end
   end
 
   describe "#validate", "preload option" do
-    it "raises when preload option is not a String, Symbol, or false" do
+    it "raises when preload option is not a String, Symbol, true, or false" do
       expect {
         described_class.new(:articles, {preload: 123}, proc {}).validate
       }.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidField)
-        expect(exception.message).to eq("Relationship articles preload option must be a Symbol, String, or false")
+        expect(exception.message).to eq("Relationship articles preload option must be a Symbol, String, true, or false")
       end
     end
 
     it "is valid with preload: false" do
       expect(described_class.new(:articles, {preload: false}, proc {}).validate).to be(true)
+    end
+
+    it "is valid with preload: true" do
+      expect(described_class.new(:articles, {preload: true}, proc {}).validate).to be(true)
     end
   end
 end

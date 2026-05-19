@@ -13,7 +13,7 @@ module Halitosis
   #
   #     resource :article
   #
-  #     relationship :accounts, preload: :accounts do |accounts|
+  #     relationship :accounts, preload: true do |accounts|
   #       accounts.map { AccountSerializer.new(_1) }
   #     end
   #
@@ -21,6 +21,10 @@ module Halitosis
   #       allow_include :owner do |accounts|
   #         accounts.includes(:owner)
   #       end
+  #     end
+  #
+  #     def accounts
+  #       resource.accounts
   #     end
   #   end
   #

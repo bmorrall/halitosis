@@ -10,9 +10,9 @@ module Halitosis
       def validate
         super
 
-        if options.key?(:preload) && options[:preload] != false &&
+        if options.key?(:preload) && options[:preload] != false && options[:preload] != true &&
             !options[:preload].is_a?(Symbol) && !options[:preload].is_a?(String)
-          raise InvalidField, "Relationship #{name} preload option must be a Symbol, String, or false"
+          raise InvalidField, "Relationship #{name} preload option must be a Symbol, String, true, or false"
         end
 
         return true if procedure
@@ -21,12 +21,14 @@ module Halitosis
       end
 
       # The key used to look up a stored preload value for this field.
-      # Defaults to the field name, but can be overridden with the +preload:+ option.
+      # Defaults to the field name, but can be overridden with a Symbol or String
+      # +preload:+ option. +true+ and +false+ both fall back to the field name.
       #
       # @return [Symbol]
       #
       def preload_key
-        (options.fetch(:preload, name) || name).to_sym
+        value = options[:preload]
+        (value.is_a?(Symbol) || value.is_a?(String)) ? value.to_sym : name.to_sym
       end
 
       # Returns +true+ only when a usable +preload:+ option was given *and*

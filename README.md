@@ -581,15 +581,15 @@ Relationships allow embedding associated serializers inside `_relationships`. Th
 One-to-one:
 
 ```ruby
-relationship(:author) { UserSerializer.new(article.author) }
+relationship(:author, preload: true) { |author| UserSerializer.new(author) }
 # => { article: { ..., _relationships: { author: { id: 5, name: "Alice", _type: "user" } } } }
 ```
 
 One-to-many (array of serializers):
 
 ```ruby
-relationship(:comments) do
-  article.comments.map { |comment| CommentSerializer.new(comment) }
+relationship(:comments, preload: true) do |comments|
+  comments.map { |comment| CommentSerializer.new(comment) }
 end
 # => { article: { ..., _relationships: { comments: [ ... ] } } }
 ```
@@ -597,7 +597,7 @@ end
 One-to-many (collection serializer):
 
 ```ruby
-relationship(:comments) { CommentsSerializer.new(article.comments) }
+relationship(:comments, preload: true) { |comments| CommentsSerializer.new(comments) }
 ```
 
 The `rel` method is a shorthand alias for `relationship`:
@@ -609,27 +609,30 @@ rel(:comments) { article.comments.map { |c| CommentSerializer.new(c) } }
 
 #### Preloading relationship values
 
-Use the `preload:` option to name a method that will be called once and cached for the duration of the render. The cached value is passed as the first argument to the relationship block:
+Use `preload: true` to call a method matching the relationship name once and cache the result for the duration of the render. The cached value is passed as the first argument to the relationship block:
 
 ```ruby
-# The :author_record method is called once and its result passed to the block
-relationship(:author, preload: :author_record) do |author|
+relationship(:author, preload: true) do |author|
   UserSerializer.new(author)
 end
 
-def author_record
-  article.author # called once even if multiple relationships share the key
+def author
+  article.author # called once, result cached
 end
 ```
 
-Multiple relationships can share the same `preload:` key — the method is evaluated only once:
+Use a Symbol or String to cache under a different key — useful when multiple relationships share the same preloaded data:
 
 ```ruby
 rel(:author,       preload: :author_data) { |data| UserSerializer.new(data) }
 rel(:author_links, preload: :author_data) { |data| data.links }
+
+def author_data
+  article.author # evaluated once, shared between both relationships
+end
 ```
 
-Use `preload: false` to opt out of preloading entirely. Any value that was manually stored under the field name is still used, but the method will not be called automatically:
+Use `preload: false` to opt out. Any value manually stored under the field name is still used, but no method will be called automatically:
 
 ```ruby
 relationship(:author, preload: false) { UserSerializer.new(article.author) }
@@ -647,7 +650,7 @@ class ArticleSerializer
 
   resource :article
 
-  relationship :author, preload: :author_record do |author|
+  relationship :author, preload: true do |author|
     UserSerializer.new(author)
   end
 
@@ -656,13 +659,13 @@ class ArticleSerializer
     allow_include(:summary) { |author| author.includes(:summary) }
   end
 
-  def author_record
+  def author
     article.author
   end
 end
 ```
 
-When `include: "author.avatar"` is requested, the `:avatar` procedure is called with the cached `:author_record` value and its return value replaces it in the preload cache for the duration of the render. The relationship block then receives the enriched value.
+When `include: "author.avatar"` is requested, the `:avatar` procedure is called with the cached `:author` value and its return value replaces it in the preload cache for the duration of the render. The relationship block then receives the enriched value.
 
 Procedures compose: if `include: "author.avatar,author.summary"` is requested, both procedures run in turn on the same cached value.
 
