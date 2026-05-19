@@ -239,6 +239,39 @@ RSpec.describe "Paginatable — paginate_links" do
     end
   end
 
+  context "when a page number is nil (unavailable link)" do
+    it "does not call the block for nil page numbers" do
+      item_ser = item_klass
+      call_count = 0
+
+      klass = Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection.map { |i| item_ser.new(i) }
+        end
+
+        paginate_by_page :kaminari, default_page_size: 10 do |collection, number, size|
+          offset = (number - 1) * size
+          page_items = collection[offset, size] || []
+          total = (collection.size.to_f / size).ceil
+          PaginatedSlice.new(page_items, number, total, size, collection.size)
+        end
+
+        paginate_links do |page_number, _qp|
+          call_count += 1
+          "/items?page[number]=#{page_number}"
+        end
+      end
+
+      links = klass.new(items, page: {number: 1, size: 10}).render.fetch(:_links)
+
+      # prev is nil on page 1 — block must not be called for it
+      expect(links[:prev]).to be_nil
+      expect(call_count).to eq(4) # self, first, last, next — not prev
+    end
+  end
+
   context "when no pagination procedure is declared" do
     it "raises InvalidField at DSL time" do
       item_ser = item_klass
