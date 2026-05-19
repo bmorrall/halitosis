@@ -74,6 +74,28 @@ RSpec.describe Halitosis::Links do
         expect(link.name).to eq(:"ea:find")
       end
     end
+
+    describe "#profile" do
+      it "adds a profile link with a static URL" do
+        klass.profile("https://docs.example.com/article")
+
+        expect(klass.new.render[:_links][:profile]).to eq(href: "https://docs.example.com/article")
+      end
+
+      it "is omitted when rendered as a child (non-root)" do
+        klass.profile("https://docs.example.com/article")
+
+        parent_ctx = Halitosis::Context.new(nil)
+        result = klass.new.render(parent: parent_ctx)
+
+        expect(result.dig(:_links, :profile)).to be_nil
+      end
+
+      it "raises when no URL is given" do
+        expect { klass.profile(nil) }
+          .to raise_error(Halitosis::InvalidField, /profile requires a URL/i)
+      end
+    end
   end
 
   describe Halitosis::Links::InstanceMethods do

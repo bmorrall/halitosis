@@ -102,6 +102,14 @@ module Halitosis
       @depth ||= parent ? parent.depth + 1 : 0
     end
 
+    # Returns true when this context has no parent (i.e. it is the outermost render).
+    #
+    # @return [Boolean]
+    #
+    def root?
+      depth.zero?
+    end
+
     # Returns true when a root envelope should be rendered.
     #
     # @return [Boolean]
