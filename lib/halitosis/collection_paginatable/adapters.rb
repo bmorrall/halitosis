@@ -45,6 +45,10 @@ module Halitosis
       # directly from the collection object.
       #
       module Kaminari
+        def self.default_per_page_procedure
+          ->(collection, number, size) { collection.page(number).per(size) }
+        end
+
         def self.call(collection)
           return nil unless collection.respond_to?(:current_page) &&
             collection.respond_to?(:total_pages)
@@ -66,6 +70,10 @@ module Halitosis
       # directly from the collection object.
       #
       module WillPaginate
+        def self.default_per_page_procedure
+          ->(collection, number, size) { collection.paginate(page: number, per_page: size) }
+        end
+
         def self.call(collection)
           return nil unless collection.respond_to?(:current_page) &&
             collection.respond_to?(:total_pages)

@@ -118,7 +118,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
       expect(klass.fields.singleton(Halitosis::CollectionPaginatable::Field)).not_to be_nil
     end
 
-    it "raises InvalidField without a block" do
+    it "raises InvalidField without a block when the adapter has no default procedure" do
       expect do
         Class.new do
           include Halitosis
@@ -127,9 +127,23 @@ RSpec.describe Halitosis::CollectionPaginatable do
             collection
           end
 
-          paginate_by_page default_page_size: 10
+          paginate_by_page ->(collection) { {} }, default_page_size: 10
         end
       end.to raise_error(Halitosis::InvalidField, /paginate_by_page must be defined with a block/i)
+    end
+
+    it "uses the adapter's default_per_page_procedure when no block is given" do
+      klass = Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection
+        end
+
+        paginate_by_page :kaminari, default_page_size: 10
+      end
+
+      expect(klass.fields.singleton(Halitosis::CollectionPaginatable::Field)).not_to be_nil
     end
 
     it "raises InvalidField when declared a second time" do
