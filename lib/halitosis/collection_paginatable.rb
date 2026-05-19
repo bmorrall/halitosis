@@ -76,7 +76,15 @@ module Halitosis
       #
       def paginate_by_page(adapter = nil, default_page_size:, &procedure)
         unless procedure
-          raise InvalidField, "#{name} paginate_by_page must be defined with a block"
+          resolved_adapter = adapter || Halitosis.config.pagination_adapter
+          if resolved_adapter
+            resolved = CollectionPaginatable::Adapters.resolve(resolved_adapter)
+            procedure = resolved.default_per_page_procedure if resolved.respond_to?(:default_per_page_procedure)
+          end
+        end
+
+        unless procedure
+          raise InvalidField, "#{name} paginate_by_page must be defined with a block or the adapter must provide a default_per_page_procedure"
         end
 
         add_pagination_field(adapter) do |context, collection, page_params|

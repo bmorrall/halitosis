@@ -348,7 +348,7 @@ end
 
 ### Pagination
 
-Declare server-side pagination on a collection serializer with `paginate_by_page`. The block receives the current `collection`, the resolved `number` (page number), and `size` (items per page), and must return the paginated collection, or `nil` to signal that the values are invalid:
+Declare server-side pagination on a collection serializer with `paginate_by_page`. When using a built-in adapter (`:kaminari` or `:will_paginate`), no block is required — the adapter provides a default pagination procedure automatically:
 
 ```ruby
 class ArticlesSerializer
@@ -358,9 +358,15 @@ class ArticlesSerializer
     collection.map { |article| ArticleSerializer.new(article) }
   end
 
-  paginate_by_page :kaminari, default_page_size: 25 do |collection, number, size|
-    collection.page(number).per(size)
-  end
+  paginate_by_page :kaminari, default_page_size: 25
+end
+```
+
+Supply a block when you need custom pagination logic — it receives the `collection`, the resolved `number` (page number), and `size` (items per page), and must return the paginated collection, or `nil` to signal that the values are invalid:
+
+```ruby
+paginate_by_page :kaminari, default_page_size: 25 do |collection, number, size|
+  collection.page(number).per(size).without_count
 end
 ```
 
@@ -397,12 +403,18 @@ Halitosis.configure { |c| c.pagination_adapter = :kaminari }
 Or pass the adapter symbol as the first argument to `paginate_by_page` or `paginate_with`:
 
 ```ruby
-paginate_by_page :will_paginate, default_page_size: 25 do |collection, number, size|
-  collection.paginate(page: number, per_page: size)
+paginate_by_page :will_paginate, default_page_size: 25
+```
+
+Built-in adapters: `:kaminari`, `:will_paginate`. Both provide a default `paginate_by_page` procedure so no block is needed. For custom behavior, or when using a custom callable adapter, supply a block:
+
+```ruby
+paginate_by_page :kaminari, default_page_size: 25 do |collection, number, size|
+  collection.page(number).per(size).without_count
 end
 ```
 
-Built-in adapters: `:kaminari`, `:will_paginate`. Any callable that accepts the paginated collection and returns `{ current_page:, total_pages:, prev_page:, next_page: }` also works.
+Any callable that accepts the paginated collection and returns `{ current_page:, total_pages:, prev_page:, next_page: }` also works as an adapter. Custom callables do not provide a default procedure, so a block is required when using one.
 
 #### Pagy
 
