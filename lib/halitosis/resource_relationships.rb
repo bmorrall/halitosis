@@ -15,17 +15,28 @@ module Halitosis
       # @return [Halitosis::ResourceRelationships::Field]
       #
       def relationship(name, options = {}, &procedure)
-        if (link_value = options.delete(:link))
+        link_value = options.delete(:link)
+
+        field = ResourceRelationships::Field.new(name, options, procedure)
+
+        if link_value
           link_opts = {}
           link_opts[:if] = options[:if] if options.key?(:if)
           link_opts[:unless] = options[:unless] if options.key?(:unless)
 
+          link_opts[:preload_key] = field.preload_key if options[:preload]
+
           if link_value.is_a?(Proc)
             # Lambdas enforce arity; call_instance passes context as the first arg,
             # so wrap a 0-arity lambda in a regular proc that absorbs the context arg.
+            # For n-arity lambdas, forward the preloaded value as the first argument.
             if link_value.lambda?
               captured = link_value
-              link_value = proc { instance_exec(&captured) }
+              link_value = if captured.arity != 0
+                proc { |preloaded| instance_exec(preloaded, &captured) }
+              else
+                proc { instance_exec(&captured) }
+              end
             end
             link(name, link_opts, &link_value)
           else
@@ -33,7 +44,7 @@ module Halitosis
           end
         end
 
-        fields.add(ResourceRelationships::Field.new(name, options, procedure))
+        fields.add(field)
       end
 
       alias_method :rel, :relationship
@@ -66,6 +77,8 @@ module Halitosis
           value = preloads[field.preload_key]
           store_preload(context, field.name, value)
         end
+
+        super
       end
 
       # @return [Hash] hash of rendered resources to include

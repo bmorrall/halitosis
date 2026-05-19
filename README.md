@@ -706,6 +706,26 @@ relationship(:author, if: :can_view_author?, link: -> { author_path(resource[:au
 end
 ```
 
+When `preload:` is also set, a 1-arity lambda passed to `link:` receives the preloaded value — the same value delivered to the relationship block. This avoids a second lookup just to build the URL:
+
+```ruby
+relationship(:author, preload: true, link: ->(author) { "/people/#{author.id}" }) do |author|
+  UserSerializer.new(author)
+end
+
+def author
+  article.author # called once; result shared by the link and the relationship block
+end
+```
+
+A 0-arity lambda continues to work as before when the URL does not depend on the preloaded value:
+
+```ruby
+relationship(:author, preload: true, link: -> { "/people" }) do |author|
+  UserSerializer.new(author)
+end
+```
+
 
 #### Preloading relationship values
 
