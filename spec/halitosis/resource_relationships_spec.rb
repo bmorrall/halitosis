@@ -133,6 +133,23 @@ RSpec.describe Halitosis::ResourceRelationships do
 
         expect(call_count).to eq(1)
       end
+
+      it "does not call the preload method for a 0-arity link proc" do
+        call_count = 0
+
+        full_klass.relationship(:articles, preload: true, link: -> { "/articles" }) do |articles|
+          articles.map { Class.new { include Halitosis::Base }.new }
+        end
+
+        full_klass.define_method(:articles) do
+          call_count += 1
+          []
+        end
+
+        full_klass.new(Object.new).render
+
+        expect(call_count).to eq(0)
+      end
     end
   end
 

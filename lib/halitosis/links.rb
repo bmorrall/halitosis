@@ -41,8 +41,10 @@ module Halitosis
         preloads = {}
 
         self.class.fields.for_type(Links::Field).each do |field|
-          next unless (pk = field.preload_key) && field.enabled?(context)
+          next unless field.preload?(context)
           next if preloaded?(context, field.name)
+
+          pk = field.preload_key
 
           unless preloads.key?(pk)
             preloads[pk] = context.call_instance(self.class.default_procedure_for(pk))
