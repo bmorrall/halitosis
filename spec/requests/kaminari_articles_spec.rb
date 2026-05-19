@@ -31,10 +31,10 @@ RSpec.describe "KaminariArticles", :kaminari, :rails, type: :request do
         expect(body.dig("_meta", "last")).to eq(2)
         expect(body.dig("_meta", "prev")).to be_nil
         expect(body.dig("_meta", "next")).to eq(2)
-        expect(body.dig("_links", "first")).to eq(kaminari_articles_path(page: {number: 1}))
-        expect(body.dig("_links", "last")).to eq(kaminari_articles_path(page: {number: 2}))
+        expect(body.dig("_links", "first", "href")).to eq(kaminari_articles_path(page: {number: 1}))
+        expect(body.dig("_links", "last", "href")).to eq(kaminari_articles_path(page: {number: 2}))
         expect(body.dig("_links", "prev")).to be_nil
-        expect(body.dig("_links", "next")).to eq(kaminari_articles_path(page: {number: 2}))
+        expect(body.dig("_links", "next", "href")).to eq(kaminari_articles_path(page: {number: 2}))
       end
     end
 
@@ -50,9 +50,9 @@ RSpec.describe "KaminariArticles", :kaminari, :rails, type: :request do
         expect(body.dig("_meta", "last")).to eq(2)
         expect(body.dig("_meta", "prev")).to eq(1)
         expect(body.dig("_meta", "next")).to be_nil
-        expect(body.dig("_links", "first")).to eq(kaminari_articles_path(page: {number: 1}))
-        expect(body.dig("_links", "last")).to eq(kaminari_articles_path(page: {number: 2}))
-        expect(body.dig("_links", "prev")).to eq(kaminari_articles_path(page: {number: 1}))
+        expect(body.dig("_links", "first", "href")).to eq(kaminari_articles_path(page: {number: 1}))
+        expect(body.dig("_links", "last", "href")).to eq(kaminari_articles_path(page: {number: 2}))
+        expect(body.dig("_links", "prev", "href")).to eq(kaminari_articles_path(page: {number: 1}))
         expect(body.dig("_links", "next")).to be_nil
       end
     end

@@ -74,11 +74,11 @@ RSpec.describe "Paginatable — paginate_links" do
     end
 
     it "includes first pointing to page 1" do
-      expect(links[:first]).to eq("/items?page[number]=1&page[size]=10")
+      expect(links[:first]).to eq(href: "/items?page[number]=1&page[size]=10")
     end
 
     it "includes last pointing to the final page" do
-      expect(links[:last]).to eq("/items?page[number]=5&page[size]=10")
+      expect(links[:last]).to eq(href: "/items?page[number]=5&page[size]=10")
     end
 
     it "emits prev as nil" do
@@ -86,7 +86,7 @@ RSpec.describe "Paginatable — paginate_links" do
     end
 
     it "includes next pointing to page 2" do
-      expect(links[:next]).to eq("/items?page[number]=2&page[size]=10")
+      expect(links[:next]).to eq(href: "/items?page[number]=2&page[size]=10")
     end
   end
 
@@ -94,15 +94,15 @@ RSpec.describe "Paginatable — paginate_links" do
     let(:links) { rendered_links(items, page: {number: 5, size: 10}).fetch(:_links) }
 
     it "includes first pointing to page 1" do
-      expect(links[:first]).to eq("/items?page[number]=1&page[size]=10")
+      expect(links[:first]).to eq(href: "/items?page[number]=1&page[size]=10")
     end
 
     it "includes last pointing to the final page" do
-      expect(links[:last]).to eq("/items?page[number]=5&page[size]=10")
+      expect(links[:last]).to eq(href: "/items?page[number]=5&page[size]=10")
     end
 
     it "includes prev pointing to page 4" do
-      expect(links[:prev]).to eq("/items?page[number]=4&page[size]=10")
+      expect(links[:prev]).to eq(href: "/items?page[number]=4&page[size]=10")
     end
 
     it "emits next as nil" do
@@ -114,10 +114,10 @@ RSpec.describe "Paginatable — paginate_links" do
     let(:links) { rendered_links(items, page: {number: 3, size: 10}).fetch(:_links) }
 
     it "includes all four links with valid URLs" do
-      expect(links[:first]).to eq("/items?page[number]=1&page[size]=10")
-      expect(links[:last]).to eq("/items?page[number]=5&page[size]=10")
-      expect(links[:prev]).to eq("/items?page[number]=2&page[size]=10")
-      expect(links[:next]).to eq("/items?page[number]=4&page[size]=10")
+      expect(links[:first]).to eq(href: "/items?page[number]=1&page[size]=10")
+      expect(links[:last]).to eq(href: "/items?page[number]=5&page[size]=10")
+      expect(links[:prev]).to eq(href: "/items?page[number]=2&page[size]=10")
+      expect(links[:next]).to eq(href: "/items?page[number]=4&page[size]=10")
     end
   end
 
@@ -127,8 +127,8 @@ RSpec.describe "Paginatable — paginate_links" do
     let(:few_items) { (1..5).map { |i| {id: i} } }
 
     it "includes first and last both pointing to page 1" do
-      expect(links[:first]).to eq("/items?page[number]=1&page[size]=10")
-      expect(links[:last]).to eq("/items?page[number]=1&page[size]=10")
+      expect(links[:first]).to eq(href: "/items?page[number]=1&page[size]=10")
+      expect(links[:last]).to eq(href: "/items?page[number]=1&page[size]=10")
     end
 
     it "emits prev as nil" do
@@ -174,7 +174,7 @@ RSpec.describe "Paginatable — paginate_links" do
       result = klass.new(items, filter: {min_id: "1"}, sort: "id", page: {number: 1, size: 10}).render
       links = result.fetch(:_links)
 
-      captured = JSON.parse(links[:first].split("captured=").last, symbolize_names: true)
+      captured = JSON.parse(links[:first][:href].split("captured=").last, symbolize_names: true)
       expect(captured[:filter]).to eq(min_id: "1")
       expect(captured[:sort]).to eq("id")
       expect(captured[:page]).to eq(number: 1, size: 10)
@@ -268,10 +268,10 @@ RSpec.describe "Paginatable — paginate_links" do
 
       links = klass.new(pagy_items, page: {number: 2, size: 10}).render.fetch(:_links)
 
-      expect(links[:first]).to eq("/items?page[number]=1&page[size]=10")
-      expect(links[:last]).to eq("/items?page[number]=5&page[size]=10")
-      expect(links[:prev]).to eq("/items?page[number]=1&page[size]=10")
-      expect(links[:next]).to eq("/items?page[number]=3&page[size]=10")
+      expect(links[:first]).to eq(href: "/items?page[number]=1&page[size]=10")
+      expect(links[:last]).to eq(href: "/items?page[number]=5&page[size]=10")
+      expect(links[:prev]).to eq(href: "/items?page[number]=1&page[size]=10")
+      expect(links[:next]).to eq(href: "/items?page[number]=3&page[size]=10")
     end
 
     it "populates query_params with page number and size from the pagy object" do
@@ -318,7 +318,7 @@ RSpec.describe "Paginatable — paginate_links" do
       links = klass.new(pagy_items, page: {number: 1}).render.fetch(:_links)
 
       # 50 items / limit 5 = 10 pages
-      expect(links[:last]).to eq("/items?page[number]=10&page[size]=5")
+      expect(links[:last]).to eq(href: "/items?page[number]=10&page[size]=5")
     end
   end
 
@@ -370,10 +370,10 @@ RSpec.describe "Paginatable — paginate_links" do
       expect(result).to have_key(:nodes)
       expect(result[:nodes]).to be_an(Array)
 
-      expect(result[:_links][:first]).to eq("/nodes?page[number]=1")
-      expect(result[:_links][:last]).to eq("/nodes?page[number]=2")
+      expect(result[:_links][:first]).to eq(href: "/nodes?page[number]=1")
+      expect(result[:_links][:last]).to eq(href: "/nodes?page[number]=2")
       expect(result[:_links][:prev]).to be_nil
-      expect(result[:_links][:next]).to eq("/nodes?page[number]=2")
+      expect(result[:_links][:next]).to eq(href: "/nodes?page[number]=2")
 
       expect(result[:nodes].first).to include(
         id: 1,
