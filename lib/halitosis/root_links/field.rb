@@ -5,7 +5,7 @@ module Halitosis
     class Field < Halitosis::Links::Field
       private
 
-      def call_procedure(context)
+      def call_procedure(context, _preloaded = nil)
         proc_or_name = procedure || name
 
         # :nocov:

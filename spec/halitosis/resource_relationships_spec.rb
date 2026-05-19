@@ -55,6 +55,84 @@ RSpec.describe Halitosis::ResourceRelationships do
         rel_field = full_klass.fields.find_by_name(Halitosis::ResourceRelationships::Field, :author)
         expect(rel_field.options).not_to have_key(:link)
       end
+
+      it "sets preload_key on the link field when relationship has preload:" do
+        full_klass.relationship(:articles, preload: true, link: -> { "/articles" }) { nil }
+
+        link_field = full_klass.fields.find_by_name(Halitosis::Links::Field, :articles)
+        expect(link_field.preload_key).to eq(:articles)
+      end
+
+      it "uses the relationship field's preload_key when preload: is a custom symbol" do
+        full_klass.relationship(:articles, preload: :user_articles, link: -> { "/articles" }) { nil }
+
+        link_field = full_klass.fields.find_by_name(Halitosis::Links::Field, :articles)
+        expect(link_field.preload_key).to eq(:user_articles)
+      end
+
+      it "does not set preload_key on the link field when relationship has no preload:" do
+        full_klass.relationship(:articles, link: -> { "/articles" }) { nil }
+
+        link_field = full_klass.fields.find_by_name(Halitosis::Links::Field, :articles)
+        expect(link_field.preload_key).to be_nil
+      end
+
+      it "link proc receives preloaded value when relationship has preload:" do
+        full_klass.relationship(:articles, preload: true, link: ->(articles) { "/articles/#{articles.size}" }) do |articles|
+          articles.map { Class.new { include Halitosis::Base }.new }
+        end
+
+        full_klass.define_method(:articles) { [Object.new, Object.new] }
+
+        serializer = full_klass.new(Object.new, include: {articles: true})
+        result = serializer.render
+
+        expect(result[:item][:_links][:articles]).to eq(href: "/articles/2")
+      end
+
+      it "0-arity lambda link still works alongside a preloaded relationship" do
+        full_klass.relationship(:articles, preload: true, link: -> { "/articles" }) do |articles|
+          articles.map { Class.new { include Halitosis::Base }.new }
+        end
+
+        full_klass.define_method(:articles) { [Object.new] }
+
+        serializer = full_klass.new(Object.new, include: {articles: true})
+        result = serializer.render
+
+        expect(result[:item][:_links][:articles]).to eq(href: "/articles")
+      end
+
+      it "link preloads the value even when the relationship is not included" do
+        full_klass.relationship(:articles, preload: true, link: ->(articles) { "/articles/#{articles.size}" }) do |articles|
+          articles.map { Class.new { include Halitosis::Base }.new }
+        end
+
+        full_klass.define_method(:articles) { [Object.new, Object.new, Object.new] }
+
+        serializer = full_klass.new(Object.new)
+        result = serializer.render
+
+        expect(result[:item][:_links][:articles]).to eq(href: "/articles/3")
+      end
+
+      it "does not call the preload method twice when the relationship is also included" do
+        call_count = 0
+
+        full_klass.relationship(:articles, preload: true, link: ->(articles) { "/articles/#{articles.size}" }) do |articles|
+          articles.map { Class.new { include Halitosis::Base }.new }
+        end
+
+        full_klass.define_method(:articles) do
+          call_count += 1
+          [Object.new]
+        end
+
+        serializer = full_klass.new(Object.new, include: {articles: true})
+        serializer.render
+
+        expect(call_count).to eq(1)
+      end
     end
   end
 

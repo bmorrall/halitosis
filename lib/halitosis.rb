@@ -36,10 +36,10 @@ module Halitosis
     base.include Includeable
     base.include Identifiers
     base.include Attributes
+    base.include Preloadable
     base.include Links
     base.include Meta
     base.include Permissions
-    base.include Preloadable
     base.include RootLinks
     base.include RootMeta
     base.include RootPermissions

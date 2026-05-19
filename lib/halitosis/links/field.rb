@@ -10,6 +10,15 @@ module Halitosis
         super(name, self.class.build_options(args), procedure)
       end
 
+      # The key used to look up a stored preload value for this link, or +nil+
+      # if this link was not created from a preloaded relationship.
+      #
+      # @return [Symbol, nil]
+      #
+      def preload_key
+        options[:preload_key]
+      end
+
       # @return [true] if nothing is raised
       #
       # @raise [Halitosis::InvalidField] if the field is invalid
@@ -23,10 +32,17 @@ module Halitosis
           "Link #{name} requires either procedure or explicit value"
       end
 
+      # @param context [Halitosis::Context]
+      # @param preloaded [Object, nil] value from the preload cache, if any
+      #
       # @return [nil, Hash]
       #
-      def value(_context)
-        hrefs = super
+      def value(context, preloaded = nil)
+        hrefs = if options.key?(:value)
+          options[:value]
+        else
+          call_procedure(context, preloaded)
+        end
 
         attrs = options.fetch(:attrs, {})
 
@@ -39,6 +55,21 @@ module Halitosis
           attrs.merge(href: hrefs)
         end
       end
+
+      private
+
+      # @param context [Halitosis::Context]
+      # @param preloaded [Object, nil]
+      #
+      def call_procedure(context, preloaded = nil)
+        if procedure.arity != 0
+          context.call_instance_with(preloaded, procedure)
+        else
+          context.call_instance(procedure || name)
+        end
+      end
+
+      public
 
       class << self
         # Build hash of options from flexible field arguments
