@@ -593,6 +593,19 @@ link(:find, :templated) { "/articles/{?id}" }
 # => { _links: { find: { href: "/articles/{?id}", templated: true } } }
 ```
 
+#### Link object properties
+
+Any of the HAL link object properties can be set as options alongside the link declaration:
+
+```ruby
+link(:self, type: "application/json") { "/articles/#{article.id}" }
+link(:alternate, hreflang: "fr") { "/fr/articles/#{article.id}" }
+link(:legacy, deprecation: "https://example.com/deprecation-notice") { "/v1/articles/#{article.id}" }
+link(:search, :templated, title: "Search articles") { "/articles{?q}" }
+```
+
+Supported properties: `type`, `deprecation`, `name`, `profile`, `title`, `hreflang`.
+
 Suppress all links at render time with `include_links: false`:
 
 ```ruby
