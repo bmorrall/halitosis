@@ -52,7 +52,7 @@ RSpec.describe Halitosis::CollectIncludes do
 
         expect(klass.ancestors).to include(Halitosis::CollectIncludes::InstanceMethods)
         expect(result[:_relationships][:child]).to eq(id: 42, _type: "child")
-        expect(result[:included]).to eq([{id: 42, name: "child"}])
+        expect(result[:included]).to eq(child: [{id: 42, name: "child"}])
       end
     end
   end
@@ -69,7 +69,7 @@ RSpec.describe Halitosis::CollectIncludes do
       end
 
       context "when a relationship is included but returns nil" do
-        it "renders an empty included array" do
+        it "renders an empty included hash" do
           klass = Class.new do
             include Halitosis
             include Halitosis::ResourceRelationships
@@ -84,7 +84,7 @@ RSpec.describe Halitosis::CollectIncludes do
           result = klass.new(include: {child: true}).render
 
           expect(result[:_relationships][:child]).to be_nil
-          expect(result[:included]).to eq([])
+          expect(result[:included]).to eq({})
         end
       end
 
@@ -94,7 +94,7 @@ RSpec.describe Halitosis::CollectIncludes do
 
           result = serializer.render
           expect(result[:_relationships][:child]).to eq(id: 42, _type: "child")
-          expect(result[:included]).to eq([{id: 42, name: "child"}])
+          expect(result[:included]).to eq(child: [{id: 42, name: "child"}])
         end
       end
     end

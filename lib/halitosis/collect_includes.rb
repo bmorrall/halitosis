@@ -13,11 +13,15 @@ module Halitosis
         end
       end
 
-      # @return [Hash] the rendered hash with a root-level included array
+      # @return [Hash] the rendered hash with a root-level included hash
       #
       def render_root(context, result)
         super.tap do |root|
-          root[:included] = context.included_registry.values if context.included_registry && context.include_options.any?
+          if context.included_registry && context.include_options.any?
+            root[:included] = context.included_registry.each_with_object({}) do |((type, _id), value), hash|
+              (hash[type.to_sym] ||= []) << value
+            end
+          end
         end
       end
 

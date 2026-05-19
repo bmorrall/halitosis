@@ -50,9 +50,9 @@ RSpec.describe "CollectIncludes" do
         _relationships: {author: {id: 10, _type: "author"}}
       )
 
-      expect(result[:included]).to eq([
-        {id: 10, name: "Alice", _type: "author"}
-      ])
+      expect(result[:included]).to eq(
+        author: [{id: 10, name: "Alice", _type: "author"}]
+      )
     end
 
     it "does not add included key when no relationships are included" do
@@ -88,8 +88,7 @@ RSpec.describe "CollectIncludes" do
       serializer = collection_klass.new(articles, include: {author: true})
       result = serializer.render
 
-      expect(result[:included].length).to eq(1)
-      expect(result[:included].first).to eq(id: 10, name: "Alice", _type: "author")
+      expect(result[:included]).to eq(author: [{id: 10, name: "Alice", _type: "author"}])
     end
 
     it "includes each distinct author once" do
@@ -102,10 +101,11 @@ RSpec.describe "CollectIncludes" do
       serializer = collection_klass.new(articles, include: {author: true})
       result = serializer.render
 
-      expect(result[:included].length).to eq(2)
-      expect(result[:included]).to contain_exactly(
-        {id: 10, name: "Alice", _type: "author"},
-        {id: 20, name: "Bob", _type: "author"}
+      expect(result[:included]).to eq(
+        author: [
+          {id: 10, name: "Alice", _type: "author"},
+          {id: 20, name: "Bob", _type: "author"}
+        ]
       )
     end
   end
@@ -202,10 +202,10 @@ RSpec.describe "CollectIncludes" do
           _type: "article",
           _relationships: {author: {id: 10, _type: "author"}}
         },
-        included: [
-          {id: 99, label: "ruby", _type: "tag"},
-          {id: 10, name: "Alice", _type: "author", _relationships: {tag: {id: 99, _type: "tag"}}}
-        ]
+        included: {
+          tag: [{id: 99, label: "ruby", _type: "tag"}],
+          author: [{id: 10, name: "Alice", _type: "author", _relationships: {tag: {id: 99, _type: "tag"}}}]
+        }
       )
     end
   end
@@ -241,7 +241,7 @@ RSpec.describe "CollectIncludes" do
       result = serializer.render
 
       expect(result[:root][:_relationships][:anon]).to eq(info: "no id here")
-      expect(result[:included]).to eq([])
+      expect(result[:included]).to eq({})
     end
   end
 
@@ -291,9 +291,9 @@ RSpec.describe "CollectIncludes" do
           {id: 1, title: "First", _type: "article", _relationships: {author: {id: 10, _type: "author"}}},
           {id: 2, title: "Second", _type: "article", _relationships: {author: {id: 10, _type: "author"}}}
         ],
-        included: [
-          {id: 10, name: "Alice", _type: "author"}
-        ]
+        included: {
+          author: [{id: 10, name: "Alice", _type: "author"}]
+        }
       )
     end
   end
@@ -342,10 +342,12 @@ RSpec.describe "CollectIncludes" do
             ]
           }
         },
-        included: [
-          {id: 10, name: "Alice", _type: "author"},
-          {id: 20, name: "Bob", _type: "author"}
-        ]
+        included: {
+          author: [
+            {id: 10, name: "Alice", _type: "author"},
+            {id: 20, name: "Bob", _type: "author"}
+          ]
+        }
       )
     end
   end
