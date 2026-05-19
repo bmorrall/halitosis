@@ -57,11 +57,8 @@ module Halitosis
         validate_relationships!(context) unless collection?
 
         render_fields(ResourceRelationships::Field, context) do |field, result|
-          # Use the preload cache if a value has been stored under the field name
-          # (populated by preload_context or manually via store_preload).
-          preloaded = if field.preload?(context) || preloaded?(context, field.name)
-            fetch_preload(context, field.name)
-          end
+          # Use the preload cache if a value has been stored under the field name.
+          preloaded = fetch_preload(context, field.name) if preloaded?(context, field.name)
           value = field.value(context, preloaded)
 
           result[field.name] = relationships_child(field.name.to_s, context, value)
