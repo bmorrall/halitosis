@@ -23,6 +23,30 @@ RSpec.describe Halitosis::ResourceRelationships::Field do
         )
       end
     end
+
+    it "raises when block accepts arguments but no preload: is set" do
+      expect {
+        described_class.new(:author, {}, proc { |val| val }).validate
+      }.to raise_error(Halitosis::InvalidField, "Relationship author block accepts arguments but no `preload:` option is set")
+    end
+
+    it "does not raise when preload: false is set alongside an arity-1 block" do
+      expect {
+        described_class.new(:author, {preload: false}, proc { |val| val }).validate
+      }.not_to raise_error
+    end
+
+    it "does not raise when preload: true is set alongside an arity-1 block" do
+      expect {
+        described_class.new(:author, {preload: true}, proc { |val| val }).validate
+      }.not_to raise_error
+    end
+
+    it "does not raise for a zero-arity block without preload:" do
+      expect {
+        described_class.new(:author, {}, proc {}).validate
+      }.not_to raise_error
+    end
   end
 
   describe "#enabled?" do
