@@ -125,7 +125,6 @@ RSpec.describe "Halitosis Example" do
         id: 1,
         age: 9.2,
         full_name: "Ferdie Duck",
-        _type: "duck",
         _links: {
           self: {href: "/ducks/1"},
           root: {href: "/ducks"},
@@ -143,7 +142,6 @@ RSpec.describe "Halitosis Example" do
         id: 1,
         age: 9.2,
         full_name: "Ferdie Duck",
-        _type: "duck",
         _links: {
           self: {href: "/ducks/1"},
           root: {href: "/ducks"},
@@ -160,7 +158,6 @@ RSpec.describe "Halitosis Example" do
       id: 1,
       age: 9.2,
       full_name: "Ferdie Duck",
-      _type: "duck",
       _links: {
         self: {href: "/ducks/1"},
         root: {href: "/ducks"},
@@ -176,8 +173,7 @@ RSpec.describe "Halitosis Example" do
       duck: {
         id: 1,
         age: 9.2,
-        full_name: "Ferdie Duck",
-        _type: "duck"
+        full_name: "Ferdie Duck"
       }
     )
   end
@@ -190,7 +186,6 @@ RSpec.describe "Halitosis Example" do
         id: 1,
         age: 9.2,
         full_name: "Ferdie Duck",
-        _type: "duck",
         _relationships: {
           ducklings: {
             name: "Duckies",
@@ -215,7 +210,6 @@ RSpec.describe "Halitosis Example" do
         id: 1,
         age: 9.2,
         full_name: "Ferdie Duck",
-        _type: "duck",
         _relationships: {
           ducklings: {
             name: "Duckies",
@@ -243,7 +237,6 @@ RSpec.describe "Halitosis Example" do
           id: 1,
           age: 9.2,
           full_name: "Ferdie Duck",
-          _type: "duck",
           _links: {
             self: {href: "/ducks/1"},
             root: {href: "/ducks"},
@@ -254,7 +247,6 @@ RSpec.describe "Halitosis Example" do
           id: 1,
           age: 9.2,
           full_name: "Ferdie Duck",
-          _type: "duck",
           _links: {
             self: {href: "/ducks/1"},
             root: {href: "/ducks"},
@@ -279,7 +271,6 @@ RSpec.describe "Halitosis Example" do
           id: 1,
           age: 9.2,
           full_name: "Ferdie Duck",
-          _type: "duck",
           _relationships: {
             ducklings: {
               name: "Duckies",
@@ -297,7 +288,6 @@ RSpec.describe "Halitosis Example" do
           id: 1,
           age: 9.2,
           full_name: "Ferdie Duck",
-          _type: "duck",
           _relationships: {
             ducklings: {
               name: "Duckies",
@@ -329,7 +319,6 @@ RSpec.describe "Halitosis Example" do
           id: 1,
           age: 9.2,
           full_name: "Ferdie Duck",
-          _type: "duck",
           _links: {
             self: {href: "/ducks/1"},
             root: {href: "/ducks"},
@@ -354,7 +343,6 @@ RSpec.describe "Halitosis Example" do
           id: 1,
           age: 9.2,
           full_name: "Ferdie Duck",
-          _type: "duck",
           _links: {
             self: {href: "/ducks/1"},
             root: {href: "/ducks"},
@@ -376,7 +364,6 @@ RSpec.describe "Halitosis Example" do
           id: 1,
           age: 9.2,
           full_name: "Ferdie Duck",
-          _type: "duck",
           _links: {
             self: {href: "/ducks/1"},
             root: {href: "/ducks"},
@@ -388,7 +375,6 @@ RSpec.describe "Halitosis Example" do
                 id: 1,
                 age: 9.2,
                 full_name: "Ferdie Duck",
-                _type: "duck",
                 _links: {
                   self: {href: "/ducks/1"},
                   root: {href: "/ducks"},
@@ -399,7 +385,6 @@ RSpec.describe "Halitosis Example" do
                 id: 1,
                 age: 9.2,
                 full_name: "Ferdie Duck",
-                _type: "duck",
                 _links: {
                   self: {href: "/ducks/1"},
                   root: {href: "/ducks"},
@@ -427,7 +412,6 @@ RSpec.describe "Halitosis Example" do
           id: 1,
           age: 9.2,
           full_name: "Ferdie Duck",
-          _type: "duck",
           _links: {
             self: {href: "/ducks/1"},
             root: {href: "/ducks"},
@@ -439,7 +423,6 @@ RSpec.describe "Halitosis Example" do
                 id: 1,
                 age: 9.2,
                 full_name: "Ferdie Duck",
-                _type: "duck",
                 _links: {
                   self: {href: "/ducks/1"},
                   root: {href: "/ducks"},
@@ -457,7 +440,6 @@ RSpec.describe "Halitosis Example" do
                 id: 1,
                 age: 9.2,
                 full_name: "Ferdie Duck",
-                _type: "duck",
                 _links: {
                   self: {href: "/ducks/1"},
                   root: {href: "/ducks"},

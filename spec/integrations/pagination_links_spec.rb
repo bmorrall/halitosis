@@ -377,20 +377,18 @@ RSpec.describe "Paginatable — paginate_links" do
 
       expect(result[:nodes].first).to include(
         id: 1,
-        _type: "node",
         _relationships: {
           children: [
-            {id: 10, _type: "node"},
-            {id: 11, _type: "node"}
+            {id: 10},
+            {id: 11}
           ]
         }
       )
       expect(result[:nodes][1]).to include(
         id: 2,
-        _type: "node",
         _relationships: {
           children: [
-            {id: 20, _type: "node"}
+            {id: 20}
           ]
         }
       )

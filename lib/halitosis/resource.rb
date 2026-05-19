@@ -60,7 +60,7 @@ module Halitosis
       # @return [Hash] the rendered hash with resource, as a hash
       #
       def render_with_context(context)
-        rendered = super.merge(_type: self.class.resource_type)
+        rendered = super
 
         if (key = self.class.resource_field.root_key(context))
           {key => rendered}
