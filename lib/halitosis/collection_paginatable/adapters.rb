@@ -52,6 +52,8 @@ module Halitosis
           {
             current_page: collection.current_page,
             total_pages: collection.total_pages,
+            per_page: collection.respond_to?(:limit_value) ? collection.limit_value : nil,
+            total_entries: collection.respond_to?(:total_count) ? collection.total_count : nil,
             prev_page: collection.prev_page,
             next_page: collection.next_page
           }
@@ -71,6 +73,8 @@ module Halitosis
           {
             current_page: collection.current_page,
             total_pages: collection.total_pages,
+            per_page: collection.respond_to?(:per_page) ? collection.per_page : nil,
+            total_entries: collection.respond_to?(:total_entries) ? collection.total_entries : nil,
             prev_page: collection.previous_page,
             next_page: collection.next_page
           }
@@ -90,6 +94,8 @@ module Halitosis
           {
             current_page: pagy.page,
             total_pages: pagy.pages,
+            per_page: pagy.limit,
+            total_entries: pagy.count,
             prev_page: pagy.previous,
             next_page: pagy.next
           }

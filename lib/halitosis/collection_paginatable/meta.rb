@@ -28,12 +28,17 @@ module Halitosis
     # == Output
     #
     # The rendered hash will contain a +_meta+ key at the root level with the
-    # four navigational page numbers:
+    # five navigational page numbers:
     #
-    #   { _meta: { first: 1, last: 5, prev: 2, next: 4 } }
+    #   { _meta: { self: 2, first: 1, last: 5, prev: 1, next: 3 } }
     #
     # Unavailable links (+prev+ on page 1, +next+ on last page) are emitted as
     # +nil+ (serialised as JSON +null+).
+    #
+    # Pass +only:+ to select a custom subset of keys. The full available pool
+    # also includes +current_page+, +per_page+, +total_entries+, and +total_pages+:
+    #
+    #   paginate_meta only: %i[current_page total_pages]
     #
     # == Combining with +paginate_links+
     #
@@ -60,7 +65,7 @@ module Halitosis
         # @example
         #   paginate_meta
         #
-        def paginate_meta
+        def paginate_meta(only: CollectionPaginatable::PaginationMetaField::DEFAULT_KEYS)
           if fields.singleton(CollectionPaginatable::PaginationMetaField)
             raise InvalidField, "#{name} pagination meta is already defined"
           end
@@ -71,7 +76,7 @@ module Halitosis
               "paginate_with, or paginate_with_pagy"
           end
 
-          fields.add_singleton(CollectionPaginatable::PaginationMetaField.new)
+          fields.add_singleton(CollectionPaginatable::PaginationMetaField.new(only: only))
         end
       end
 
@@ -98,20 +103,25 @@ module Halitosis
         # @param context [Halitosis::Context]
         #
         def apply_pagination_meta!(result, context)
-          return unless self.class.fields.singleton(CollectionPaginatable::PaginationMetaField)
+          meta_field = self.class.fields.singleton(CollectionPaginatable::PaginationMetaField)
+          return unless meta_field
 
-          page_numbers = extract_pagination_page_numbers(context)
-          return if page_numbers.nil?
+          meta = extract_pagination_meta(context)
+          return if meta.nil?
 
-          result[:_meta] = result.fetch(:_meta, {}).merge(page_numbers)
+          result[:_meta] = result.fetch(:_meta, {}).merge(meta_field.filter(meta))
         end
 
         # @param context [Halitosis::Context]
         # @return [Hash, nil]
         #
-        def extract_pagination_page_numbers(context)
+        def extract_pagination_meta(context)
           metadata_field = self.class.fields.singleton(CollectionPaginatable::Field)
-          metadata_field.page_numbers(context)
+          page_nums = metadata_field.page_numbers(context)
+          return unless page_nums
+
+          col_meta = metadata_field.collection_meta(context)
+          page_nums.merge(col_meta || {})
         end
       end
     end

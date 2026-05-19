@@ -2,13 +2,15 @@
 
 # Minimal mock of a Kaminari/WillPaginate paginated collection.
 # Wraps an array and exposes the metadata methods both adapters read.
-PaginatedSlice = Struct.new(:items, :current_page, :total_pages) do
+PaginatedSlice = Struct.new(:items, :current_page, :total_pages, :per_page, :total_entries) do
   include Enumerable
 
   def each(&block) = items.each(&block)
   def prev_page = (current_page > 1) ? current_page - 1 : nil
   def next_page = (current_page < total_pages) ? current_page + 1 : nil
   def previous_page = prev_page
+  def limit_value = per_page
+  def total_count = total_entries
 end
 
 # Array wrapper that supports the ActiveRecord-style offset/limit interface
@@ -51,7 +53,7 @@ RSpec.describe "Paginatable — paginate_links" do
         offset = (number - 1) * size
         page_items = collection[offset, size] || []
         total = (collection.size.to_f / size).ceil
-        PaginatedSlice.new(page_items, number, total)
+        PaginatedSlice.new(page_items, number, total, size, collection.size)
       end
 
       paginate_links do |page_number, query_params|
@@ -188,7 +190,7 @@ RSpec.describe "Paginatable — paginate_links" do
           offset = (number - 1) * size
           page_items = collection[offset, size] || []
           total = [(collection.size.to_f / size).ceil, 1].max
-          PaginatedSlice.new(page_items, number, total)
+          PaginatedSlice.new(page_items, number, total, size, collection.size)
         end
 
         paginate_links do |page_number, qp|
@@ -203,6 +205,37 @@ RSpec.describe "Paginatable — paginate_links" do
       expect(captured[:filter]).to eq(min_id: "1")
       expect(captured[:sort]).to eq("id")
       expect(captured[:page]).to eq(number: 1, size: 10)
+    end
+  end
+
+  context "when only: limits the emitted links" do
+    it "only emits the specified link keys" do
+      item_ser = item_klass
+
+      klass = Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection.map { |i| item_ser.new(i) }
+        end
+
+        paginate_by_page :kaminari, default_page_size: 10 do |collection, number, size|
+          offset = (number - 1) * size
+          page_items = collection[offset, size] || []
+          total = (collection.size.to_f / size).ceil
+          PaginatedSlice.new(page_items, number, total, size, collection.size)
+        end
+
+        paginate_links only: %i[self next] do |page_number, _qp|
+          page_number.nil? ? nil : "/items?page[number]=#{page_number}"
+        end
+      end
+
+      links = klass.new(items, page: {number: 2, size: 10}).render.fetch(:_links)
+
+      expect(links.keys).to contain_exactly(:self, :next)
+      expect(links[:self]).to eq(href: "/items?page[number]=2")
+      expect(links[:next]).to eq(href: "/items?page[number]=3")
     end
   end
 
@@ -255,10 +288,11 @@ RSpec.describe "Paginatable — paginate_links" do
     # Minimal Pagy::Offset stand-in that actually computes page metadata.
     let(:pagy_offset_class) do
       Class.new do
-        attr_reader :page, :pages, :limit, :offset
+        attr_reader :page, :pages, :limit, :offset, :count
 
         def initialize(count:, page: 1, limit: nil, **_opts)
           @limit = limit || 10
+          @count = count
           @page = page
           @pages = [(count.to_f / @limit).ceil, 1].max
           @offset = (page - 1) * @limit
@@ -374,7 +408,7 @@ RSpec.describe "Paginatable — paginate_links" do
           offset = (number - 1) * size
           page_items = collection[offset, size] || []
           total = (collection.size.to_f / size).ceil
-          PaginatedSlice.new(page_items, number, total)
+          PaginatedSlice.new(page_items, number, total, size, collection.size)
         end
 
         paginate_links do |page_number, _qp|

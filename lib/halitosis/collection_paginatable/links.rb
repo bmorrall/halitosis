@@ -53,8 +53,8 @@ module Halitosis
         #   +query_params+ — the active query params hash (sort, filter, page size, etc.)
         #
         # The block should return a URL string, or +nil+ for unavailable links.
-        # All four keys are always present in the output; unavailable links are
-        # emitted as JSON +null+.
+        # All five keys (+self+, +first+, +last+, +prev+, +next+) are always present
+        # in the output; unavailable links are emitted as JSON +null+.
         #
         # The adapter must be declared on the pagination method itself (e.g.
         # +paginate_by_page :kaminari+ or +paginate_with :kaminari+), or set
@@ -66,7 +66,7 @@ module Halitosis
         #     articles_url(query_params.merge(page: { number: page_number }))
         #   end
         #
-        def paginate_links(&procedure)
+        def paginate_links(only: CollectionPaginatable::LinksField::DEFAULT_KEYS, &procedure)
           unless procedure
             raise InvalidField, "#{name} paginate_links must be defined with a block"
           end
@@ -86,7 +86,7 @@ module Halitosis
               "paginate_with, or paginate_with_pagy"
           end
 
-          fields.add_singleton(CollectionPaginatable::LinksField.new(:pagination_links, {}, procedure))
+          fields.add_singleton(CollectionPaginatable::LinksField.new(:pagination_links, {only: only}, procedure))
         end
       end
 
@@ -117,6 +117,8 @@ module Halitosis
 
           page_numbers = extract_pagination_metadata(context)
           return if page_numbers.nil?
+
+          page_numbers = links_field.filter_page_numbers(page_numbers)
 
           links = page_numbers.transform_values do |n|
             url = links_field.apply(context, n, context.query_params)

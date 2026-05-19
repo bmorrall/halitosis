@@ -15,6 +15,9 @@ module Halitosis
     # "how do I build a URL for a given page number?".
     #
     class LinksField < Halitosis::Field
+      # Keys emitted by default when no +only:+ option is given.
+      DEFAULT_KEYS = %i[self first last prev next].freeze
+
       def initialize(name, options, procedure)
         super
       end
@@ -40,6 +43,18 @@ module Halitosis
       #
       def apply(context, page_number, query_params)
         context.call_instance_with(page_number, query_params, procedure)
+      end
+
+      # Filter page_numbers hash to the requested keys.
+      #
+      # When no +only:+ option was given all default keys are returned.
+      # Pass +only:+ to emit a specific subset.
+      #
+      # @param page_numbers [Hash]
+      # @return [Hash]
+      #
+      def filter_page_numbers(page_numbers)
+        page_numbers.slice(*Array(options[:only]).map(&:to_sym))
       end
     end
   end
