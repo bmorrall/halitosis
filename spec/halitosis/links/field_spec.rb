@@ -82,6 +82,34 @@ RSpec.describe Halitosis::Links::Field do
         eq(attrs: {attributes: {}, templated: true}, foo: "bar")
       )
     end
+
+    it "extracts HAL link property keys into attrs" do
+      options = described_class.build_options([
+        {title: "Author", type: "application/json", value: "/people/1"}
+      ])
+
+      expect(options).to eq(
+        attrs: {title: "Author", type: "application/json"},
+        value: "/people/1"
+      )
+    end
+
+    it "extracts all recognised HAL link properties" do
+      props = {
+        type: "application/json",
+        deprecation: "https://example.com/deprecation",
+        name: "second",
+        profile: "https://example.com/profile",
+        title: "My Link",
+        hreflang: "en"
+      }
+
+      options = described_class.build_options([props.merge(value: "/foo")])
+
+      expect(options[:attrs]).to eq(props)
+      expect(options).not_to have_key(:type)
+      expect(options).not_to have_key(:title)
+    end
   end
 
   describe ".build_attrs" do

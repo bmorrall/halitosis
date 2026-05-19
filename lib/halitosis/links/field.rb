@@ -41,6 +41,12 @@ module Halitosis
       end
 
       class << self
+        # HAL link object properties that may be passed as hash options.
+        # Each key is extracted from the trailing options hash and merged
+        # into +:attrs+ so it appears alongside +href+ in the rendered output.
+        #
+        PROPERTIES = %i[type deprecation name profile title hreflang].freeze
+
         # Build hash of options from flexible field arguments
         #
         # @param args [Array] the raw field arguments
@@ -53,6 +59,10 @@ module Halitosis
 
             options[:attrs] ||= {}
             options[:attrs].merge!(build_attrs(args))
+
+            PROPERTIES.each do |prop|
+              options[:attrs][prop] = options.delete(prop) if options.key?(prop)
+            end
           end
         end
 
