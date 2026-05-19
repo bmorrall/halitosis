@@ -22,7 +22,7 @@ RSpec.describe "CollectIncludes" do
 
       resource :article
 
-      collect_includes
+      collect_includes!
 
       identifier(:id) { resource[:id] }
 
@@ -71,7 +71,7 @@ RSpec.describe "CollectIncludes" do
         include Halitosis
         include Halitosis::ResourceRelationships
 
-        collect_includes
+        collect_includes!
 
         collection :articles do |articles|
           articles.map { |attrs| article_klass.new(attrs) }
@@ -133,7 +133,7 @@ RSpec.describe "CollectIncludes" do
 
         resource :article
 
-        collect_includes
+        collect_includes!
 
         identifier(:id) { resource[:id] }
 
@@ -181,7 +181,7 @@ RSpec.describe "CollectIncludes" do
 
         resource :article
 
-        collect_includes
+        collect_includes!
 
         identifier(:id) { resource[:id] }
 
@@ -226,7 +226,7 @@ RSpec.describe "CollectIncludes" do
         include Halitosis
         include Halitosis::ResourceRelationships
 
-        collect_includes
+        collect_includes!
 
         resource :root
 
@@ -241,7 +241,7 @@ RSpec.describe "CollectIncludes" do
       result = serializer.render
 
       expect(result[:root][:_relationships][:anon]).to eq(info: "no id here")
-      expect(result).not_to have_key(:included)
+      expect(result[:included]).to eq([])
     end
   end
 
@@ -250,7 +250,7 @@ RSpec.describe "CollectIncludes" do
       serializer = Class.new do
         include Halitosis
 
-        collect_includes
+        collect_includes!
 
         collection :articles do |articles|
           articles.map { |attrs|
@@ -308,7 +308,7 @@ RSpec.describe "CollectIncludes" do
 
         resource :article
 
-        collect_includes
+        collect_includes!
 
         identifier(:id) { resource[:id] }
         attribute(:title) { resource[:title] }

@@ -45,6 +45,8 @@ module Halitosis
     base.include RootPermissions
 
     config.extensions.each { |extension| base.send :include, extension }
+
+    base.include CollectIncludes if config.collect_includes
   end
 
   module ClassMethods
@@ -60,7 +62,7 @@ module Halitosis
       define_collection(name, ...)
     end
 
-    def collect_includes
+    def collect_includes!
       include Halitosis::CollectIncludes
     end
   end
