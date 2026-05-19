@@ -434,7 +434,7 @@ Filters and sorts declared on the serializer are still applied to the collection
 
 ### Pagination links
 
-Use `paginate_links` to emit `first`/`last`/`prev`/`next` links alongside a paginated collection. The block receives the target page number and the active `query_params` hash (including sort, filter, and page size):
+Use `paginate_links` to emit `self`/`first`/`last`/`prev`/`next` links alongside a paginated collection. The block receives the target page number and the active `query_params` hash (including sort, filter, and page size):
 
 ```ruby
 class ArticlesSerializer
@@ -454,12 +454,13 @@ class ArticlesSerializer
 end
 ```
 
-All four keys (`first`, `last`, `prev`, `next`) are always present in `_links` as Link Objects with an `href` key. Unavailable links — `prev` on the first page and `next` on the last — are emitted as `null`.
+All five keys (`self`, `first`, `last`, `prev`, `next`) are always present in `_links` as Link Objects with an `href` key. `self` points to the current page. Unavailable links — `prev` on the first page and `next` on the last — are emitted as `null`.
 
 ```json
 {
   "articles": [...],
   "_links": {
+    "self":  { "href": "/articles?page[number]=1" },
     "first": { "href": "/articles?page[number]=1" },
     "last":  { "href": "/articles?page[number]=5" },
     "prev":  null,
@@ -495,11 +496,11 @@ This produces a `_meta` hash at the root level:
 ```json
 {
   "articles": [...],
-  "_meta": { "first": 1, "last": 5, "prev": 2, "next": 4 }
+  "_meta": { "self": 3, "first": 1, "last": 5, "prev": 2, "next": 4 }
 }
 ```
 
-All four keys are always present. Unavailable pages — `prev` on the first page and `next` on the last — are emitted as `null`.
+All five keys are always present. `self` is the current page number. Unavailable pages — `prev` on the first page and `next` on the last — are emitted as `null`.
 
 `paginate_meta` must be declared after the pagination method (`paginate_by_page`, `paginate_with`, or `paginate_with_pagy`).
 
