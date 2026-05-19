@@ -17,7 +17,6 @@ RSpec.describe "RootMeta" do
 
       expect(serializer.render).to eq(
         simple: {
-          _type: "simple",
           _meta: {inline_meta: "inline meta"}
         },
         _meta: {root_meta: "root meta"}

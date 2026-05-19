@@ -46,12 +46,11 @@ RSpec.describe "CollectIncludes" do
       expect(result[:article]).to include(
         id: 1,
         title: "Hello",
-        _type: "article",
         _relationships: {author: {id: 10, _type: "author"}}
       )
 
       expect(result[:included]).to eq(
-        author: [{id: 10, name: "Alice", _type: "author"}]
+        author: [{id: 10, name: "Alice"}]
       )
     end
 
@@ -88,7 +87,7 @@ RSpec.describe "CollectIncludes" do
       serializer = collection_klass.new(articles, include: {author: true})
       result = serializer.render
 
-      expect(result[:included]).to eq(author: [{id: 10, name: "Alice", _type: "author"}])
+      expect(result[:included]).to eq(author: [{id: 10, name: "Alice"}])
     end
 
     it "includes each distinct author once" do
@@ -103,8 +102,8 @@ RSpec.describe "CollectIncludes" do
 
       expect(result[:included]).to eq(
         author: [
-          {id: 10, name: "Alice", _type: "author"},
-          {id: 20, name: "Bob", _type: "author"}
+          {id: 10, name: "Alice"},
+          {id: 20, name: "Bob"}
         ]
       )
     end
@@ -199,12 +198,11 @@ RSpec.describe "CollectIncludes" do
         article: {
           id: 1,
           title: "Hello",
-          _type: "article",
           _relationships: {author: {id: 10, _type: "author"}}
         },
         included: {
-          tag: [{id: 99, label: "ruby", _type: "tag"}],
-          author: [{id: 10, name: "Alice", _type: "author", _relationships: {tag: {id: 99, _type: "tag"}}}]
+          tag: [{id: 99, label: "ruby"}],
+          author: [{id: 10, name: "Alice", _relationships: {tag: {id: 99, _type: "tag"}}}]
         }
       )
     end
@@ -288,11 +286,11 @@ RSpec.describe "CollectIncludes" do
 
       expect(result).to eq(
         articles: [
-          {id: 1, title: "First", _type: "article", _relationships: {author: {id: 10, _type: "author"}}},
-          {id: 2, title: "Second", _type: "article", _relationships: {author: {id: 10, _type: "author"}}}
+          {id: 1, title: "First", _relationships: {author: {id: 10, _type: "author"}}},
+          {id: 2, title: "Second", _relationships: {author: {id: 10, _type: "author"}}}
         ],
         included: {
-          author: [{id: 10, name: "Alice", _type: "author"}]
+          author: [{id: 10, name: "Alice"}]
         }
       )
     end
@@ -333,7 +331,6 @@ RSpec.describe "CollectIncludes" do
         article: {
           id: 1,
           title: "Hello",
-          _type: "article",
           _relationships: {
             authors: [
               {id: 10, _type: "author"},
@@ -344,8 +341,8 @@ RSpec.describe "CollectIncludes" do
         },
         included: {
           author: [
-            {id: 10, name: "Alice", _type: "author"},
-            {id: 20, name: "Bob", _type: "author"}
+            {id: 10, name: "Alice"},
+            {id: 20, name: "Bob"}
           ]
         }
       )

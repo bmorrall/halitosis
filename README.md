@@ -68,7 +68,6 @@ serializer.render
 #        id: 1,
 #        title: "Hello World",
 #        body: "...",
-#        _type: "article",
 #        _links: { self: { href: "/articles/1" } }
 #      }
 #    }
@@ -110,7 +109,7 @@ class ArticleSerializer
 end
 
 ArticleSerializer.new(article).render
-# => { article: { id: 1, title: "Hello World", _type: "article" } }
+# => { article: { id: 1, title: "Hello World" } }
 ```
 
 #### 3. Collection
@@ -127,7 +126,7 @@ class ArticlesSerializer
 end
 
 ArticlesSerializer.new(Article.all).render
-# => { articles: [ { id: 1, title: "Hello World", _type: "article" }, ... ] }
+# => { articles: [ { id: 1, title: "Hello World" }, ... ] }
 ```
 
 ### Sorting collections
@@ -571,7 +570,7 @@ Suppress all links at render time with `include_links: false`:
 
 ```ruby
 ArticleSerializer.new(article, include_links: false).render
-# => { article: { id: 1, title: "Hello World", _type: "article" } }
+# => { article: { id: 1, title: "Hello World" } }
 ```
 
 ### Relationships
@@ -582,7 +581,7 @@ One-to-one:
 
 ```ruby
 relationship(:author, preload: true) { |author| UserSerializer.new(author) }
-# => { article: { ..., _relationships: { author: { id: 5, name: "Alice", _type: "user" } } } }
+# => { article: { ..., _relationships: { author: { id: 5, name: "Alice" } } } }
 ```
 
 One-to-many (array of serializers):
@@ -748,7 +747,6 @@ ArticleSerializer.new(article).render
 #      article: {
 #        id: 1,
 #        title: "Hello World",
-#        _type: "article",
 #        _meta: {
 #          created_at: "2024-09-30T20:46:00Z",
 #          updated_at: "2024-10-01T08:00:00Z"
@@ -785,7 +783,6 @@ ArticleSerializer.new(article).render
 #      article: {
 #        id: 1,
 #        title: "Hello World",
-#        _type: "article",
 #        _permissions: { edit: true, destroy: false }
 #      }
 #    }
@@ -917,7 +914,7 @@ Keys for middleware that was not triggered (e.g. no `filter` param, or no `pagin
 
 ### Collecting includes (JSON:API-style sideloading)
 
-Include `collect_includes!` in a serializer to hoist included relationships out of the nested `_relationships` structure and into a flat top-level `included` array, deduplicating by type and id. This mirrors the [JSON:API compound document](https://jsonapi.org/format/#document-compound-documents) pattern.
+Include `collect_includes!` in a serializer to hoist included relationships out of the nested `_relationships` structure and into a top-level `included` hash, grouped by resource type and deduplicated by id. This mirrors the [JSON:API compound document](https://jsonapi.org/format/#document-compound-documents) pattern.
 
 ```ruby
 class ArticleSerializer
@@ -934,7 +931,7 @@ class ArticleSerializer
 end
 ```
 
-When a relationship is included, the child serializer's full payload is placed in `included` and a stub (id + `_type`) is left inline:
+When a relationship is included, the child serializer's full payload is placed in `included` and a typed stub (`{id:, _type:}`) is left inline:
 
 ```ruby
 ArticleSerializer.new(article, include: "author").render
@@ -942,12 +939,13 @@ ArticleSerializer.new(article, include: "author").render
 #      article: {
 #        id: 1,
 #        title: "Hello World",
-#        _type: "article",
 #        _relationships: { author: { id: 5, _type: "author" } }
 #      },
-#      included: [
-#        { id: 5, name: "Alice", _type: "author" }
-#      ]
+#      included: {
+#        author: [
+#          { id: 5, name: "Alice" }
+#        ]
+#      }
 #    }
 ```
 
@@ -971,12 +969,14 @@ end
 ArticlesSerializer.new(articles, include: "author").render
 # => {
 #      articles: [
-#        { id: 1, title: "First",  _type: "article", _relationships: { author: { id: 5, _type: "author" } } },
-#        { id: 2, title: "Second", _type: "article", _relationships: { author: { id: 5, _type: "author" } } }
+#        { id: 1, title: "First",  _relationships: { author: { id: 5, _type: "author" } } },
+#        { id: 2, title: "Second", _relationships: { author: { id: 5, _type: "author" } } }
 #      ],
-#      included: [
-#        { id: 5, name: "Alice", _type: "author" }   # appears once despite two references
-#      ]
+#      included: {
+#        author: [
+#          { id: 5, name: "Alice" }   # appears once despite two references
+#        ]
+#      }
 #    }
 ```
 
@@ -996,11 +996,11 @@ ArticlesSerializer.new(articles, include: "author").render
 ```ruby
 # Omit the root wrapper entirely
 ArticleSerializer.new(article, include_root: false).render
-# => { id: 1, title: "Hello World", _type: "article", ... }
+# => { id: 1, title: "Hello World", ... }
 
 # Use a custom root key
 ArticleSerializer.new(article, include_root: "post").render
-# => { post: { id: 1, title: "Hello World", _type: "article", ... } }
+# => { post: { id: 1, title: "Hello World", ... } }
 ```
 
 ### Using with Rails
