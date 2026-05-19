@@ -22,6 +22,9 @@ Rails.application.routes.draw do
   resources :pagy_articles, only: :index
   resources :pipeline_articles, only: :index
 
+  resources :preloading_books, only: :show
+  resources :preloading_libraries, only: :show
+
   # Defines the root path route ("/")
   # root "posts#index"
 end
