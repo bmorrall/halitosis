@@ -19,6 +19,20 @@ module Halitosis
         options[:preload_key]
       end
 
+      # Returns +true+ when a preload key is set, the field is enabled, and the
+      # procedure accepts an argument (i.e. it will actually use the preloaded
+      # value). 0-arity procs and static +value:+ links are excluded.
+      #
+      # @param context [Halitosis::Context]
+      # @return [true, false]
+      #
+      def preload?(context)
+        return false unless preload_key
+        return false unless procedure&.arity&.nonzero?
+
+        enabled?(context)
+      end
+
       # @return [true] if nothing is raised
       #
       # @raise [Halitosis::InvalidField] if the field is invalid
