@@ -174,7 +174,7 @@ RSpec.describe "Paginatable — paginate_meta" do
       expect(result).to have_key(:_links)
       expect(result).to have_key(:_meta)
 
-      expect(result[:_links][:first]).to eq("/items?page[number]=1&page[size]=10")
+      expect(result[:_links][:first]).to eq(href: "/items?page[number]=1&page[size]=10")
       expect(result[:_meta][:first]).to eq(1)
       expect(result[:_meta][:prev]).to eq(1)
       expect(result[:_meta][:next]).to eq(3)

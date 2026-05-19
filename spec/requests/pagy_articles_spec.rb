@@ -31,8 +31,8 @@ RSpec.describe "PagyArticles", :pagy, :rails, type: :request do
         expect(body.dig("_meta", "last")).to eq(1)
         expect(body.dig("_meta", "prev")).to be_nil
         expect(body.dig("_meta", "next")).to be_nil
-        expect(body.dig("_links", "first")).to eq(pagy_articles_path(page: {number: 1}))
-        expect(body.dig("_links", "last")).to eq(pagy_articles_path(page: {number: 1}))
+        expect(body.dig("_links", "first", "href")).to eq(pagy_articles_path(page: {number: 1}))
+        expect(body.dig("_links", "last", "href")).to eq(pagy_articles_path(page: {number: 1}))
         expect(body.dig("_links", "prev")).to be_nil
         expect(body.dig("_links", "next")).to be_nil
       end
@@ -50,10 +50,10 @@ RSpec.describe "PagyArticles", :pagy, :rails, type: :request do
         expect(body.dig("_meta", "last")).to eq(2)
         expect(body.dig("_meta", "prev")).to be_nil
         expect(body.dig("_meta", "next")).to eq(2)
-        expect(body.dig("_links", "first")).to eq(pagy_articles_path(page: {number: 1}))
-        expect(body.dig("_links", "last")).to eq(pagy_articles_path(page: {number: 2}))
+        expect(body.dig("_links", "first", "href")).to eq(pagy_articles_path(page: {number: 1}))
+        expect(body.dig("_links", "last", "href")).to eq(pagy_articles_path(page: {number: 2}))
         expect(body.dig("_links", "prev")).to be_nil
-        expect(body.dig("_links", "next")).to eq(pagy_articles_path(page: {number: 2}))
+        expect(body.dig("_links", "next", "href")).to eq(pagy_articles_path(page: {number: 2}))
       end
     end
 
@@ -69,9 +69,9 @@ RSpec.describe "PagyArticles", :pagy, :rails, type: :request do
         expect(body.dig("_meta", "last")).to eq(2)
         expect(body.dig("_meta", "prev")).to eq(1)
         expect(body.dig("_meta", "next")).to be_nil
-        expect(body.dig("_links", "first")).to eq(pagy_articles_path(page: {number: 1}))
-        expect(body.dig("_links", "last")).to eq(pagy_articles_path(page: {number: 2}))
-        expect(body.dig("_links", "prev")).to eq(pagy_articles_path(page: {number: 1}))
+        expect(body.dig("_links", "first", "href")).to eq(pagy_articles_path(page: {number: 1}))
+        expect(body.dig("_links", "last", "href")).to eq(pagy_articles_path(page: {number: 2}))
+        expect(body.dig("_links", "prev", "href")).to eq(pagy_articles_path(page: {number: 1}))
         expect(body.dig("_links", "next")).to be_nil
       end
     end

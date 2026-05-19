@@ -454,7 +454,19 @@ class ArticlesSerializer
 end
 ```
 
-All four keys (`first`, `last`, `prev`, `next`) are always present in `_links`. Unavailable links — `prev` on the first page and `next` on the last — are emitted as `null`.
+All four keys (`first`, `last`, `prev`, `next`) are always present in `_links` as Link Objects with an `href` key. Unavailable links — `prev` on the first page and `next` on the last — are emitted as `null`.
+
+```json
+{
+  "articles": [...],
+  "_links": {
+    "first": { "href": "/articles?page[number]=1" },
+    "last":  { "href": "/articles?page[number]=5" },
+    "prev":  null,
+    "next":  { "href": "/articles?page[number]=2" }
+  }
+}
+```
 
 `paginate_links` must be declared after the pagination method (`paginate_by_page`, `paginate_with`, or `paginate_with_pagy`).
 

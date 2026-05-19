@@ -118,7 +118,10 @@ module Halitosis
           page_numbers = extract_pagination_metadata(context)
           return if page_numbers.nil?
 
-          links = page_numbers.transform_values { |n| links_field.apply(context, n, context.query_params) }
+          links = page_numbers.transform_values do |n|
+            url = links_field.apply(context, n, context.query_params)
+            url && {href: url}
+          end
 
           result[:_links] = result.fetch(:_links, {}).merge(links)
         end
