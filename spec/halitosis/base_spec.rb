@@ -64,6 +64,23 @@ RSpec.describe Halitosis::Base do
 
         expect(result[:verify_opts]).to eq(foo: "foo", bar: "bar")
       end
+
+      it "calls before_render on the child before rendering" do
+        before_render_called = false
+
+        child_klass = Class.new do
+          include Halitosis::Base
+
+          define_method(:before_render) { |_ctx| before_render_called = true }
+        end
+
+        serializer = klass.new
+        context = serializer.send(:build_context)
+
+        serializer.send(:render_child, child_klass.new, context, {})
+
+        expect(before_render_called).to be true
+      end
     end
 
     describe "#as_json", :rails do

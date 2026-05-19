@@ -185,6 +185,31 @@ RSpec.describe Halitosis::CollectIncludes do
         expect(child).not_to receive(:extend)
         serializer.send(:render_child, child, context, {})
       end
+
+      it "calls before_render on the child before rendering into the registry" do
+        serializer = klass.new
+        context = Halitosis::Context.new(serializer, {})
+        context.included_registry = {}
+        child = child_klass.new
+        before_render_called = false
+
+        child.define_singleton_method(:before_render) { |_ctx| before_render_called = true }
+
+        serializer.send(:render_child, child, context, {})
+
+        expect(before_render_called).to be true
+      end
+
+      it "does not call before_render when child is already in the registry" do
+        serializer = klass.new
+        context = Halitosis::Context.new(serializer, {})
+        context.included_registry = {["child", 42] => {id: 42, name: "existing"}}
+        child = child_klass.new
+
+        child.define_singleton_method(:before_render) { |_ctx| raise "should not be called" }
+
+        expect { serializer.send(:render_child, child, context, {}) }.not_to raise_error
+      end
     end
   end
 end

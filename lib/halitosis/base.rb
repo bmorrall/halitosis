@@ -151,7 +151,9 @@ module Halitosis
       def render_child(child, context, opts)
         return unless child.class.include?(Halitosis::Base)
 
-        child.render_with_context child.build_context(parent: context, include: opts)
+        child_context = child.build_context(parent: context, include: opts)
+        child.before_render(child_context)
+        child.render_with_context(child_context)
       end
     end
   end
