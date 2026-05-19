@@ -138,10 +138,7 @@ module Halitosis
         current = fetch_preload(context, cache_key)
         return if current.nil?
 
-        new_value = context.call_instance_with(current, field.procedure)
-
-        preloads = context.fetch_local(:includeable_preloads) || {}
-        context.store_local(:includeable_preloads, preloads.merge(cache_key.to_sym => new_value))
+        store_preload(context, cache_key, context.call_instance_with(current, field.procedure))
       end
     end
   end
