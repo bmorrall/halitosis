@@ -15,6 +15,10 @@ module Halitosis
           raise InvalidField, "Relationship #{name} preload option must be a Symbol, String, true, or false"
         end
 
+        if procedure&.arity&.nonzero? && !options.key?(:preload)
+          raise InvalidField, "Relationship #{name} block accepts arguments but no `preload:` option is set"
+        end
+
         return true if procedure
 
         raise InvalidField, "Relationship #{name} must be defined with a proc"

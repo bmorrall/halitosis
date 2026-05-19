@@ -84,7 +84,7 @@ RSpec.describe Halitosis::ResourceRelationships do
             attribute(:id, value: 1)
           }
 
-          klass.rel(:with_preload, {}) { |preloaded| preloaded }
+          klass.rel(:with_preload, {preload: true}) { |preloaded| preloaded }
 
           serializer = klass.new(include: {with_preload: true})
           context = serializer.send(:build_context)
