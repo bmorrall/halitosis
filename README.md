@@ -917,7 +917,7 @@ Keys for middleware that was not triggered (e.g. no `filter` param, or no `pagin
 
 ### Collecting includes (JSON:API-style sideloading)
 
-Include `collect_includes` in a serializer to hoist included relationships out of the nested `_relationships` structure and into a flat top-level `included` array, deduplicating by type and id. This mirrors the [JSON:API compound document](https://jsonapi.org/format/#document-compound-documents) pattern.
+Include `collect_includes!` in a serializer to hoist included relationships out of the nested `_relationships` structure and into a flat top-level `included` array, deduplicating by type and id. This mirrors the [JSON:API compound document](https://jsonapi.org/format/#document-compound-documents) pattern.
 
 ```ruby
 class ArticleSerializer
@@ -925,7 +925,7 @@ class ArticleSerializer
 
   resource :article
 
-  collect_includes            # enable sideloading on this serializer
+  collect_includes!           # enable sideloading on this serializer
 
   identifier :id
   attribute :title
@@ -961,7 +961,7 @@ When multiple resources reference the same related object, it appears only once 
 class ArticlesSerializer
   include Halitosis
 
-  collect_includes
+  collect_includes!
 
   collection :articles do |collection|
     collection.map { |article| ArticleSerializer.new(article) }
@@ -1099,6 +1099,7 @@ end
 | --- | --- | --- |
 | `extensions` | `[]` | Modules included in every serializer class at load time |
 | `pagination_adapter` | `nil` | Default adapter for pagination metadata — `:kaminari`, `:will_paginate`, or a callable |
+| `collect_includes` | `false` | When `true`, enables JSON:API-style sideloading on every serializer (equivalent to calling `collect_includes!` on each) |
 
 ## Development
 

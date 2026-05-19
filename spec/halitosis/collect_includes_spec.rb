@@ -20,9 +20,7 @@ RSpec.describe Halitosis::CollectIncludes do
       include Halitosis
       include Halitosis::ResourceRelationships
 
-      collect_includes
-
-      attribute(:name) { "root" }
+      collect_includes!
 
       relationship :child do
         child_klass.new
@@ -30,9 +28,32 @@ RSpec.describe Halitosis::CollectIncludes do
     end
   end
 
-  describe ".collect_includes" do
+  describe ".collect_includes!" do
     it "includes CollectIncludes::InstanceMethods" do
       expect(klass.ancestors).to include(Halitosis::CollectIncludes::InstanceMethods)
+    end
+
+    context "when config.collect_includes is true" do
+      before { allow(Halitosis.config).to receive(:collect_includes).and_return(true) }
+
+      it "automatically includes CollectIncludes::InstanceMethods without calling collect_includes!" do
+        child_klass = self.child_klass
+
+        klass = Class.new do
+          include Halitosis
+          include Halitosis::ResourceRelationships
+
+          relationship :child do
+            child_klass.new
+          end
+        end
+
+        result = klass.new(include: {child: true}).render
+
+        expect(klass.ancestors).to include(Halitosis::CollectIncludes::InstanceMethods)
+        expect(result[:_relationships][:child]).to eq(id: 42, _type: "child")
+        expect(result[:included]).to eq([{id: 42, name: "child"}])
+      end
     end
   end
 
@@ -44,6 +65,26 @@ RSpec.describe Halitosis::CollectIncludes do
 
           result = serializer.render
           expect(result).not_to have_key(:included)
+        end
+      end
+
+      context "when a relationship is included but returns nil" do
+        it "renders an empty included array" do
+          klass = Class.new do
+            include Halitosis
+            include Halitosis::ResourceRelationships
+
+            collect_includes!
+
+            relationship :child do
+              nil
+            end
+          end
+
+          result = klass.new(include: {child: true}).render
+
+          expect(result[:_relationships][:child]).to be_nil
+          expect(result[:included]).to eq([])
         end
       end
 

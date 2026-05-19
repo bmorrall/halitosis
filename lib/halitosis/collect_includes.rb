@@ -17,7 +17,7 @@ module Halitosis
       #
       def render_root(context, result)
         super.tap do |root|
-          root[:included] = context.included_registry.values if context.included_registry.any?
+          root[:included] = context.included_registry.values if context.included_registry && context.include_options.any?
         end
       end
 
