@@ -61,6 +61,7 @@ module Halitosis
         unless registry.key?(dedup_key)
           # Extend so that any relationships this child renders are also stubbed
           child.extend(CollectIncludes::InstanceMethods) unless child.is_a?(CollectIncludes::InstanceMethods)
+          child.before_render(child_context)
           registry[dedup_key] = child.render_with_context(child_context)
         end
 
