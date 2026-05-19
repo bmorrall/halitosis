@@ -126,7 +126,7 @@ RSpec.describe Halitosis::ResourceIncludes do
         it "does not modify the cached preload value" do
           serializer.before_render(context)
 
-          expect(context.fetch_local(:includeable_preloads)[:items_data]).to eq(%w[a b c])
+          expect(context.fetch_local(:includeable_preloads)[:items]).to eq(%w[a b c])
         end
       end
 
@@ -136,7 +136,7 @@ RSpec.describe Halitosis::ResourceIncludes do
         it "applies the :detail procedure to the cached value" do
           serializer.before_render(context)
 
-          expect(context.fetch_local(:includeable_preloads)[:items_data]).to eq(%w[a:detail b:detail c:detail])
+          expect(context.fetch_local(:includeable_preloads)[:items]).to eq(%w[a:detail b:detail c:detail])
         end
       end
 
@@ -146,7 +146,7 @@ RSpec.describe Halitosis::ResourceIncludes do
         it "applies the :summary procedure to the cached value" do
           serializer.before_render(context)
 
-          expect(context.fetch_local(:includeable_preloads)[:items_data]).to eq(%w[a:summary b:summary c:summary])
+          expect(context.fetch_local(:includeable_preloads)[:items]).to eq(%w[a:summary b:summary c:summary])
         end
       end
 
@@ -175,13 +175,27 @@ RSpec.describe Halitosis::ResourceIncludes do
         end
       end
 
+      context "when the preloaded value is nil" do
+        before do
+          klass.define_method(:items_data) { nil }
+        end
+
+        let(:include_param) { "items.detail" }
+
+        it "does not apply the include procedure" do
+          serializer.before_render(context)
+
+          expect(context.fetch_local(:includeable_preloads)[:items]).to be_nil
+        end
+      end
+
       context "when the requested path has no matching allow_include child" do
         let(:include_param) { "items.unknown" }
 
         it "does not raise and leaves the cached value unchanged" do
           serializer.before_render(context)
 
-          expect(context.fetch_local(:includeable_preloads)[:items_data]).to eq(%w[a b c])
+          expect(context.fetch_local(:includeable_preloads)[:items]).to eq(%w[a b c])
         end
       end
 
@@ -230,7 +244,7 @@ RSpec.describe Halitosis::ResourceIncludes do
         it "applies the deepest procedure" do
           serializer.before_render(context)
 
-          expect(context.fetch_local(:includeable_preloads)[:items_data]).to eq(%w[a:meta b:meta c:meta])
+          expect(context.fetch_local(:includeable_preloads)[:items]).to eq(%w[a:meta b:meta c:meta])
         end
       end
     end

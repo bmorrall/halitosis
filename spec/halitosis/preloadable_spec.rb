@@ -16,34 +16,49 @@ RSpec.describe Halitosis::Preloadable do
   let(:context) { serializer.send(:build_context) }
 
   describe Halitosis::Preloadable::InstanceMethods do
+    describe "#preload_context" do
+      it "is a no-op by default" do
+        expect { serializer.preload_context(context) }.not_to raise_error
+      end
+
+      it "is called during before_render" do
+        calls = []
+        klass.define_method(:preload_context) { |ctx| calls << ctx }
+
+        serializer.send(:before_render, context)
+
+        expect(calls).to eq([context])
+      end
+    end
+
+    describe "#before_render" do
+      it "calls super" do
+        super_called = false
+        klass.define_method(:before_render) do |ctx|
+          super_called = true
+          super(ctx)
+        end
+
+        serializer.send(:before_render, context)
+
+        expect(super_called).to be true
+      end
+
+      it "returns nil" do
+        expect(serializer.send(:before_render, context)).to be_nil
+      end
+    end
+
     describe "#store_preload" do
-      context "with a proc value_source" do
-        it "stores the evaluated result" do
-          serializer.send(:store_preload, context, :my_field, proc { "proc_value" })
+      it "stores the given value" do
+        serializer.send(:store_preload, context, :my_field, "stored_value")
 
-          expect(context.fetch_local(:includeable_preloads)).to eq(my_field: "proc_value")
-        end
-      end
-
-      context "with a symbol value_source" do
-        it "calls the method on the serializer instance and stores the result" do
-          serializer.send(:store_preload, context, :my_field, :computed_value)
-
-          expect(context.fetch_local(:includeable_preloads)).to eq(my_field: "from_instance")
-        end
-      end
-
-      context "with a string value_source" do
-        it "calls the method on the serializer instance and stores the result" do
-          serializer.send(:store_preload, context, :my_field, "computed_value")
-
-          expect(context.fetch_local(:includeable_preloads)).to eq(my_field: "from_instance")
-        end
+        expect(context.fetch_local(:includeable_preloads)).to eq(my_field: "stored_value")
       end
 
       it "does not clobber existing preloads for other fields" do
-        serializer.send(:store_preload, context, :field_a, proc { "a" })
-        serializer.send(:store_preload, context, :field_b, proc { "b" })
+        serializer.send(:store_preload, context, :field_a, "a")
+        serializer.send(:store_preload, context, :field_b, "b")
 
         preloads = context.fetch_local(:includeable_preloads)
 
@@ -52,14 +67,14 @@ RSpec.describe Halitosis::Preloadable do
       end
 
       it "stores a string field_name as a symbol key" do
-        serializer.send(:store_preload, context, "my_field", proc { "value" })
+        serializer.send(:store_preload, context, "my_field", "value")
 
         expect(context.fetch_local(:includeable_preloads)).to have_key(:my_field)
       end
 
       it "overwrites an existing entry for the same field" do
-        serializer.send(:store_preload, context, :my_field, proc { "first" })
-        serializer.send(:store_preload, context, :my_field, proc { "second" })
+        serializer.send(:store_preload, context, :my_field, "first")
+        serializer.send(:store_preload, context, :my_field, "second")
 
         expect(context.fetch_local(:includeable_preloads)[:my_field]).to eq("second")
       end
@@ -67,35 +82,23 @@ RSpec.describe Halitosis::Preloadable do
 
     describe "#fetch_preload" do
       it "returns the stored value" do
-        serializer.send(:store_preload, context, :my_field, proc { "value" })
+        serializer.send(:store_preload, context, :my_field, "value")
 
         expect(serializer.send(:fetch_preload, context, :my_field)).to eq("value")
       end
 
-      it "lazily evaluates the serializer method and caches the value on first access" do
-        expect(serializer.send(:fetch_preload, context, :computed_value)).to eq("from_instance")
-
-        expect(serializer.send(:preloaded?, context, :computed_value)).to be true
-      end
-
-      it "does not re-evaluate the method on subsequent fetches" do
-        call_count = 0
-        klass.define_method(:counted_value) { call_count += 1 }
-
-        serializer.send(:fetch_preload, context, :counted_value)
-        serializer.send(:fetch_preload, context, :counted_value)
-
-        expect(call_count).to eq(1)
+      it "returns nil when nothing has been stored for the field" do
+        expect(serializer.send(:fetch_preload, context, :my_field)).to be_nil
       end
 
       it "returns nil when the stored value is nil" do
-        serializer.send(:store_preload, context, :my_field, proc {})
+        serializer.send(:store_preload, context, :my_field, nil)
 
         expect(serializer.send(:fetch_preload, context, :my_field)).to be_nil
       end
 
       it "accepts a string field_name" do
-        serializer.send(:store_preload, context, :my_field, proc { "value" })
+        serializer.send(:store_preload, context, :my_field, "value")
 
         expect(serializer.send(:fetch_preload, context, "my_field")).to eq("value")
       end
@@ -103,7 +106,7 @@ RSpec.describe Halitosis::Preloadable do
 
     describe "#preloaded?" do
       it "returns true when a value has been stored" do
-        serializer.send(:store_preload, context, :my_field, proc { "value" })
+        serializer.send(:store_preload, context, :my_field, "value")
 
         expect(serializer.send(:preloaded?, context, :my_field)).to be true
       end
@@ -117,13 +120,13 @@ RSpec.describe Halitosis::Preloadable do
       end
 
       it "returns true even when the stored value is nil" do
-        serializer.send(:store_preload, context, :my_field, proc {})
+        serializer.send(:store_preload, context, :my_field, nil)
 
         expect(serializer.send(:preloaded?, context, :my_field)).to be true
       end
 
       it "accepts a string field_name" do
-        serializer.send(:store_preload, context, :my_field, proc { "value" })
+        serializer.send(:store_preload, context, :my_field, "value")
 
         expect(serializer.send(:preloaded?, context, "my_field")).to be true
       end

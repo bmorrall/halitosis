@@ -88,14 +88,14 @@ RSpec.describe Halitosis::ResourceRelationships do
 
           serializer = klass.new(include: {with_preload: true})
           context = serializer.send(:build_context)
-          serializer.send(:store_preload, context, :with_preload, proc { child_class.new })
+          serializer.send(:store_preload, context, :with_preload, child_class.new)
 
           result = serializer.relationships(context)
 
           expect(result[:with_preload]).to eq(id: 1)
         end
 
-        it "uses the preload: option key for the preload lookup" do
+        it "passes the stored preload to an arity-1 relationship block when preload: key differs from field name" do
           child_class = Class.new {
             include Halitosis::Base
             include Halitosis::Attributes
@@ -107,7 +107,7 @@ RSpec.describe Halitosis::ResourceRelationships do
 
           serializer = klass.new(include: {articles: true})
           context = serializer.send(:build_context)
-          serializer.send(:store_preload, context, :user_articles, proc { child_class.new })
+          serializer.send(:store_preload, context, :articles, child_class.new)
 
           result = serializer.relationships(context)
 
@@ -133,7 +133,7 @@ RSpec.describe Halitosis::ResourceRelationships do
           end
 
           serializer = klass.new(include: {rel_a: true, rel_b: true, rel_c: true})
-          result = serializer.relationships
+          result = serializer.render[:_relationships]
 
           expect(call_count).to eq(1)
           expect(result[:rel_a]).to eq(id: 42)
@@ -153,7 +153,7 @@ RSpec.describe Halitosis::ResourceRelationships do
 
           serializer = klass.new(include: {opted_out: true})
           context = serializer.send(:build_context)
-          serializer.send(:store_preload, context, :opted_out, proc { child_class.new })
+          serializer.send(:store_preload, context, :opted_out, child_class.new)
 
           result = serializer.relationships(context)
 
@@ -174,8 +174,8 @@ RSpec.describe Halitosis::ResourceRelationships do
       end
     end
 
-    describe "#before_render" do
-      it "pre-populates preload storage for enabled preload: fields before rendering" do
+    describe "#preload_context" do
+      it "stores preloads under the field name before rendering" do
         populated_before_render = nil
         child_class = Class.new {
           include Halitosis::Base
@@ -189,7 +189,7 @@ RSpec.describe Halitosis::ResourceRelationships do
 
         original_render_with_context = klass.instance_method(:render_with_context)
         klass.define_method(:render_with_context) do |ctx|
-          populated_before_render = send(:preloaded?, ctx, :item_data)
+          populated_before_render = send(:preloaded?, ctx, :item)
           original_render_with_context.bind_call(self, ctx)
         end
 
@@ -199,18 +199,47 @@ RSpec.describe Halitosis::ResourceRelationships do
         expect(populated_before_render).to be(true)
       end
 
-      it "does not pre-populate preloads for excluded relationship fields" do
+      it "evaluates a shared preload_key only once across multiple fields" do
         call_count = 0
-        child_class = Class.new { include Halitosis::Base }
+
+        klass.rel(:rel_a, {preload: :shared}) { |data| data }
+        klass.rel(:rel_b, {preload: :shared}) { |data| data }
+        klass.define_method(:shared) {
+          call_count += 1
+          nil
+        }
+
+        serializer = klass.new(include: {rel_a: true, rel_b: true})
+        serializer.send(:preload_context, serializer.send(:build_context))
+
+        expect(call_count).to eq(1)
+      end
+
+      it "does not preload for excluded relationship fields" do
+        call_count = 0
 
         klass.rel(:item, {preload: :item_data}) { |data| data }
         klass.define_method(:item_data) {
           call_count += 1
-          child_class.new
+          nil
         }
 
         # item is NOT included
         klass.new(include: {}).render
+
+        expect(call_count).to eq(0)
+      end
+
+      it "does not preload fields with preload: false" do
+        call_count = 0
+
+        klass.rel(:item, {preload: false}) { nil }
+        klass.define_method(:item_data) {
+          call_count += 1
+          nil
+        }
+
+        klass.new.render
 
         expect(call_count).to eq(0)
       end

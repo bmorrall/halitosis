@@ -13,40 +13,44 @@ module Halitosis
     end
 
     module InstanceMethods
+      # @param context [Halitosis::Context]
+      #
+      def before_render(context)
+        super
+
+        preload_context(context)
+      end
+
+      # Hook called by +before_render+ to allow subclasses to populate preload
+      # storage before field rendering begins. Override in a serializer class to
+      # perform bulk preloading against the render context.
+      #
+      # @param _context [Halitosis::Context]
+      #
+      def preload_context(_context)
+      end
+
       private
 
-      # Evaluate +value_source+ via the serializer instance and cache the
-      # result under +field_name+ in the context's local preloads hash.
+      # Store +value+ under +field_name+ in the context's local preloads hash.
       #
       # @param context [Halitosis::Context] the render context
       # @param field_name [Symbol, String] key to store under
-      # @param value_source [String, Symbol, Proc] evaluated via +context.call_instance+
+      # @param value [Object] the value to cache
       #
-      def store_preload(context, field_name, value_source)
-        procedure = case value_source
-        when Symbol, String
-          self.class.default_procedure_for(value_source.to_sym)
-        else
-          value_source
-        end
-        value = context.call_instance(procedure)
+      def store_preload(context, field_name, value)
         current = context.fetch_local(:includeable_preloads) || {}
 
         context.store_local(:includeable_preloads, current.merge(field_name.to_sym => value))
       end
 
-      # Retrieve a previously stored preloaded value for +field_name+, lazily
-      # evaluating and storing it first if it has not yet been preloaded.
-      # The value is evaluated by calling the method named by +field_name+ on
-      # the serializer instance via +store_preload+.
+      # Retrieve a previously stored preloaded value for +field_name+.
       #
       # @param context [Halitosis::Context] the render context
       # @param field_name [Symbol, String]
       # @return [Object, nil]
       #
       def fetch_preload(context, field_name)
-        store_preload(context, field_name, field_name.to_sym) unless preloaded?(context, field_name)
-
         (context.fetch_local(:includeable_preloads) || {})[field_name.to_sym]
       end
 

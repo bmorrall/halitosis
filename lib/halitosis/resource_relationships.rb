@@ -28,20 +28,25 @@ module Halitosis
         decorate_render :relationships, context, super
       end
 
-      # Pre-populate the preload cache for any enabled relationship fields
-      # that declare a +preload:+ key. Fields sharing the same +preload_key+
-      # are evaluated only once. Already-stored values are left untouched,
-      # allowing callers to supply preloads manually before +render+ is called.
+      # Pre-populate the preload cache for all relationship fields that
+      # declare a +preload:+ key. Each unique +preload_key+ is evaluated once
+      # via +default_procedure_for+; the result is stored under the field's
+      # own name so the rendering step can look it up directly by field name.
       #
       # @param context [Halitosis::Context]
       #
-      def before_render(context)
-        super
+      def preload_context(context)
+        preloads = {}
 
         self.class.fields.for_type(ResourceRelationships::Field).each do |field|
-          next unless field.preload? && field.enabled?(context)
+          next unless field.preload?(context)
 
-          fetch_preload(context, field.preload_key)
+          unless preloads.key?(field.preload_key)
+            preloads[field.preload_key] = context.call_instance(self.class.default_procedure_for(field.preload_key))
+          end
+
+          value = preloads[field.preload_key]
+          store_preload(context, field.name, value)
         end
       end
 
@@ -52,12 +57,10 @@ module Halitosis
         validate_relationships!(context) unless collection?
 
         render_fields(ResourceRelationships::Field, context) do |field, result|
-          # Use the preload cache if the field declares a preload: key, or if a
-          # preload has already been stored for this key (e.g. manually via store_preload).
-          # fetch_preload lazily evaluates and caches on first access.
-          # Set preload: false to opt out of lazy loading (manually stored values are still used).
-          preloaded = if field.preload? || preloaded?(context, field.preload_key)
-            fetch_preload(context, field.preload_key)
+          # Use the preload cache if a value has been stored under the field name
+          # (populated by preload_context or manually via store_preload).
+          preloaded = if field.preload?(context) || preloaded?(context, field.name)
+            fetch_preload(context, field.name)
           end
           value = field.value(context, preloaded)
 
