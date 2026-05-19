@@ -121,6 +121,8 @@ module Halitosis
           page_numbers = links_field.filter_page_numbers(page_numbers)
 
           links = page_numbers.transform_values do |n|
+            next if n.nil?
+
             url = links_field.apply(context, n, context.query_params)
             url && {href: url}
           end
