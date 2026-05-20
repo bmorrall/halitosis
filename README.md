@@ -1248,6 +1248,7 @@ class ArticleSerializer
   include Halitosis
 
   resource :article
+
   required_option :current_user
 
   attribute(:editable) { current_user.can?(:edit, article) }
@@ -1261,6 +1262,50 @@ ArticleSerializer.new(article).render
 # Works fine
 ArticleSerializer.new(article, current_user: user).render
 ```
+
+### Inheritance
+
+Serializer classes can be subclassed. The subclass inherits all fields (identifiers, attributes, links, meta, permissions, relationships) and the `resource_type` from the parent. Each class has its own independent field registry, so additions in the subclass never affect the parent.
+
+```ruby
+class ArticleSerializer
+  include Halitosis
+
+  resource :article
+
+  identifier :id
+  attribute :title
+  link(:self) { "/articles/#{article.id}" }
+end
+
+class DetailedArticleSerializer < ArticleSerializer
+  # inherits id, title, and self link automatically
+  attribute :body
+  meta(:created_at) { article.created_at.iso8601 }
+  rel(:comments) { article.comments.map { |c| CommentSerializer.new(c) } }
+end
+```
+
+```ruby
+ArticleSerializer.new(article).render
+# => { article: { id: 1, title: "Hello World", _links: { self: { href: "/articles/1" } } } }
+
+DetailedArticleSerializer.new(article, include: "comments").render
+# => {
+#      article: {
+#        id: 1,
+#        title: "Hello World",
+#        body: "...",
+#        _links: { self: { href: "/articles/1" } },
+#        _meta: { created_at: "2024-09-30T20:46:00Z" },
+#        _relationships: { comments: [ ... ] }
+#      }
+#    }
+```
+
+Note: only one `identifier` is allowed per serializer. Subclasses inherit the parent's identifier and cannot define another.
+
+Note: the `resource` declaration cannot be re-declared on a subclass. The child inherits the parent's `resource_type` unchanged.
 
 
 ### Using with Rails

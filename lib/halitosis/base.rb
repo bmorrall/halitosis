@@ -21,6 +21,23 @@ module Halitosis
         @fields ||= Fields.new
       end
 
+      # When a serializer is subclassed, give the child a snapshot copy of the
+      # parent's fields so it can add or override fields without affecting the
+      # parent class.
+      #
+      def inherited(subclass)
+        super
+
+        child_fields = Fields.new
+
+        fields.each do |key, value|
+          child_fields[key] = value.is_a?(Hash) ? value.dup : value
+        end
+
+        subclass.instance_variable_set(:@fields, child_fields)
+        subclass.resource_type = resource_type if respond_to?(:resource_type)
+      end
+
       # Declares a required initializer option, generating a reader method
       # and raising +MissingOption+ at construction time if absent.
       #
