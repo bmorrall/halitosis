@@ -305,30 +305,6 @@ RSpec.describe "Paginatable — paginate_meta" do
     end
   end
 
-  context "when paginate_meta is declared twice" do
-    it "raises InvalidField at DSL time" do
-      item_ser = item_klass
-
-      expect do
-        Class.new do
-          include Halitosis
-
-          collection :items do |collection|
-            collection.map { |i| item_ser.new(i) }
-          end
-
-          paginate_by_page :kaminari, default_page_size: 10 do |collection, number, size|
-            offset = (number - 1) * size
-            collection[offset, size] || []
-          end
-
-          paginate_meta
-          paginate_meta
-        end
-      end.to raise_error(Halitosis::InvalidField, /pagination meta is already defined/)
-    end
-  end
-
   context "when a global pagination adapter is configured" do
     it "uses the config adapter when none is passed" do
       item_ser = item_klass

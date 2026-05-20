@@ -7,7 +7,7 @@ module Halitosis
   #
   class Fields < Hash
     def add(field)
-      type = field.class.name
+      type = field.class.registerable_as.name
 
       field.validate
 
