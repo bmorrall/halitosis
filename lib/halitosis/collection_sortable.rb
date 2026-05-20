@@ -77,7 +77,6 @@ module Halitosis
         if directives.empty?
           if (default_field = self.class.fields.singleton(CollectionSortable::DefaultField))
             context.collection = default_field.apply_sort(context, context.collection, nil)
-            context.register_query_params(sort: default_field.sort_string) if default_field.sort_string
           end
           return
         end
