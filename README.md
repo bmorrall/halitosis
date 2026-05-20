@@ -261,6 +261,39 @@ Providing an unparseable date string will raise:
 The articles collection can not be filtered by 'created_after' with the provided value
 ```
 
+#### Compound filter keys
+
+Use the `keys:` option to declare a filter that expects multiple sub-keys — for example, a date range with separate `from` and `to` parameters. The block receives the collection and a hash with symbolized keys:
+
+```ruby
+filterable_by :start_date, keys: [:from, :to] do |collection, value|
+  collection.where(start_date: value[:from]..value[:to])
+end
+```
+
+Params are passed as a nested hash from either bracket or dot notation:
+
+```ruby
+ArticlesSerializer.new(
+  Article.all,
+  filter: { start_date: { from: "2024-01-01", to: "2024-12-31" } }
+).render
+```
+
+Requesting an undeclared sub-key (e.g. `filter[start_date][foo]`) raises `InvalidFilterParameter` at the framework level. **Partial key validation** — checking that both `from` and `to` are present — is left to the block. Use the three-argument form with `errors.add` to handle this:
+
+```ruby
+filterable_by :start_date, keys: [:from, :to] do |collection, value, errors|
+  errors.add("from", "is required") unless value.key?(:from)
+  errors.add("to", "is required") unless value.key?(:to)
+  errors.none? ? collection.where(start_date: value[:from]..value[:to]) : nil
+end
+```
+
+The two-argument form of `errors.add` scopes sub-key errors under the compound field name. With a filter named `start_date`:
+- `errors.add("from", "is required")` raises with `source.parameter` `"filter[start_date][from]"`
+- `errors.add("range is too wide")` raises with `source.parameter` `"filter[start_date]"`
+
 #### Validation errors
 
 Add a third argument to a `filterable_by` block to receive a `FilterErrors` object. Call `errors.add(message)` to record a validation failure with a specific message — Halitosis raises `InvalidFilterParameter` using that message instead of the generic one:

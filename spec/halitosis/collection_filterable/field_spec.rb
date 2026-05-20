@@ -102,4 +102,114 @@ RSpec.describe Halitosis::CollectionFilterable::Field do
       end
     end
   end
+
+  describe "#compound?" do
+    it "returns false when no keys option is given" do
+      field = described_class.new(:name, {}, proc { |c, v| c })
+
+      expect(field.compound?).to be false
+    end
+
+    it "returns true when a keys option is given" do
+      field = described_class.new(:start_date, {keys: [:from, :to]}, proc { |c, v| c })
+
+      expect(field.compound?).to be true
+    end
+  end
+
+  describe "#compound_keys" do
+    it "returns an empty array when no keys option is given" do
+      field = described_class.new(:name, {}, proc { |c, v| c })
+
+      expect(field.compound_keys).to eq([])
+    end
+
+    it "returns symbolized keys" do
+      field = described_class.new(:start_date, {keys: ["from", :to]}, proc { |c, v| c })
+
+      expect(field.compound_keys).to eq([:from, :to])
+    end
+  end
+
+  describe "#validate — keys option" do
+    it "raises InvalidField when keys is an empty array" do
+      field = described_class.new(:start_date, {keys: []}, proc { |c, v| c })
+
+      expect { field.validate }.to raise_error(Halitosis::InvalidField, /keys option must be a non-empty array/i)
+    end
+
+    it "raises InvalidField when keys contains non-symbol/string values" do
+      field = described_class.new(:start_date, {keys: [1, 2]}, proc { |c, v| c })
+
+      expect { field.validate }.to raise_error(Halitosis::InvalidField, /keys option must be a non-empty array/i)
+    end
+
+    it "does not raise when keys is a valid non-empty array of symbols" do
+      field = described_class.new(:start_date, {keys: [:from, :to]}, proc { |c, v| c })
+
+      expect { field.validate }.not_to raise_error
+    end
+
+    it "does not raise when keys contains strings" do
+      field = described_class.new(:start_date, {keys: ["from", "to"]}, proc { |c, v| c })
+
+      expect { field.validate }.not_to raise_error
+    end
+  end
+
+  describe "#apply_filter — compound field" do
+    it "passes the hash value to a 2-argument block" do
+      received = nil
+      field = described_class.new(:start_date, {keys: [:from, :to]}, proc { |col, value|
+        received = value
+        col
+      })
+
+      field.apply_filter(Halitosis::Context.new(Object.new), [], {from: "2024-01-01", to: "2024-12-31"})
+      expect(received).to eq({from: "2024-01-01", to: "2024-12-31"})
+    end
+
+    context "with a 3-argument block" do
+      it "initializes FilterErrors with the field name as prefix" do
+        received_errors = nil
+        field = described_class.new(:start_date, {keys: [:from, :to]}, proc { |col, value, errors|
+          received_errors = errors
+          col
+        })
+
+        field.apply_filter(Halitosis::Context.new(Object.new), [], {from: "2024-01-01", to: "2024-12-31"})
+        expect(received_errors.field_name).to eq("start_date")
+      end
+
+      it "resolves errors.add(sub_key, message) under the compound field name" do
+        field = described_class.new(:start_date, {keys: [:from, :to]}, proc { |col, value, errors|
+          errors.add("from", "is required")
+          nil
+        })
+
+        _, errors = field.apply_filter(Halitosis::Context.new(Object.new), [], {to: "2024-12-31"})
+        expect(errors.to_h).to eq({"start_date.from" => ["is required"]})
+      end
+
+      it "resolves errors.add(message) under the compound field name itself" do
+        field = described_class.new(:start_date, {keys: [:from, :to]}, proc { |col, value, errors|
+          errors.add("range is invalid")
+          nil
+        })
+
+        _, errors = field.apply_filter(Halitosis::Context.new(Object.new), [], {from: "2024-12-31", to: "2024-01-01"})
+        expect(errors.to_h).to eq({"start_date" => ["range is invalid"]})
+      end
+
+      it "resolves sub-key errors under a namespaced compound field" do
+        field = described_class.new(:"item.start_date", {keys: [:from, :to]}, proc { |col, value, errors|
+          errors.add("from", "is required")
+          nil
+        })
+
+        _, errors = field.apply_filter(Halitosis::Context.new(Object.new), [], {to: "2024-12-31"})
+        expect(errors.to_h).to eq({"item.start_date.from" => ["is required"]})
+      end
+    end
+  end
 end

@@ -64,10 +64,10 @@ module Halitosis
   class FilterErrors
     attr_reader :field_name
 
-    def initialize(field_name)
+    def initialize(field_name, prefix: nil)
       @field_name = field_name.to_s
       parts = @field_name.split(".")
-      @namespace_prefix = (parts.length > 1) ? parts[0..-2].join(".") : nil
+      @namespace_prefix = prefix || ((parts.length > 1) ? parts[0..-2].join(".") : nil)
       @entries = []
     end
 

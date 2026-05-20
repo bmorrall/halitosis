@@ -427,6 +427,122 @@ RSpec.describe Halitosis::CollectionFilterable do
         )
       end
     end
+
+    context "with a compound filter (keys: option)" do
+      let :compound_klass do
+        Class.new do
+          include Halitosis
+
+          collection :items do |items|
+            items
+          end
+
+          filterable_by :start_date, keys: [:from, :to] do |collection, value|
+            collection.select { |i| i[:date].between?(value[:from], value[:to]) }
+          end
+        end
+      end
+
+      let(:dated_items) do
+        [
+          {name: "Alice", date: "2024-01-15"},
+          {name: "Bob", date: "2024-06-01"},
+          {name: "Carol", date: "2024-09-20"}
+        ]
+      end
+
+      it "passes a symbolized hash value to the block" do
+        serializer = compound_klass.new(dated_items)
+        context = build_context(serializer, {filter: {start_date: {from: "2024-01-01", to: "2024-07-01"}}})
+
+        serializer.send(:apply_filters!, context)
+
+        expect(context.collection).to eq([{name: "Alice", date: "2024-01-15"}, {name: "Bob", date: "2024-06-01"}])
+      end
+
+      it "raises InvalidFilterParameter for an unknown sub-key" do
+        serializer = compound_klass.new(dated_items)
+        context = build_context(serializer, {filter: {start_date: {from: "2024-01-01", foo: "bar"}}})
+
+        expect { serializer.send(:apply_filters!, context) }.to raise_error do |exception|
+          expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
+          expect(exception.message).to match(/can not be filtered by 'start_date\.foo'/i)
+        end
+      end
+
+      it "passes partial keys to the block without raising a framework error" do
+        safe_compound_klass = Class.new do
+          include Halitosis
+
+          collection :items do |items|
+            items
+          end
+
+          filterable_by :start_date, keys: [:from, :to] do |collection, value|
+            # only :from present — block receives it and guards gracefully
+            collection.select { |i| i[:date] >= value[:from] }
+          end
+        end
+
+        serializer = safe_compound_klass.new(dated_items)
+        context = build_context(serializer, {filter: {start_date: {from: "2024-06-01"}}})
+
+        expect { serializer.send(:apply_filters!, context) }.not_to raise_error
+        expect(context.collection).to eq([{name: "Bob", date: "2024-06-01"}, {name: "Carol", date: "2024-09-20"}])
+      end
+
+      context "with a 3-argument block" do
+        let :compound_errors_klass do
+          Class.new do
+            include Halitosis
+
+            collection :items do |items|
+              items
+            end
+
+            filterable_by :start_date, keys: [:from, :to] do |collection, value, errors|
+              errors.add("from", "is required") unless value.key?(:from)
+              errors.add("to", "is required") unless value.key?(:to)
+              errors.none? ? collection.select { |i| i[:date].between?(value[:from], value[:to]) } : nil
+            end
+          end
+        end
+
+        it "reports sub-key errors under the compound field name" do
+          serializer = compound_errors_klass.new(dated_items)
+          context = build_context(serializer, {filter: {start_date: {from: "2024-01-01"}}})
+
+          expect { serializer.send(:apply_filters!, context) }.to raise_error do |exception|
+            expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
+            expect(exception.message).to match(/can not be filtered by 'start_date\.to': is required/i)
+            expect(exception.parameter).to eq("filter[start_date][to]")
+          end
+        end
+
+        it "reports a top-level error under the compound field name itself" do
+          klass_with_range_check = Class.new do
+            include Halitosis
+
+            collection :items do |items|
+              items
+            end
+
+            filterable_by :start_date, keys: [:from, :to] do |collection, value, errors|
+              errors.add("range is too wide") if value[:from] && value[:to] && (value[:to] > value[:from])
+              errors.none? ? collection : nil
+            end
+          end
+
+          serializer = klass_with_range_check.new(dated_items)
+          context = build_context(serializer, {filter: {start_date: {from: "2024-01-01", to: "2024-12-31"}}})
+
+          expect { serializer.send(:apply_filters!, context) }.to raise_error do |exception|
+            expect(exception.message).to match(/can not be filtered by 'start_date': range is too wide/i)
+            expect(exception.parameter).to eq("filter[start_date]")
+          end
+        end
+      end
+    end
   end
 
   describe "context query_params" do
