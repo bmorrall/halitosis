@@ -74,7 +74,7 @@ module Halitosis
           preloaded = fetch_preload(context, pk) if pk && preloaded?(context, pk)
           value = field.value(context, preloaded)
 
-          result[field.name] = value if value
+          result[field.name] = value if value || field.always_emit?
         end
       end
     end

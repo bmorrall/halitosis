@@ -33,6 +33,17 @@ module Halitosis
         enabled?(context)
       end
 
+      # Whether to emit this field in +_links+ even when its value is +nil+.
+      #
+      # Returns +false+ by default. Override in subclasses that must always
+      # appear in the +_links+ hash (e.g. pagination link fields).
+      #
+      # @return [Boolean]
+      #
+      def always_emit?
+        false
+      end
+
       # @return [true] if nothing is raised
       #
       # @raise [Halitosis::InvalidField] if the field is invalid

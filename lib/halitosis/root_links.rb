@@ -35,7 +35,7 @@ module Halitosis
         render_fields(RootLinks::Field, context) do |field, result|
           value = field.value(context)
 
-          result[field.name] = value if value
+          result[field.name] = value if value || field.always_emit?
         end
       end
     end

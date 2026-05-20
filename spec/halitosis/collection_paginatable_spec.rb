@@ -437,7 +437,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
   end
 
   describe ".paginate_links" do
-    it "stores a LinksField singleton" do
+    it "registers a PaginationLinksKeyField for each default key" do
       klass = Class.new do
         include Halitosis
 
@@ -449,7 +449,11 @@ RSpec.describe Halitosis::CollectionPaginatable do
         paginate_links { |_page_number, _qp| "/items" }
       end
 
-      expect(klass.fields.singleton(Halitosis::CollectionPaginatable::LinksField)).not_to be_nil
+      pagination_link_fields = klass.fields.for_type(Halitosis::RootLinks::Field)
+        .select { |f| f.is_a?(Halitosis::CollectionPaginatable::PaginationLinksKeyField) }
+
+      expect(pagination_link_fields.map(&:name))
+        .to match_array(Halitosis::CollectionPaginatable::PaginationLinksKeyField::DEFAULT_KEYS)
     end
 
     it "stores the resolved adapter on the Field" do
@@ -516,22 +520,6 @@ RSpec.describe Halitosis::CollectionPaginatable do
           paginate_links { |page_number| "/items" }
         end
       end.to raise_error(Halitosis::InvalidField, /must accept exactly 2 arguments/i)
-    end
-
-    it "raises InvalidField when declared a second time" do
-      expect do
-        Class.new do
-          include Halitosis
-
-          collection :items do |collection|
-            collection
-          end
-
-          paginate_by_page(:kaminari, default_page_size: 10) { |collection, number, size| collection }
-          paginate_links { |_page_number, _qp| "/items" }
-          paginate_links { |_page_number, _qp| "/items" }
-        end
-      end.to raise_error(Halitosis::InvalidField, /pagination links are already defined/i)
     end
 
     it "raises InvalidField when no adapter is configured and none is passed" do
