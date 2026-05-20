@@ -9,7 +9,7 @@ class WillPaginateArticlesSerializer
     collection.paginate(page: number, per_page: size)
   end
 
-  paginate_links do |page_number, query_params|
+  paginate_links do |_, page_number, query_params|
     will_paginate_articles_path(query_params.merge(page: {number: page_number})) if page_number
   end
 

@@ -65,7 +65,7 @@ RSpec.describe "RootLinks" do
           ascending ? collection.sort : collection.sort.reverse
         end
 
-        root_link(:self) do |query_params|
+        root_link(:self) do |_, query_params|
           "/items?#{query_params.map { |k, v| "#{k}=#{v}" }.join("&")}"
         end
       end
@@ -94,7 +94,7 @@ RSpec.describe "RootLinks" do
 
         relationship(:comments) { nil }
 
-        root_link(:self) do |query_params|
+        root_link(:self) do |_, query_params|
           "/item?#{query_params.map { |k, v| "#{k}=#{v}" }.join("&")}"
         end
       end
@@ -113,7 +113,7 @@ RSpec.describe "RootLinks" do
     end
   end
 
-  context "with a root link block accepting context and query_params (2-arg)" do
+  context "with a root link block receiving context as the first argument" do
     let(:resource_klass) do
       Class.new do
         include Halitosis

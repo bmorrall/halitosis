@@ -225,7 +225,7 @@ RSpec.describe "Paginatable — paginate_meta" do
           PaginatedSlice.new(page_items, number, total, size, collection.size)
         end
 
-        paginate_links do |page_number, query_params|
+        paginate_links do |_, page_number, query_params|
           size = query_params.dig(:page, :size)
           page_number.nil? ? nil : "/items?page[number]=#{page_number}&page[size]=#{size}"
         end

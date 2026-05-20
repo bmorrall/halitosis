@@ -33,7 +33,7 @@ RSpec.describe "ResourceIncludes integration" do
       # The allow_include procs transform this array before the relationship
       # renders, proving the cache is modified.
       #
-      relationship :parts, preload: :raw_parts do |parts|
+      relationship :parts, preload: :raw_parts do |_, parts|
         (parts || []).map { |p| part_class.new(p) }
       end
 
@@ -121,7 +121,7 @@ RSpec.describe "ResourceIncludes integration" do
 
         resource :record
 
-        relationship :owner, preload: :raw_owner do |owner|
+        relationship :owner, preload: :raw_owner do |_, owner|
           owner_class.new(owner)
         end
 

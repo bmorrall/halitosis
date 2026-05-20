@@ -189,7 +189,7 @@ This is useful when descending order is expensive or semantically meaningless fo
 
 #### Default sort
 
-Use `default_sort` to apply a fallback when no `sort` param is provided. It accepts either a sort string (which delegates through the same `sortable_by` pipeline) or a no-argument block:
+Use `default_sort` to apply a fallback when no `sort` param is provided. It accepts either a sort string (which delegates through the same `sortable_by` pipeline) or a block receiving the render context and the collection:
 
 ```ruby
 class ArticlesSerializer
@@ -206,8 +206,8 @@ class ArticlesSerializer
   # Delegates to the :title sortable_by block, descending
   default_sort "-title"
 
-  # Or provide a custom fallback block (no arguments)
-  # default_sort { collection.order(created_at: :desc) }
+  # Or provide a custom fallback block
+  # default_sort { |_, collection| collection.order(created_at: :desc) }
 end
 ```
 
@@ -531,7 +531,7 @@ Filters and sorts declared on the serializer are still applied to the collection
 
 ### Pagination links
 
-Use `paginate_links` to emit `self`/`first`/`last`/`prev`/`next` links alongside a paginated collection. The block receives the target page number and the active `query_params` hash (including sort, filter, and page size):
+Use `paginate_links` to emit `self`/`first`/`last`/`prev`/`next` links alongside a paginated collection. The block receives the render context, the target page number, and the active `query_params` hash (including sort, filter, and page size):
 
 ```ruby
 class ArticlesSerializer
@@ -545,7 +545,7 @@ class ArticlesSerializer
     collection.page(number).per(size)
   end
 
-  paginate_links do |page_number, query_params|
+  paginate_links do |_, page_number, query_params|
     articles_url(query_params.merge(page: { number: page_number }))
   end
 end
@@ -556,7 +556,7 @@ All five keys (`self`, `first`, `last`, `prev`, `next`) are always present in `_
 Pass `only:` to limit which keys are emitted:
 
 ```ruby
-paginate_links only: %i[self next] do |page_number, query_params|
+paginate_links only: %i[self next] do |_, page_number, query_params|
   articles_url(query_params.merge(page: { number: page_number }))
 end
 ```
@@ -760,14 +760,14 @@ Relationships allow embedding associated serializers inside `_relationships`. Th
 One-to-one:
 
 ```ruby
-relationship(:author, preload: true) { |author| UserSerializer.new(author) }
+relationship(:author, preload: true) { |_, author| UserSerializer.new(author) }
 # => { article: { ..., _relationships: { author: { id: 5, name: "Alice" } } } }
 ```
 
 One-to-many (array of serializers):
 
 ```ruby
-relationship(:comments, preload: true) do |comments|
+relationship(:comments, preload: true) do |_, comments|
   comments.map { |comment| CommentSerializer.new(comment) }
 end
 # => { article: { ..., _relationships: { comments: [ ... ] } } }
@@ -776,7 +776,7 @@ end
 One-to-many (collection serializer):
 
 ```ruby
-relationship(:comments, preload: true) { |comments| CommentsSerializer.new(comments) }
+relationship(:comments, preload: true) { |_, comments| CommentsSerializer.new(comments) }
 ```
 
 The `rel` method is a shorthand alias for `relationship`:
@@ -831,10 +831,10 @@ relationship(:author, if: :can_view_author?, link: -> { author_path(resource[:au
 end
 ```
 
-When `preload:` is also set, a 1-arity lambda passed to `link:` receives the preloaded value — the same value delivered to the relationship block. This avoids a second lookup just to build the URL:
+When `preload:` is also set, a lambda passed to `link:` receives the render context as its first argument and the preloaded value as its second — the same value delivered to the relationship block. This avoids a second lookup just to build the URL:
 
 ```ruby
-relationship(:author, preload: true, link: ->(author) { "/people/#{author.id}" }) do |author|
+relationship(:author, preload: true, link: ->(_ctx, author) { "/people/#{author.id}" }) do |_, author|
   UserSerializer.new(author)
 end
 
@@ -846,7 +846,7 @@ end
 A 0-arity lambda continues to work as before when the URL does not depend on the preloaded value:
 
 ```ruby
-relationship(:author, preload: true, link: -> { "/people" }) do |author|
+relationship(:author, preload: true, link: -> { "/people" }) do |_, author|
   UserSerializer.new(author)
 end
 ```
@@ -857,7 +857,7 @@ end
 Use `preload: true` to call a method matching the relationship name once and cache the result for the duration of the render. The cached value is passed as the first argument to the relationship block:
 
 ```ruby
-relationship(:author, preload: true) do |author|
+relationship(:author, preload: true) do |_, author|
   UserSerializer.new(author)
 end
 
@@ -869,8 +869,8 @@ end
 Use a Symbol or String to cache under a different key — useful when multiple relationships share the same preloaded data:
 
 ```ruby
-rel(:author,       preload: :author_data) { |data| UserSerializer.new(data) }
-rel(:author_links, preload: :author_data) { |data| data.links }
+rel(:author,       preload: :author_data) { |_, data| UserSerializer.new(data) }
+rel(:author_links, preload: :author_data) { |_, data| data.links }
 
 def author_data
   article.author # evaluated once, shared between both relationships
@@ -1075,7 +1075,7 @@ ArticlesSerializer.new(articles).render
 
 #### Generating links with `query_params`
 
-When a `root_link` (or `link`) block accepts one argument, it receives the accumulated `query_params` hash — a plain hash of the normalised request params that were active during that render. Each middleware module contributes its slice:
+When a `root_link` (or `link`) block accepts arguments, it receives the render context as the first argument and the accumulated `query_params` hash as the second. Both are optional — use whichever you need:
 
 | Key | Contributed by | Shape |
 | --- | --- | --- |
@@ -1107,11 +1107,11 @@ class ArticlesSerializer
   end
 
   # On collections, `link` is an alias for `root_link`
-  link(:self) do |query_params|
+  link(:self) do |_ctx, query_params|
     articles_url(query_params)
   end
 
-  root_link(:first) do |query_params|
+  root_link(:first) do |_ctx, query_params|
     articles_url(query_params.merge(page: { number: 1, size: query_params.dig(:page, :size) }))
   end
 end
@@ -1136,7 +1136,7 @@ class ArticleSerializer
 
   relationship(:author) { AuthorSerializer.new(article.author) }
 
-  root_link(:self) do |query_params|
+  root_link(:self) do |_ctx, query_params|
     query_string = query_params.map { |k, v| "#{k}=#{v}" }.join("&")
     "/articles/#{article.id}?#{query_string}"
   end
@@ -1146,7 +1146,7 @@ ArticleSerializer.new(article, include: "author").render[:_links]
 # => { self: { href: "/articles/1?include=author" } }
 ```
 
-If you need access to both the full render context and `query_params`, use a two-argument block:
+If you need access to both the full render context and `query_params`:
 
 ```ruby
 root_link(:self) do |context, query_params|

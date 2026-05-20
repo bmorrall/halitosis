@@ -13,7 +13,7 @@ class SortableArticlesSerializer
     collection.order(score: ascending ? :asc : :desc)
   end
 
-  link(:self) do |query_params|
+  link(:self) do |_, query_params|
     sortable_articles_path(query_params)
   end
 end

@@ -33,7 +33,7 @@ module Halitosis
             if link_value.lambda?
               captured = link_value
               link_value = if captured.arity != 0
-                proc { |preloaded| instance_exec(preloaded, &captured) }
+                proc { |ctx, preloaded| instance_exec(ctx, preloaded, &captured) }
               else
                 proc { instance_exec(&captured) }
               end

@@ -42,7 +42,7 @@ module Halitosis
       # @return [String, nil]
       #
       def apply(context, page_number, query_params)
-        context.call_instance_with(page_number, query_params, procedure)
+        context.call_instance_with(context, page_number, query_params, procedure)
       end
 
       # Filter page_numbers hash to the requested keys.

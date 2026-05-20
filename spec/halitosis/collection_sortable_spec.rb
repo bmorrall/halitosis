@@ -211,7 +211,7 @@ RSpec.describe Halitosis::CollectionSortable do
       end
 
       it "applies the default_sort procedure via instance_exec" do
-        klass.default_sort { |collection| collection.reverse }
+        klass.default_sort { |_, collection| collection.reverse }
 
         serializer = klass.new(["a", "b", "c"])
         context = build_context(serializer, {})
@@ -268,7 +268,7 @@ RSpec.describe Halitosis::CollectionSortable do
     end
 
     it "does not register a sort key when a block-based default_sort is used" do
-      klass.default_sort { |collection| collection.sort }
+klass.default_sort { |_, collection| collection.sort }
 
       context = render_context(klass.new(["b", "a"]))
 

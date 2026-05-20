@@ -27,14 +27,14 @@ module Halitosis
       # @return [Object] the sorted collection
       #
       def apply_sort(context, collection, _ascending)
-        context.call_instance_with(collection, context, procedure)
+        context.call_instance_with(context, collection, procedure)
       end
 
       private
 
       def build_sort_string_procedure(sort_string)
         directives = SortUtil.parse_sort_param(sort_string)
-        ->(collection, context) {
+        ->(context, collection) {
           directives.reduce(collection) { |coll, (name, ascending)| apply_sort(context, coll, name, ascending) }
         }
       end

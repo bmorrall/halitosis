@@ -185,13 +185,13 @@ RSpec.describe "CollectionSortable" do
 
   context "with default_sort as a block" do
     it "applies the block when no sort param is provided" do
-      klass.default_sort { |collection| collection.reverse }
+      klass.default_sort { |_, collection| collection.reverse }
 
       expect(rendered_names(klass.new(items).render)).to eq(["cherry", "apple", "banana"])
     end
 
     it "is overridden when a sort param is explicitly provided" do
-      klass.default_sort { |collection| collection.reverse }
+      klass.default_sort { |_, collection| collection.reverse }
 
       expect(rendered_names(klass.new(items, sort: "name").render)).to eq(["apple", "banana", "cherry"])
     end

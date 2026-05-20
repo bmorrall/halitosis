@@ -18,7 +18,7 @@ class ComplexSerializer
     ]
   end
 
-  root_link(:self) do |query_params|
+  root_link(:self) do |_, query_params|
     complex_renderable_path(complex.id, query_params)
   end
 end

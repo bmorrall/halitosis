@@ -446,7 +446,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
         end
 
         paginate_by_page(:kaminari, default_page_size: 10) { |collection, number, size| collection }
-        paginate_links { |_page_number, _qp| "/items" }
+        paginate_links { |_ctx, _page_number, _qp| "/items" }
       end
 
       expect(klass.fields.singleton(Halitosis::CollectionPaginatable::LinksField)).not_to be_nil
@@ -461,7 +461,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
         end
 
         paginate_by_page(:will_paginate, default_page_size: 10) { |collection, number, size| collection }
-        paginate_links { |_page_number, _qp| "/items" }
+        paginate_links { |_ctx, _page_number, _qp| "/items" }
       end
 
       expect(klass.fields.singleton(Halitosis::CollectionPaginatable::Field).options[:adapter])
@@ -481,7 +481,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
         end
 
         paginate_by_page(default_page_size: 10) { |collection, number, size| collection }
-        paginate_links { |_page_number, _qp| "/items" }
+        paginate_links { |_ctx, _page_number, _qp| "/items" }
       end
 
       expect(klass.fields.singleton(Halitosis::CollectionPaginatable::Field).options[:adapter])
@@ -515,7 +515,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
           paginate_by_page(:kaminari, default_page_size: 10) { |collection, number, size| collection }
           paginate_links { |page_number| "/items" }
         end
-      end.to raise_error(Halitosis::InvalidField, /must accept exactly 2 arguments/i)
+      end.to raise_error(Halitosis::InvalidField, /must accept exactly 3 arguments/i)
     end
 
     it "raises InvalidField when declared a second time" do
@@ -528,8 +528,8 @@ RSpec.describe Halitosis::CollectionPaginatable do
           end
 
           paginate_by_page(:kaminari, default_page_size: 10) { |collection, number, size| collection }
-          paginate_links { |_page_number, _qp| "/items" }
-          paginate_links { |_page_number, _qp| "/items" }
+          paginate_links { |_ctx, _page_number, _qp| "/items" }
+          paginate_links { |_ctx, _page_number, _qp| "/items" }
         end
       end.to raise_error(Halitosis::InvalidField, /pagination links are already defined/i)
     end
@@ -546,7 +546,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
           end
 
           paginate_by_page(default_page_size: 10) { |collection, number, size| collection }
-          paginate_links { |_page_number, _qp| "/items" }
+          paginate_links { |_ctx, _page_number, _qp| "/items" }
         end
       end.to raise_error(Halitosis::InvalidField, /requires an adapter/i)
     end

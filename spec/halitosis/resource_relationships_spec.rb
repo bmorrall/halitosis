@@ -78,7 +78,7 @@ RSpec.describe Halitosis::ResourceRelationships do
       end
 
       it "link proc receives preloaded value when relationship has preload:" do
-        full_klass.relationship(:articles, preload: true, link: ->(articles) { "/articles/#{articles.size}" }) do |articles|
+        full_klass.relationship(:articles, preload: true, link: ->(_ctx, articles) { "/articles/#{articles.size}" }) do |_, articles|
           articles.map { Class.new { include Halitosis::Base }.new }
         end
 
@@ -91,7 +91,7 @@ RSpec.describe Halitosis::ResourceRelationships do
       end
 
       it "0-arity lambda link still works alongside a preloaded relationship" do
-        full_klass.relationship(:articles, preload: true, link: -> { "/articles" }) do |articles|
+        full_klass.relationship(:articles, preload: true, link: -> { "/articles" }) do |_, articles|
           articles.map { Class.new { include Halitosis::Base }.new }
         end
 
@@ -104,7 +104,7 @@ RSpec.describe Halitosis::ResourceRelationships do
       end
 
       it "link preloads the value even when the relationship is not included" do
-        full_klass.relationship(:articles, preload: true, link: ->(articles) { "/articles/#{articles.size}" }) do |articles|
+        full_klass.relationship(:articles, preload: true, link: ->(_ctx, articles) { "/articles/#{articles.size}" }) do |_, articles|
           articles.map { Class.new { include Halitosis::Base }.new }
         end
 
@@ -119,7 +119,7 @@ RSpec.describe Halitosis::ResourceRelationships do
       it "does not call the preload method twice when the relationship is also included" do
         call_count = 0
 
-        full_klass.relationship(:articles, preload: true, link: ->(articles) { "/articles/#{articles.size}" }) do |articles|
+        full_klass.relationship(:articles, preload: true, link: ->(_ctx, articles) { "/articles/#{articles.size}" }) do |_, articles|
           articles.map { Class.new { include Halitosis::Base }.new }
         end
 
@@ -137,7 +137,7 @@ RSpec.describe Halitosis::ResourceRelationships do
       it "does not call the preload method for a 0-arity link proc" do
         call_count = 0
 
-        full_klass.relationship(:articles, preload: true, link: -> { "/articles" }) do |articles|
+        full_klass.relationship(:articles, preload: true, link: -> { "/articles" }) do |_, articles|
           articles.map { Class.new { include Halitosis::Base }.new }
         end
 
@@ -210,7 +210,7 @@ RSpec.describe Halitosis::ResourceRelationships do
             attribute(:id, value: 1)
           }
 
-          klass.rel(:with_preload, {preload: true}) { |preloaded| preloaded }
+          klass.rel(:with_preload, {preload: true}) { |_ctx, preloaded| preloaded }
 
           serializer = klass.new(include: {with_preload: true})
           context = serializer.send(:build_context)
@@ -229,7 +229,7 @@ RSpec.describe Halitosis::ResourceRelationships do
             attribute(:id, value: 2)
           }
 
-          klass.rel(:articles, {preload: :user_articles}) { |preloaded| preloaded }
+          klass.rel(:articles, {preload: :user_articles}) { |_ctx, preloaded| preloaded }
 
           serializer = klass.new(include: {articles: true})
           context = serializer.send(:build_context)
@@ -249,9 +249,9 @@ RSpec.describe Halitosis::ResourceRelationships do
             attribute(:id, value: 42)
           }
 
-          klass.rel(:rel_a, {preload: :shared}) { |data| data }
-          klass.rel(:rel_b, {preload: :shared}) { |data| data }
-          klass.rel(:rel_c, {preload: :shared}) { |data| data }
+          klass.rel(:rel_a, {preload: :shared}) { |_ctx, data| data }
+          klass.rel(:rel_b, {preload: :shared}) { |_ctx, data| data }
+          klass.rel(:rel_c, {preload: :shared}) { |_ctx, data| data }
 
           klass.define_method(:shared) do
             call_count += 1
@@ -275,7 +275,7 @@ RSpec.describe Halitosis::ResourceRelationships do
             attribute(:id, value: 99)
           }
 
-          klass.rel(:opted_out, {preload: false}) { |preloaded| preloaded }
+          klass.rel(:opted_out, {preload: false}) { |_ctx, preloaded| preloaded }
 
           serializer = klass.new(include: {opted_out: true})
           context = serializer.send(:build_context)
@@ -289,7 +289,7 @@ RSpec.describe Halitosis::ResourceRelationships do
         it "does not lazy-load when preload: false and nothing is stored" do
           call_count = 0
 
-          klass.rel(:opted_out, {preload: false}) { |preloaded| preloaded }
+          klass.rel(:opted_out, {preload: false}) { |_ctx, preloaded| preloaded }
           klass.define_method(:opted_out) { call_count += 1 }
 
           serializer = klass.new(include: {opted_out: true})
@@ -310,7 +310,7 @@ RSpec.describe Halitosis::ResourceRelationships do
           attribute(:id, value: 7)
         }
 
-        klass.rel(:item, {preload: :item_data}) { |data| data }
+        klass.rel(:item, {preload: :item_data}) { |_ctx, data| data }
         klass.define_method(:item_data) { child_class.new }
 
         original_render_with_context = klass.instance_method(:render_with_context)
@@ -328,8 +328,8 @@ RSpec.describe Halitosis::ResourceRelationships do
       it "evaluates a shared preload_key only once across multiple fields" do
         call_count = 0
 
-        klass.rel(:rel_a, {preload: :shared}) { |data| data }
-        klass.rel(:rel_b, {preload: :shared}) { |data| data }
+        klass.rel(:rel_a, {preload: :shared}) { |_ctx, data| data }
+        klass.rel(:rel_b, {preload: :shared}) { |_ctx, data| data }
         klass.define_method(:shared) {
           call_count += 1
           nil
@@ -344,7 +344,7 @@ RSpec.describe Halitosis::ResourceRelationships do
       it "does not preload for excluded relationship fields" do
         call_count = 0
 
-        klass.rel(:item, {preload: :item_data}) { |data| data }
+        klass.rel(:item, {preload: :item_data}) { |_ctx, data| data }
         klass.define_method(:item_data) {
           call_count += 1
           nil

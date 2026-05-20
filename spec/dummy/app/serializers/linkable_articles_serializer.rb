@@ -9,7 +9,7 @@ class LinkableArticlesSerializer
     collection.order(name: ascending ? :asc : :desc)
   end
 
-  link(:self) do |query_params|
+  link(:self) do |_, query_params|
     linkable_articles_path(query_params)
   end
 end

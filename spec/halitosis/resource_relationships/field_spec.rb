@@ -96,17 +96,17 @@ RSpec.describe Halitosis::ResourceRelationships::Field do
       end
     end
 
-    context "when the procedure has arity 1" do
-      it "passes the preloaded value as the first argument" do
+    context "when the procedure has arity 2" do
+      it "passes context and preloaded value as arguments" do
         context = klass.new(include: {articles: true}).send(:build_context)
-        field = described_class.new(:articles, {}, proc { |articles| articles })
+        field = described_class.new(:articles, {}, proc { |_ctx, articles| articles })
 
         expect(field.value(context, ["preloaded"])).to eq(["preloaded"])
       end
 
       it "passes nil when no preloaded value is given" do
         context = klass.new(include: {articles: true}).send(:build_context)
-        field = described_class.new(:articles, {}, proc { |articles| articles })
+        field = described_class.new(:articles, {}, proc { |_ctx, articles| articles })
 
         expect(field.value(context, nil)).to be_nil
       end

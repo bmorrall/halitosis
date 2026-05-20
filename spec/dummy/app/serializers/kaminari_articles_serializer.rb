@@ -9,7 +9,7 @@ class KaminariArticlesSerializer
     collection.page(number).per(size)
   end
 
-  paginate_links do |page_number, query_params|
+  paginate_links do |_, page_number, query_params|
     kaminari_articles_path(query_params.merge(page: {number: page_number})) if page_number
   end
 

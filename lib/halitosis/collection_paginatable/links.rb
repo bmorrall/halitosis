@@ -71,9 +71,9 @@ module Halitosis
             raise InvalidField, "#{name} paginate_links must be defined with a block"
           end
 
-          unless procedure.arity == 2
+          unless procedure.arity == 3
             raise InvalidField,
-              "#{name} paginate_links block must accept exactly 2 arguments (page_number, query_params)"
+              "#{name} paginate_links block must accept exactly 3 arguments (context, page_number, query_params)"
           end
 
           if fields.singleton(CollectionPaginatable::LinksField)

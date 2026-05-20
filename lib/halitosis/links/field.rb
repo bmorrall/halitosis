@@ -76,8 +76,8 @@ module Halitosis
       # @param preloaded [Object, nil]
       #
       def call_procedure(context, preloaded = nil)
-        if procedure.arity != 0
-          context.call_instance_with(preloaded, procedure)
+        if preload_key && procedure&.arity&.nonzero?
+          context.call_instance_with(context, preloaded, procedure)
         else
           context.call_instance(procedure || name)
         end

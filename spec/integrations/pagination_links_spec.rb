@@ -56,7 +56,7 @@ RSpec.describe "Paginatable — paginate_links" do
         PaginatedSlice.new(page_items, number, total, size, collection.size)
       end
 
-      paginate_links do |page_number, query_params|
+      paginate_links do |_, page_number, query_params|
         size = query_params.dig(:page, :size)
         page_number.nil? ? nil : "/items?page[number]=#{page_number}&page[size]=#{size}"
       end
@@ -193,7 +193,7 @@ RSpec.describe "Paginatable — paginate_links" do
           PaginatedSlice.new(page_items, number, total, size, collection.size)
         end
 
-        paginate_links do |page_number, qp|
+        paginate_links do |_, page_number, qp|
           page_number.nil? ? nil : "/items?captured=#{qp.to_json}"
         end
       end
@@ -226,7 +226,7 @@ RSpec.describe "Paginatable — paginate_links" do
           PaginatedSlice.new(page_items, number, total, size, collection.size)
         end
 
-        paginate_links only: %i[self next] do |page_number, _qp|
+        paginate_links only: %i[self next] do |_, page_number, _qp|
           page_number.nil? ? nil : "/items?page[number]=#{page_number}"
         end
       end
@@ -258,7 +258,7 @@ RSpec.describe "Paginatable — paginate_links" do
           PaginatedSlice.new(page_items, number, total, size, collection.size)
         end
 
-        paginate_links do |page_number, _qp|
+        paginate_links do |_, page_number, _qp|
           call_count += 1
           "/items?page[number]=#{page_number}"
         end
@@ -284,7 +284,7 @@ RSpec.describe "Paginatable — paginate_links" do
             collection.map { |i| item_ser.new(i) }
           end
 
-          paginate_links do |page_number, _qp|
+          paginate_links do |_, page_number, _qp|
             page_number.nil? ? nil : "/items?page=#{page_number}"
           end
         end
@@ -309,7 +309,7 @@ RSpec.describe "Paginatable — paginate_links" do
             collection[offset, size] || []
           end
 
-          paginate_links do |page_number, _qp|
+          paginate_links do |_, page_number, _qp|
             page_number.nil? ? nil : "/items?page=#{page_number}"
           end
         end
@@ -352,7 +352,7 @@ RSpec.describe "Paginatable — paginate_links" do
 
         paginate_with_pagy
 
-        paginate_links do |page_number, query_params|
+        paginate_links do |_, page_number, query_params|
           size = query_params.dig(:page, :size)
           page_number.nil? ? nil : "/items?page[number]=#{page_number}&page[size]=#{size}"
         end
@@ -378,7 +378,7 @@ RSpec.describe "Paginatable — paginate_links" do
 
         paginate_with_pagy
 
-        paginate_links do |_page_number, _qp|
+        paginate_links do |_, _page_number, _qp|
           nil
         end
       end
@@ -401,7 +401,7 @@ RSpec.describe "Paginatable — paginate_links" do
 
         paginate_with_pagy { {limit: 5} }
 
-        paginate_links do |page_number, query_params|
+        paginate_links do |_, page_number, query_params|
           size = query_params.dig(:page, :size)
           page_number.nil? ? nil : "/items?page[number]=#{page_number}&page[size]=#{size}"
         end
@@ -444,7 +444,7 @@ RSpec.describe "Paginatable — paginate_links" do
           PaginatedSlice.new(page_items, number, total, size, collection.size)
         end
 
-        paginate_links do |page_number, _qp|
+        paginate_links do |_, page_number, _qp|
           page_number.nil? ? nil : "/nodes?page[number]=#{page_number}"
         end
       end

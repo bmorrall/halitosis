@@ -5,7 +5,7 @@ class IncludeableExampleSerializer
 
   attribute :id
 
-  relationship :parts, preload: :example_parts do |parts|
+  relationship :parts, preload: :example_parts do |_, parts|
     (parts || []).map { |part| ExamplePartSerializer.new(part) }
   end
 
