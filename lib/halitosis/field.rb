@@ -45,6 +45,12 @@ module Halitosis
         "Cannot specify both value and procedure for #{name}"
     end
 
+    # The type under which this field registers in the fields collection.
+    # Subclasses may override this to merge into a parent type's rendering bucket.
+    def self.registerable_as
+      self
+    end
+
     private
 
     attr_reader :procedure

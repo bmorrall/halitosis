@@ -26,6 +26,10 @@ module Halitosis
       def validate
         true
       end
+
+      def self.registerable_as
+        self
+      end
     end
   end
 end

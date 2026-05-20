@@ -553,7 +553,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
   end
 
   describe ".paginate_meta" do
-    it "stores a PaginationMetaField singleton" do
+    it "registers a PaginationMetaKeyField for each default key" do
       klass = Class.new do
         include Halitosis
 
@@ -569,7 +569,10 @@ RSpec.describe Halitosis::CollectionPaginatable do
         paginate_meta
       end
 
-      expect(klass.fields.singleton(Halitosis::CollectionPaginatable::PaginationMetaField)).not_to be_nil
+      key_fields = klass.fields.for_type(Halitosis::RootMeta::Field)
+        .select { |f| f.is_a?(Halitosis::CollectionPaginatable::PaginationMetaKeyField) }
+
+      expect(key_fields.map(&:name)).to match_array(Halitosis::CollectionPaginatable::PaginationMetaKeyField::DEFAULT_KEYS)
     end
 
     it "raises InvalidField when declared before pagination is set up" do
@@ -584,25 +587,6 @@ RSpec.describe Halitosis::CollectionPaginatable do
           paginate_meta
         end
       end.to raise_error(Halitosis::InvalidField, /must be declared after/i)
-    end
-
-    it "raises InvalidField when declared a second time" do
-      expect do
-        Class.new do
-          include Halitosis
-
-          collection :items do |collection|
-            collection
-          end
-
-          paginate_by_page :kaminari, default_page_size: 10 do |collection, number, size|
-            collection
-          end
-
-          paginate_meta
-          paginate_meta
-        end
-      end.to raise_error(Halitosis::InvalidField, /pagination meta is already defined/i)
     end
   end
 end

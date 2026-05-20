@@ -49,8 +49,6 @@ module Halitosis
     module Meta
       def self.included(base)
         base.extend ClassMethods
-
-        base.send :include, InstanceMethods
       end
 
       module ClassMethods
@@ -65,67 +63,22 @@ module Halitosis
         # @example
         #   paginate_meta
         #
-        def paginate_meta(only: CollectionPaginatable::PaginationMetaField::DEFAULT_KEYS)
-          if fields.singleton(CollectionPaginatable::PaginationMetaField)
-            raise InvalidField, "#{name} pagination meta is already defined"
-          end
+        def paginate_meta(only: CollectionPaginatable::PaginationMetaKeyField::DEFAULT_KEYS)
+          pagination_field = fields.singleton(CollectionPaginatable::Field)
 
-          unless fields.singleton(CollectionPaginatable::Field)
+          unless pagination_field
             raise InvalidField,
               "#{name} paginate_meta must be declared after paginate_by_page, " \
               "paginate_with, or paginate_with_pagy"
           end
 
-          fields.add_singleton(CollectionPaginatable::PaginationMetaField.new(only: only))
-        end
-      end
-
-      module InstanceMethods
-        # @param context [Halitosis::Context] the render context
-        # @param result [Hash] the fully-enveloped render output
-        # @return [Hash]
-        #
-        def render_root(context, result)
-          super.tap { |root| apply_pagination_meta!(root, context) }
-        end
-
-        private
-
-        # Inject pagination page numbers into the root +_meta+ of the result.
-        #
-        # Always emits all four keys (+first+, +last+, +prev+, +next+).
-        # Unavailable pages (+prev+ on page 1, +next+ on last page) are set to
-        # +nil+ (serialised as JSON +null+).
-        # Silently returns when +paginate_meta+ has not been declared or when
-        # the adapter returns no metadata (e.g. non-paginated render).
-        #
-        # @param result [Hash] the partially rendered result hash (mutated in place)
-        # @param context [Halitosis::Context]
-        #
-        def apply_pagination_meta!(result, context)
-          meta_field = self.class.fields.singleton(CollectionPaginatable::PaginationMetaField)
-          return unless meta_field
-
-          meta = extract_pagination_meta(context)
-          return if meta.nil?
-
-          result[:_meta] = result.fetch(:_meta, {}).merge(meta_field.filter(meta))
-        end
-
-        # @param context [Halitosis::Context]
-        # @return [Hash, nil]
-        #
-        def extract_pagination_meta(context)
-          metadata_field = self.class.fields.singleton(CollectionPaginatable::Field)
-          page_nums = metadata_field.page_numbers(context)
-          return unless page_nums
-
-          col_meta = metadata_field.collection_meta(context)
-          page_nums.merge(col_meta || {})
+          Array(only).each do |key|
+            fields.add(CollectionPaginatable::PaginationMetaKeyField.new(key, pagination_field))
+          end
         end
       end
     end
   end
 end
 
-require "halitosis/collection_paginatable/pagination_meta_field"
+require "halitosis/collection_paginatable/pagination_meta_key_field"
