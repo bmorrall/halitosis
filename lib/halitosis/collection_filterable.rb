@@ -61,19 +61,28 @@ module Halitosis
 
       private
 
-      # Validate that all requested filter keys are declared on this serializer.
+      # Validate that all requested filter keys are declared on this serializer,
+      # and that sub-keys of compound filters are among the declared keys.
       #
       # @param pairs [Array<Array(String, Object)>] parsed filter pairs
       #
-      # @raise [Halitosis::InvalidFilterParameter] if an unknown filter key is requested
+      # @raise [Halitosis::InvalidFilterParameter] if an unknown filter key or sub-key is requested
       #
       def validate_filters!(pairs)
         known_names = self.class.fields.for_type(CollectionFilterable::Field).map { |f| f.name.to_s }
         unknown = pairs.map(&:first) - known_names
 
-        return if unknown.none?
+        raise_unknown_filter_error(unknown.first) if unknown.any?
 
-        raise_unknown_filter_error(unknown.first)
+        pairs.each do |name, value|
+          field = self.class.fields.find_by_name(CollectionFilterable::Field, name)
+          next unless field&.compound? && value.respond_to?(:each_pair)
+
+          allowed = field.compound_keys.map(&:to_s)
+          unknown_sub = value.keys.map(&:to_s) - allowed
+
+          raise_unknown_filter_error("#{name}.#{unknown_sub.first}") if unknown_sub.any?
+        end
       end
 
       # Apply filter pairs from context to @collection.
@@ -82,7 +91,10 @@ module Halitosis
       #
       def apply_filters!(context)
         filter_param = context.fetch(:filter, nil)
-        pairs = FilterUtil.parse_filter_param(filter_param)
+        compound_names = self.class.fields.for_type(CollectionFilterable::Field)
+          .select(&:compound?)
+          .map { |f| f.name.to_s }
+        pairs = FilterUtil.parse_filter_param(filter_param, compound_names: compound_names)
 
         return if pairs.empty?
 
@@ -92,8 +104,9 @@ module Halitosis
 
         pairs.each do |name, value|
           field = self.class.fields.find_by_name(CollectionFilterable::Field, name)
+          resolved_value = (field.compound? && value.respond_to?(:transform_keys)) ? value.transform_keys(&:to_sym) : value
 
-          result, errors = field.apply_filter(context, context.collection, value)
+          result, errors = field.apply_filter(context, context.collection, resolved_value)
 
           if errors&.any?
             raise_custom_filter_error(errors)

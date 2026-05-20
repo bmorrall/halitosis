@@ -76,5 +76,55 @@ RSpec.describe Halitosis::FilterUtil do
         expect(described_class.parse_filter_param(42)).to eq([])
       end
     end
+
+    context "with compound_names:" do
+      it "stops flattening when a key matches a compound name" do
+        result = described_class.parse_filter_param(
+          {"start_date" => {"from" => "2024-01-01", "to" => "2024-12-31"}},
+          compound_names: ["start_date"]
+        )
+
+        expect(result).to eq([["start_date", {"from" => "2024-01-01", "to" => "2024-12-31"}]])
+      end
+
+      it "still flattens keys not in compound_names" do
+        result = described_class.parse_filter_param(
+          {"user" => {"name" => "Alice"}, "start_date" => {"from" => "2024-01-01"}},
+          compound_names: ["start_date"]
+        )
+
+        expect(result).to contain_exactly(
+          ["user.name", "Alice"],
+          ["start_date", {"from" => "2024-01-01"}]
+        )
+      end
+
+      it "stops at the compound name when nested inside a namespace" do
+        result = described_class.parse_filter_param(
+          {"item" => {"start_date" => {"from" => "2024-01-01", "to" => "2024-12-31"}}},
+          compound_names: ["item.start_date"]
+        )
+
+        expect(result).to eq([["item.start_date", {"from" => "2024-01-01", "to" => "2024-12-31"}]])
+      end
+
+      it "passes a scalar value through unchanged for a compound name" do
+        result = described_class.parse_filter_param(
+          {"start_date" => "2024-01-01"},
+          compound_names: ["start_date"]
+        )
+
+        expect(result).to eq([["start_date", "2024-01-01"]])
+      end
+
+      it "returns normal flat pairs when compound_names is empty" do
+        result = described_class.parse_filter_param(
+          {"start_date" => {"from" => "2024-01-01"}},
+          compound_names: []
+        )
+
+        expect(result).to eq([["start_date.from", "2024-01-01"]])
+      end
+    end
   end
 end

@@ -183,4 +183,76 @@ RSpec.describe "CollectionFilterable" do
       expect { serializer.render }.to raise_error(Halitosis::InvalidFilterParameter, /item\.unknown/)
     end
   end
+
+  context "with a compound filter (keys: option)" do
+    let(:dated_items) do
+      [
+        {name: "Alice", date: "2024-02-10"},
+        {name: "Bob", date: "2024-07-15"},
+        {name: "Carol", date: "2024-11-01"}
+      ]
+    end
+
+    let :dated_item_klass do
+      Class.new do
+        include Halitosis
+
+        resource :item
+        attribute(:name) { resource[:name] }
+        attribute(:date) { resource[:date] }
+      end
+    end
+
+    let :compound_klass do
+      item_ser = dated_item_klass
+
+      Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items.map { |i| item_ser.new(i) }
+        end
+
+        filterable_by :date, keys: [:from, :to] do |collection, value, errors|
+          errors.add("from", "is required") unless value.key?(:from)
+          errors.add("to", "is required") unless value.key?(:to)
+          next nil if errors.any?
+
+          collection.select { |i| i[:date].between?(value[:from], value[:to]) }
+        end
+      end
+    end
+
+    it "filters the collection when both sub-keys are present" do
+      serializer = compound_klass.new(dated_items, filter: {date: {from: "2024-01-01", to: "2024-08-01"}})
+
+      result = serializer.render
+      expect(result[:items].map { |i| i[:name] }).to eq(%w[Alice Bob])
+    end
+
+    it "raises InvalidFilterParameter for an unknown sub-key" do
+      serializer = compound_klass.new(dated_items, filter: {date: {from: "2024-01-01", bogus: "x"}})
+
+      expect { serializer.render }.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
+        expect(exception.message).to match(/can not be filtered by 'date\.bogus'/i)
+      end
+    end
+
+    it "raises with sub-key error source when a required key is missing" do
+      serializer = compound_klass.new(dated_items, filter: {date: {from: "2024-01-01"}})
+
+      expect { serializer.render }.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
+        expect(exception.message).to match(/can not be filtered by 'date\.to': is required/i)
+        expect(exception.parameter).to eq("filter[date][to]")
+      end
+    end
+
+    it "completes render without error when both sub-keys are present" do
+      serializer = compound_klass.new(dated_items, filter: {date: {from: "2024-01-01", to: "2024-12-31"}})
+
+      expect { serializer.render }.not_to raise_error
+    end
+  end
 end
