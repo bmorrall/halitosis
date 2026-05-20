@@ -39,10 +39,11 @@ RSpec.describe Halitosis::CollectionFilterable::Field do
       })
 
       context = Halitosis::Context.new(Object.new)
-      result = field.apply_filter(context, [1, 2, 3], "Alice")
+      result, errors = field.apply_filter(context, [1, 2, 3], "Alice")
 
       expect(received).to eq([[1, 2, 3], "Alice"])
       expect(result).to eq("filtered_result")
+      expect(errors).to be_nil
     end
 
     it "evaluates the block in the instance scope" do
@@ -52,13 +53,53 @@ RSpec.describe Halitosis::CollectionFilterable::Field do
         col.select { |i| i >= v.to_i }
       })
 
-      expect(field.apply_filter(Halitosis::Context.new(instance), [1, 2, 3, 4, 5], "3")).to eq([3, 4, 5])
+      result, = field.apply_filter(Halitosis::Context.new(instance), [1, 2, 3, 4, 5], "3")
+      expect(result).to eq([3, 4, 5])
     end
 
     it "returns nil when the block returns nil" do
       field = described_class.new(:score, {}, proc { |_col, _v| })
 
-      expect(field.apply_filter(Halitosis::Context.new(Object.new), [], "bad")).to be_nil
+      result, = field.apply_filter(Halitosis::Context.new(Object.new), [], "bad")
+      expect(result).to be_nil
+    end
+
+    context "with a 3-argument block (collection, value, errors)" do
+      it "yields a FilterErrors object initialized with the field name" do
+        received_errors = nil
+        field = described_class.new(:status, {}, proc { |col, v, errors|
+          received_errors = errors
+          col
+        })
+
+        field.apply_filter(Halitosis::Context.new(Object.new), [], "x")
+        expect(received_errors).to be_a(Halitosis::FilterErrors)
+        expect(received_errors.field_name).to eq("status")
+      end
+
+      it "returns the FilterErrors object alongside the result" do
+        field = described_class.new(:status, {}, proc { |col, v, errors|
+          errors.add("is invalid")
+          nil
+        })
+
+        result, errors = field.apply_filter(Halitosis::Context.new(Object.new), [], "bad")
+        expect(result).to be_nil
+        expect(errors).to be_a(Halitosis::FilterErrors)
+        expect(errors).to be_any
+        expect(errors.first).to eq(["status", ["is invalid"]])
+        expect(errors.to_h).to eq({"status" => ["is invalid"]})
+      end
+
+      it "respects a field name override in add" do
+        field = described_class.new(:"account.date_range", {}, proc { |col, v, errors|
+          errors.add("started_at", "is not a valid date")
+          nil
+        })
+
+        _, errors = field.apply_filter(Halitosis::Context.new(Object.new), [], "bad")
+        expect(errors.to_h).to eq({"account.started_at" => ["is not a valid date"]})
+      end
     end
   end
 end

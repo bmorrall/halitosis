@@ -51,11 +51,11 @@ RSpec.describe Halitosis::CollectionFilterable::Namespace do
       end
     end
 
-    context "with a block that accepts more than 2 arguments" do
+    context "with a block that accepts more than 3 arguments" do
       it "raises InvalidField" do
         expect do
-          namespace.filterable_by(:name) { |a, b, c| a }
-        end.to raise_error(Halitosis::InvalidField, /must accept 0 arguments.*or 2 arguments/i)
+          namespace.filterable_by(:name) { |a, b, c, d| a }
+        end.to raise_error(Halitosis::InvalidField, /must accept 0 arguments.*2 arguments.*or 3 arguments/i)
       end
     end
   end

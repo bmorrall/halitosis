@@ -39,13 +39,14 @@ module Halitosis
         case procedure&.arity
         when 0
           CollectionFilterable::Namespace.new(name, self).instance_eval(&procedure)
-        when 2
+        when 2, 3
           fields.add(CollectionFilterable::Field.new(name, options, procedure))
         when nil
           raise InvalidField, "Filter field #{name} must be defined with a proc"
         else
           raise InvalidField,
-            "Filter field #{name} block must accept 0 arguments (namespace) or 2 arguments (collection, filter value)"
+            "Filter field #{name} block must accept 0 arguments (namespace), " \
+            "2 arguments (collection, filter value), or 3 arguments (collection, filter value, errors)"
         end
       end
     end
@@ -91,14 +92,33 @@ module Halitosis
 
         pairs.each do |name, value|
           field = self.class.fields.find_by_name(CollectionFilterable::Field, name)
-          result = field.apply_filter(context, context.collection, value)
 
-          if result.nil?
+          result, errors = field.apply_filter(context, context.collection, value)
+
+          if errors&.any?
+            raise_custom_filter_error(errors)
+          elsif result.nil?
             raise_invalid_filter_value_error(field.name)
           end
 
           context.collection = result
         end
+      end
+
+      # Raise an error with a user-provided message for a declared filter field.
+      # Reads the field name and first message directly from the +errors+ object,
+      # allowing the block to override the field name via +errors.field_name=+.
+      #
+      # @param errors [Halitosis::FilterErrors]
+      # @raise [Halitosis::InvalidFilterParameter]
+      #
+      def raise_custom_filter_error(errors)
+        resource_label = [self.class.resource_type, "collection"].compact.join(" ")
+        field_name, messages = errors.first
+        raise Halitosis::InvalidFilterParameter.new(
+          "The #{resource_label} can not be filtered by '#{field_name}': #{messages.first}",
+          field_name
+        )
       end
 
       # Raise an error for an unknown (user-supplied) filter key.
