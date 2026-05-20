@@ -356,6 +356,28 @@ ArticlesSerializer.new(Article.all, filter: { "user.name" => "Alice" }).render
 
 Namespaces can be nested to any depth. A block with no arguments opens a namespace; a block with one argument is a filter implementation. Any other arity raises `InvalidField` at class load time.
 
+### Bulk collection preload
+
+Use `preload_collection` to run a single block against the raw collection immediately after it is assigned — before filtering, sorting, and pagination. This is the place to call `includes` unconditionally on every render:
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+
+  collection :articles do |collection|
+    collection.map { |article| ArticleSerializer.new(article) }
+  end
+
+  preload_collection { |collection| collection.includes(:author, :tags) }
+end
+```
+
+The block receives the current collection and must return the updated collection. Returning `nil` leaves the collection unchanged.
+
+`preload_collection` only fires for root-level renders — it is skipped when the serializer is used as a nested relationship inside another serializer.
+
+Use `allow_include` instead when the preload should only fire for specific requested include paths.
+
 ### Preloading collection includes
 
 Use `allow_include` on a collection serializer to declare which include paths are accepted and attach a preload block that fires before the collection is rendered. This is the standard way to prevent N+1 queries when nested relationships are requested on a collection.

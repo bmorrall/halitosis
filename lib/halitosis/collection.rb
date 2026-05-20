@@ -16,6 +16,7 @@ module Halitosis
 
       base.send :attr_reader, :raw_collection
 
+      base.include CollectionPreload
       base.include CollectionPaginatable
       base.include CollectionSortable
       base.include CollectionFilterable
