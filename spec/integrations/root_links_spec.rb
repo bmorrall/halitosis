@@ -65,13 +65,13 @@ RSpec.describe "RootLinks" do
           ascending ? collection.sort : collection.sort.reverse
         end
 
-        root_link(:self) do |query_params|
+        root_link(:self) do |_collection, query_params|
           "/items?#{query_params.map { |k, v| "#{k}=#{v}" }.join("&")}"
         end
       end
     end
 
-    it "includes accumulated query params in the self link" do
+    it "renders sort query params in the self link" do
       serializer = collection_klass.new(["b", "a"], sort: "name")
 
       expect(serializer.render[:_links][:self]).to eq(href: "/items?sort=name")
@@ -113,20 +113,20 @@ RSpec.describe "RootLinks" do
     end
   end
 
-  context "with a root link block accepting context and query_params (2-arg)" do
+  context "with a root link block accessing init-time options via instance" do
     let(:resource_klass) do
       Class.new do
         include Halitosis
 
         resource :item
 
-        root_link(:self) do |ctx, query_params|
-          "/items/#{ctx.fetch(:id)}?#{query_params.map { |k, v| "#{k}=#{v}" }.join("&")}"
+        root_link(:self) do |query_params|
+          "/items/#{options[:id]}?#{query_params.map { |k, v| "#{k}=#{v}" }.join("&")}"
         end
       end
     end
 
-    it "passes context and query_params to the block" do
+    it "accesses init-time options via instance methods" do
       serializer = resource_klass.new(Object.new, id: 99)
 
       expect(serializer.render[:_links][:self]).to eq(href: "/items/99?")

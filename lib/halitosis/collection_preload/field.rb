@@ -21,7 +21,7 @@ module Halitosis
       # @return [Object] the updated collection
       #
       def apply(context)
-        context.call_instance_with(context.collection, procedure)
+        context.call_instance(context.collection, procedure)
       end
     end
   end

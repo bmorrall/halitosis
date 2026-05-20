@@ -23,7 +23,7 @@ module Halitosis
       # @return [Object] the sorted collection
       #
       def apply_sort(context, collection, ascending)
-        context.call_instance_with(collection, ascending, procedure)
+        context.call_instance(collection, ascending, procedure)
       end
     end
   end

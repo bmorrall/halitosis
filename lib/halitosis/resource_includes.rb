@@ -142,7 +142,7 @@ module Halitosis
         current = fetch_preload(context, cache_key)
         return if current.nil?
 
-        store_preload(context, cache_key, context.call_instance_with(current, field.procedure))
+        store_preload(context, cache_key, context.call_instance(current, field.procedure))
       end
     end
   end

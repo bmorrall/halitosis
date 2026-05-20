@@ -28,10 +28,10 @@ module Halitosis
       def apply_filter(context, collection, value)
         if procedure.arity == 3
           errors = FilterErrors.new(name, prefix: (compound? ? name.to_s : nil))
-          result = context.call_instance_with(collection, value, errors, procedure)
+          result = context.call_instance(collection, value, errors, procedure)
           [result, errors]
         else
-          result = context.call_instance_with(collection, value, procedure)
+          result = context.call_instance(collection, value, procedure)
           [result, nil]
         end
       end

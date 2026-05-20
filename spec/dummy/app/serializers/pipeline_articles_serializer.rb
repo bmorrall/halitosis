@@ -20,8 +20,8 @@ class PipelineArticlesSerializer
   end
 
   # Sum of scores across ALL records — unaffected by filter/sort/pagination.
-  meta(:total_score) { |_context| raw_collection.sum(:score) }
+  meta(:total_score) { raw_collection.sum(:score) }
 
   # Sum of scores for the current page only — after filter, sort, and pagination.
-  meta(:page_score) { |context| context.collection.to_a.sum(&:score) }
+  meta(:page_score) { |collection| collection.to_a.sum(&:score) }
 end

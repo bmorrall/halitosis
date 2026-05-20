@@ -51,4 +51,23 @@ RSpec.describe "RootMeta" do
       )
     end
   end
+
+  context "with a collection and a root meta block that receives the collection" do
+    let(:collection_klass) do
+      Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection
+        end
+
+        root_meta(:count) { |collection| collection.size }
+      end
+    end
+
+    it "passes the collection to the root meta block" do
+      expect(collection_klass.new([1, 2, 3]).render[:_meta]).to eq(count: 3)
+      expect(collection_klass.new([]).render[:_meta]).to eq(count: 0)
+    end
+  end
 end

@@ -122,7 +122,7 @@ module Halitosis
       #
       def paginate_with_pagy(&procedure)
         add_pagination_field(CollectionPaginatable::Adapters::Pagy) do |context, collection, page_params|
-          extra_kwargs = procedure ? context.call_instance_with(collection, page_params, procedure) || {} : {}
+          extra_kwargs = procedure ? context.call_instance(collection, page_params, procedure) || {} : {}
 
           pagy_obj, records = CollectionPaginatable::PagyHelper.pagy(collection, page_params, **extra_kwargs)
 

@@ -42,7 +42,7 @@ RSpec.describe Halitosis::CollectionIncludeable do
         expect(field).not_to be_nil
 
         ctx = instance_double(Halitosis::CollectionContext, collection: [1, 2, 3])
-        allow(ctx).to receive(:call_instance_with).with([1, 2, 3], Halitosis::CollectionIncludeable::Field::DEFAULT_PROCEDURE).and_return([1, 2, 3])
+        allow(ctx).to receive(:call_instance).with([1, 2, 3], Halitosis::CollectionIncludeable::Field::DEFAULT_PROCEDURE).and_return([1, 2, 3])
         expect(field.apply(ctx)).to eq([1, 2, 3])
       end
 

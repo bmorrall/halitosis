@@ -12,13 +12,10 @@ module Halitosis
         return context.call_instance(proc_or_name) unless proc_or_name.is_a?(Proc)
         # :nocov:
 
-        case proc_or_name.arity
-        when 0
-          context.call_instance_with(proc_or_name)
-        when 1
-          context.call_instance_with(context.query_params, proc_or_name)
+        if context.collection?
+          context.call_instance(context.collection, context.query_params, proc_or_name)
         else
-          context.call_instance_with(context, context.query_params, proc_or_name)
+          context.call_instance(context.query_params, proc_or_name)
         end
       end
     end

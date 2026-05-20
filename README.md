@@ -189,7 +189,7 @@ This is useful when descending order is expensive or semantically meaningless fo
 
 #### Default sort
 
-Use `default_sort` to apply a fallback when no `sort` param is provided. It accepts either a sort string (which delegates through the same `sortable_by` pipeline) or a no-argument block:
+Use `default_sort` to apply a fallback when no `sort` param is provided. It accepts either a sort string (which delegates through the same `sortable_by` pipeline) or a block receiving the collection:
 
 ```ruby
 class ArticlesSerializer
@@ -206,8 +206,8 @@ class ArticlesSerializer
   # Delegates to the :title sortable_by block, descending
   default_sort "-title"
 
-  # Or provide a custom fallback block (no arguments)
-  # default_sort { collection.order(created_at: :desc) }
+  # Or provide a custom fallback block
+  # default_sort { |collection| collection.order(created_at: :desc) }
 end
 ```
 
@@ -831,7 +831,7 @@ relationship(:author, if: :can_view_author?, link: -> { author_path(resource[:au
 end
 ```
 
-When `preload:` is also set, a 1-arity lambda passed to `link:` receives the preloaded value — the same value delivered to the relationship block. This avoids a second lookup just to build the URL:
+When `preload:` is also set, a lambda passed to `link:` receives the preloaded value — the same value delivered to the relationship block. This avoids a second lookup just to build the URL:
 
 ```ruby
 relationship(:author, preload: true, link: ->(author) { "/people/#{author.id}" }) do |author|
@@ -1075,7 +1075,7 @@ ArticlesSerializer.new(articles).render
 
 #### Generating links with `query_params`
 
-When a `root_link` (or `link`) block accepts one argument, it receives the accumulated `query_params` hash — a plain hash of the normalised request params that were active during that render. Each middleware module contributes its slice:
+When a `root_link` (or `link`) block accepts arguments, collection serializers receive the current collection and the accumulated `query_params` hash; resource serializers receive only `query_params`. Both are optional — use whichever you need:
 
 | Key | Contributed by | Shape |
 | --- | --- | --- |
@@ -1107,11 +1107,11 @@ class ArticlesSerializer
   end
 
   # On collections, `link` is an alias for `root_link`
-  link(:self) do |query_params|
+  link(:self) do |_collection, query_params|
     articles_url(query_params)
   end
 
-  root_link(:first) do |query_params|
+  root_link(:first) do |_collection, query_params|
     articles_url(query_params.merge(page: { number: 1, size: query_params.dig(:page, :size) }))
   end
 end
@@ -1144,16 +1144,6 @@ end
 
 ArticleSerializer.new(article, include: "author").render[:_links]
 # => { self: { href: "/articles/1?include=author" } }
-```
-
-If you need access to both the full render context and `query_params`, use a two-argument block:
-
-```ruby
-root_link(:self) do |context, query_params|
-  # context is the frozen render-time context; query_params is context.query_params
-  query_string = query_params.map { |k, v| "#{k}=#{v}" }.join("&")
-  "/articles?#{query_string}"
-end
 ```
 
 Keys for middleware that was not triggered (e.g. no `filter` param, or no `paginate_by_page` declaration) are omitted entirely. The `sort:` key is also omitted when a block-based `default_sort` is in effect, since it cannot be reconstructed as a param string. The hash is frozen — use `merge` to build variations of it.
@@ -1248,6 +1238,30 @@ ArticleSerializer.new(article, include_root: false).render
 ArticleSerializer.new(article, include_root: "post").render
 # => { post: { id: 1, title: "Hello World", ... } }
 ```
+
+### Declaring required options
+
+Use `required_option` to declare that a named option must be supplied at initialization. A `Halitosis::MissingOption` error is raised immediately if the option is absent, and a reader method is generated on the serializer so fields can access the value directly:
+
+```ruby
+class ArticleSerializer
+  include Halitosis
+
+  resource :article
+  required_option :current_user
+
+  attribute(:editable) { current_user.can?(:edit, article) }
+
+  link(:edit, if: -> { current_user.can?(:edit, article) }) { edit_article_url(article) }
+end
+
+# Raises Halitosis::MissingOption immediately — not rescued by ErrorHandling, results in 500
+ArticleSerializer.new(article).render
+
+# Works fine
+ArticleSerializer.new(article, current_user: user).render
+```
+
 
 ### Using with Rails
 
