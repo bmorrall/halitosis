@@ -11,7 +11,14 @@ module Halitosis
       end
 
       def apply_filter(context, collection, value)
-        context.call_instance_with(collection, value, procedure)
+        if procedure.arity == 3
+          errors = FilterErrors.new(name)
+          result = context.call_instance_with(collection, value, errors, procedure)
+          [result, errors]
+        else
+          result = context.call_instance_with(collection, value, procedure)
+          [result, nil]
+        end
       end
     end
   end

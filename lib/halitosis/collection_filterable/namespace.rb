@@ -36,13 +36,14 @@ module Halitosis
         case procedure&.arity
         when 0
           Namespace.new(full_name, target_class).instance_eval(&procedure)
-        when 2
+        when 2, 3
           target_class.fields.add(CollectionFilterable::Field.new(full_name, options, procedure))
         when nil
           raise InvalidField, "Filter field #{full_name} must be defined with a proc"
         else
           raise InvalidField,
-            "Filter field #{full_name} block must accept 0 arguments (namespace) or 2 arguments (collection, filter value)"
+            "Filter field #{full_name} block must accept 0 arguments (namespace), " \
+            "2 arguments (collection, filter value), or 3 arguments (collection, filter value, errors)"
         end
       end
 

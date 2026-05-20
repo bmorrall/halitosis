@@ -261,6 +261,36 @@ Providing an unparseable date string will raise:
 The articles collection can not be filtered by 'created_after' with the provided value
 ```
 
+#### Validation errors
+
+Add a third argument to a `filterable_by` block to receive a `FilterErrors` object. Call `errors.add(message)` to record a validation failure with a specific message — Halitosis raises `InvalidFilterParameter` using that message instead of the generic one:
+
+```ruby
+filterable_by :status do |collection, value, errors|
+  errors.add("must be one of: draft, published, archived") unless valid_status?(value)
+  errors.none? ? collection.where(status: value) : nil
+end
+```
+
+Providing an invalid status raises:
+```
+The articles collection can not be filtered by 'status': must be one of: draft, published, archived
+```
+with `source.parameter` set to `"filter[status]"`.
+
+Pass a field name as the first argument to `errors.add` to report the error under a different field. When the filter is nested inside a namespace, the namespace prefix is automatically prepended:
+
+```ruby
+filterable_by :account do
+  filterable_by :date_range do |collection, value, errors|
+    errors.add("started_at", "is not a valid date") unless valid_date?(value)
+    errors.none? ? collection : nil
+  end
+end
+```
+
+This raises with `source.parameter` set to `"filter[account][started_at]"` rather than `"filter[account][date_range]"`.
+
 #### Nested filter keys
 
 Both Rails bracket notation (`filter[user][name]=Alice`) and dot notation

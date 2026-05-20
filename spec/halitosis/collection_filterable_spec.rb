@@ -44,10 +44,16 @@ RSpec.describe Halitosis::CollectionFilterable do
       end.to raise_error(Halitosis::InvalidField, /filter field title must be defined with a proc/i)
     end
 
-    it "raises InvalidField when the block accepts more than 2 arguments" do
+    it "raises InvalidField when the block accepts more than 3 arguments" do
       expect do
-        klass.filterable_by(:title) { |a, b, c| a }
-      end.to raise_error(Halitosis::InvalidField, /must accept 0 arguments.*or 2 arguments/i)
+        klass.filterable_by(:title) { |a, b, c, d| a }
+      end.to raise_error(Halitosis::InvalidField, /must accept 0 arguments.*2 arguments.*or 3 arguments/i)
+    end
+
+    it "accepts a 3-argument block (collection, value, errors)" do
+      expect do
+        klass.filterable_by(:title) { |collection, value, errors| collection }
+      end.not_to raise_error
     end
 
     context "with a zero-arity namespace block" do
@@ -116,7 +122,7 @@ RSpec.describe Halitosis::CollectionFilterable do
         expect(fields.map(&:name)).to contain_exactly(:"user.name", :"user.age")
       end
 
-      it "raises InvalidField when a nested block accepts more than 2 arguments" do
+      it "raises InvalidField when a nested block accepts more than 3 arguments" do
         expect do
           Class.new do
             include Halitosis
@@ -126,12 +132,30 @@ RSpec.describe Halitosis::CollectionFilterable do
             end
 
             filterable_by :user do
-              filterable_by :name do |a, b, c|
+              filterable_by :name do |a, b, c, d|
                 a
               end
             end
           end
-        end.to raise_error(Halitosis::InvalidField, /must accept 0 arguments.*or 2 arguments/i)
+        end.to raise_error(Halitosis::InvalidField, /must accept 0 arguments.*2 arguments.*or 3 arguments/i)
+      end
+
+      it "accepts a nested 3-argument block (collection, value, errors)" do
+        expect do
+          Class.new do
+            include Halitosis
+
+            collection :items do |items|
+              items
+            end
+
+            filterable_by :user do
+              filterable_by :name do |collection, value, errors|
+                collection
+              end
+            end
+          end
+        end.not_to raise_error
       end
     end
   end
@@ -241,6 +265,132 @@ RSpec.describe Halitosis::CollectionFilterable do
         serializer.send(:apply_filters!, context)
 
         expect(context.collection).to eq([{name: "Alice", score: 1}])
+      end
+    end
+
+    context "when a filterable_by block (arity-3) adds errors" do
+      let :errors_klass do
+        Class.new do
+          include Halitosis
+
+          collection :items do |items|
+            items
+          end
+
+          filterable_by :status do |collection, value, errors|
+            unless %w[active inactive].include?(value)
+              errors.add("must be 'active' or 'inactive'")
+            end
+            errors.none? ? collection.select { |i| i[:status] == value } : nil
+          end
+        end
+      end
+
+      it "raises InvalidFilterParameter with the custom message" do
+        serializer = errors_klass.new(items)
+        context = build_context(serializer, {filter: {status: "bogus"}})
+
+        expect { serializer.send(:apply_filters!, context) }.to raise_error do |exception|
+          expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
+          expect(exception.message).to match(/can not be filtered by 'status': must be 'active' or 'inactive'/i)
+          expect(exception.parameter).to eq("filter[status]")
+        end
+      end
+
+      it "does not raise when the block adds no errors" do
+        items_with_status = [{name: "Alice", status: "active"}, {name: "Bob", status: "inactive"}]
+        serializer = errors_klass.new(items_with_status)
+        context = build_context(serializer, {filter: {status: "active"}})
+
+        expect { serializer.send(:apply_filters!, context) }.not_to raise_error
+        expect(context.collection).to eq([{name: "Alice", status: "active"}])
+      end
+
+      context "with a nested filter" do
+        let :nested_errors_klass do
+          Class.new do
+            include Halitosis
+
+            collection :items do |items|
+              items
+            end
+
+            filterable_by :article do
+              filterable_by :name do |collection, value, errors|
+                errors.add("is too short") if value.length < 3
+                errors.none? ? collection.select { |i| i[:name] == value } : nil
+              end
+            end
+          end
+        end
+
+        it "uses bracket notation for the source parameter" do
+          items_data = [{name: "Alice"}, {name: "Bob"}]
+          serializer = nested_errors_klass.new(items_data)
+          context = build_context(serializer, {filter: {article: {name: "Al"}}})
+
+          expect { serializer.send(:apply_filters!, context) }.to raise_error do |exception|
+            expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
+            expect(exception.message).to match(/can not be filtered by 'article\.name': is too short/i)
+            expect(exception.parameter).to eq("filter[article][name]")
+          end
+        end
+      end
+
+      context "when the block passes a field name override to errors.add" do
+        let :override_klass do
+          Class.new do
+            include Halitosis
+
+            collection :items do |items|
+              items
+            end
+
+            filterable_by :date_range do |collection, value, errors|
+              errors.add("started_at", "is not a valid date") unless value.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+              errors.none? ? collection : nil
+            end
+          end
+        end
+
+        it "reports under the overridden field name" do
+          serializer = override_klass.new(items)
+          context = build_context(serializer, {filter: {date_range: "not-a-date"}})
+
+          expect { serializer.send(:apply_filters!, context) }.to raise_error do |exception|
+            expect(exception.message).to match(/can not be filtered by 'started_at': is not a valid date/i)
+            expect(exception.parameter).to eq("filter[started_at]")
+          end
+        end
+
+        context "with a namespace prefix" do
+          let :nested_override_klass do
+            Class.new do
+              include Halitosis
+
+              collection :items do |items|
+                items
+              end
+
+              filterable_by :account do
+                filterable_by :date_range do |collection, value, errors|
+                  errors.add("started_at", "is not a valid date") unless value.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+                  errors.none? ? collection : nil
+                end
+              end
+            end
+          end
+
+          it "prepends the namespace prefix to the overridden field name" do
+            serializer = nested_override_klass.new(items)
+            context = build_context(serializer, {filter: {account: {date_range: "not-a-date"}}})
+
+            expect { serializer.send(:apply_filters!, context) }.to raise_error do |exception|
+              expect(exception.message).to match(/can not be filtered by 'account\.started_at': is not a valid date/i)
+              expect(exception.parameter).to eq("filter[account][started_at]")
+            end
+          end
+        end
       end
     end
 
