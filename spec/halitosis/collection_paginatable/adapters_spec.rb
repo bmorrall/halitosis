@@ -47,6 +47,19 @@ RSpec.describe Halitosis::CollectionPaginatable::Adapters do
         prev_page: 1, next_page: 3
       )
     end
+
+    describe ".default_per_page_procedure" do
+      it "returns a callable that paginates the collection" do
+        collection = double
+        paged = double
+        allow(collection).to receive(:page).with(1).and_return(paged)
+        allow(paged).to receive(:per).with(25).and_return(:result)
+
+        result = adapter.default_per_page_procedure.call(collection, 1, 25)
+
+        expect(result).to eq(:result)
+      end
+    end
   end
 
   describe "WillPaginate" do
@@ -71,6 +84,17 @@ RSpec.describe Halitosis::CollectionPaginatable::Adapters do
         current_page: 3, total_pages: 10, per_page: 20, total_entries: 200,
         prev_page: 2, next_page: 4
       )
+    end
+
+    describe ".default_per_page_procedure" do
+      it "returns a callable that paginates the collection" do
+        collection = double
+        allow(collection).to receive(:paginate).with(page: 2, per_page: 10).and_return(:result)
+
+        result = adapter.default_per_page_procedure.call(collection, 2, 10)
+
+        expect(result).to eq(:result)
+      end
     end
   end
 
