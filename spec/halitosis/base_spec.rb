@@ -24,15 +24,46 @@ RSpec.describe Halitosis::Base do
       end
     end
 
+    describe Halitosis::Base::ClassMethods do
+      describe ".required_option" do
+        it "defines a reader method backed by options" do
+          klass = Class.new { include Halitosis::Base }
+          klass.required_option :current_user
+
+          serializer = klass.new(current_user: "alice")
+
+          expect(serializer.current_user).to eq("alice")
+        end
+
+        it "raises MissingOption when the option is absent" do
+          klass = Class.new { include Halitosis::Base }
+          klass.required_option :current_user
+
+          expect { klass.new }.to raise_error(Halitosis::MissingOption, /current_user/)
+        end
+
+        it "inherits required_option_keys from superclass" do
+          parent = Class.new { include Halitosis::Base }
+          parent.required_option :tenant
+
+          child = Class.new(parent)
+
+          expect(child.required_option_keys).to include(:tenant)
+        end
+
+        it "does not share required_option_keys across siblings" do
+          base = Class.new { include Halitosis::Base }
+          Class.new(base) { required_option :foo }
+          b = Class.new(base)
+
+          expect(b.required_option_keys).not_to include(:foo)
+        end
+      end
+    end
+
     describe "#render_child" do
       let :klass do
-        Class.new do
-          include Halitosis::Base
-          include Halitosis::Attributes
-
-          attribute(:verify_parent) { |context| context.parent.object_id }
-          attribute(:verify_opts) { |context| context.fetch(:include) }
-        end
+        Class.new { include Halitosis::Base }
       end
 
       it "returns nil if child is not a serializer" do
@@ -47,22 +78,30 @@ RSpec.describe Halitosis::Base do
       it "renders child serializer with correct parent and options" do
         serializer = klass.new
         context = serializer.send(:build_context)
+        captured = nil
+        serializer.define_singleton_method(:render_with_context) { |ctx|
+          captured = ctx
+          {}
+        }
 
-        result = serializer.send(:render_child, serializer, context, foo: "bar")
+        serializer.send(:render_child, serializer, context, foo: "bar")
 
-        expect(result).to eq(
-          verify_parent: context.object_id,
-          verify_opts: {foo: "bar"}
-        )
+        expect(captured.parent.object_id).to eq(context.object_id)
+        expect(captured.fetch(:include)).to eq(foo: "bar")
       end
 
       it "merges child options if already present" do
         serializer = klass.new(include: {bar: "bar"})
         context = serializer.send(:build_context)
+        captured = nil
+        serializer.define_singleton_method(:render_with_context) { |ctx|
+          captured = ctx
+          {}
+        }
 
-        result = serializer.send(:render_child, serializer, context, foo: "foo")
+        serializer.send(:render_child, serializer, context, foo: "foo")
 
-        expect(result[:verify_opts]).to eq(foo: "foo", bar: "bar")
+        expect(captured.fetch(:include)).to eq(foo: "foo", bar: "bar")
       end
 
       it "calls before_render on the child before rendering" do

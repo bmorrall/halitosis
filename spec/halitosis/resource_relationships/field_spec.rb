@@ -97,7 +97,7 @@ RSpec.describe Halitosis::ResourceRelationships::Field do
     end
 
     context "when the procedure has arity 1" do
-      it "passes the preloaded value as the first argument" do
+      it "passes preloaded value as argument" do
         context = klass.new(include: {articles: true}).send(:build_context)
         field = described_class.new(:articles, {}, proc { |articles| articles })
 

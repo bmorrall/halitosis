@@ -5,9 +5,6 @@ RSpec.describe "Include Options" do
         include Halitosis
         include Halitosis::ResourceRelationships
 
-        attribute(:verify_depth) { |ctx| ctx.depth }
-        attribute(:verify_include) { |ctx| ctx.include_options.keys }
-
         relationship :item do
           self.class.new
         end
@@ -32,151 +29,80 @@ RSpec.describe "Include Options" do
     end
 
     it "excludes relationships by default" do
-      serializer = klass.new
-
-      expect(serializer.render).to eq(verify_depth: 0, verify_include: [])
+      expect(klass.new.render).to eq({})
     end
 
     it "allows child resources to be included" do
-      serializer = klass.new(include: {item: true})
-
-      expect(serializer.render).to eq(
-        verify_depth: 0,
-        verify_include: ["item"],
-        _relationships: {item: {verify_depth: 1, verify_include: []}}
+      expect(klass.new(include: {item: true}).render).to eq(
+        _relationships: {item: {}}
       )
     end
 
     it "allows child items_array to be included" do
-      serializer = klass.new(include: {items_array: true})
-
-      expect(serializer.render).to eq(
-        verify_depth: 0,
-        verify_include: ["items_array"],
-        _relationships: {items_array: [{verify_depth: 1, verify_include: []}]}
+      expect(klass.new(include: {items_array: true}).render).to eq(
+        _relationships: {items_array: [{}]}
       )
     end
 
     it "allows child items_collection to be included" do
-      serializer = klass.new(include: {items_collection: true})
-
-      expect(serializer.render).to eq(
-        verify_depth: 0,
-        verify_include: ["items_collection"],
-        _relationships: {items_collection: [{verify_depth: 2, verify_include: []}]}
+      expect(klass.new(include: {items_collection: true}).render).to eq(
+        _relationships: {items_collection: [{}]}
       )
     end
 
     it "allows grandchild resources to be included from a child resource" do
-      serializer = klass.new(include: {item: {item: true}})
-
-      expect(serializer.render).to eq(
-        verify_depth: 0,
-        verify_include: ["item"],
+      expect(klass.new(include: {item: {item: true}}).render).to eq(
         _relationships: {
-          item: {
-            verify_depth: 1,
-            verify_include: ["item"],
-            _relationships: {item: {verify_depth: 2, verify_include: []}}
-          }
+          item: {_relationships: {item: {}}}
         }
       )
     end
 
     it "allows grandchild resources to be included from a resource array" do
-      serializer = klass.new(include: {items_array: {item: true}})
-
-      expect(serializer.render).to eq(
-        verify_depth: 0,
-        verify_include: ["items_array"],
+      expect(klass.new(include: {items_array: {item: true}}).render).to eq(
         _relationships: {
-          items_array: [
-            {
-              verify_depth: 1,
-              verify_include: ["item"],
-              _relationships: {item: {verify_depth: 2, verify_include: []}}
-            }
-          ]
+          items_array: [{_relationships: {item: {}}}]
         }
       )
     end
 
     it "allows grandchild resources to be included from a resource collection" do
-      serializer = klass.new(include: {items_collection: {item: true}})
-      expect(serializer.render).to eq(
-        verify_depth: 0,
-        verify_include: ["items_collection"],
+      expect(klass.new(include: {items_collection: {item: true}}).render).to eq(
         _relationships: {
-          items_collection: [
-            {
-              verify_depth: 2,
-              verify_include: ["item"],
-              _relationships: {item: {verify_depth: 3, verify_include: []}}
-            }
-          ]
+          items_collection: [{_relationships: {item: {}}}]
         }
       )
     end
 
     it "allows grandchild items_array to be included from a child resource" do
-      serializer = klass.new(include: {item: {items_array: true}})
-      expect(serializer.render).to eq(
-        verify_depth: 0,
-        verify_include: ["item"],
+      expect(klass.new(include: {item: {items_array: true}}).render).to eq(
         _relationships: {
-          item: {
-            verify_depth: 1,
-            verify_include: ["items_array"],
-            _relationships: {items_array: [{verify_depth: 2, verify_include: []}]}
-          }
+          item: {_relationships: {items_array: [{}]}}
         }
       )
     end
 
     it "allows grandchild items_array to be included from a resource array" do
-      serializer = klass.new(include: {items_array: {items_array: true}})
-
-      expect(serializer.render).to eq(
-        verify_depth: 0,
-        verify_include: ["items_array"],
+      expect(klass.new(include: {items_array: {items_array: true}}).render).to eq(
         _relationships: {
-          items_array: [
-            {
-              verify_depth: 1,
-              verify_include: ["items_array"],
-              _relationships: {items_array: [{verify_depth: 2, verify_include: []}]}
-            }
-          ]
+          items_array: [{_relationships: {items_array: [{}]}}]
         }
       )
     end
 
     it "allows grandchild items_array to be included from a resource collection" do
-      serializer = klass.new(include: {items_collection: {items_array: true}})
-      expect(serializer.render).to eq(
-        verify_depth: 0,
-        verify_include: ["items_collection"],
+      expect(klass.new(include: {items_collection: {items_array: true}}).render).to eq(
         _relationships: {
-          items_collection: [
-            {
-              verify_depth: 2,
-              verify_include: ["items_array"],
-              _relationships: {items_array: [{verify_depth: 3, verify_include: []}]}
-            }
-          ]
+          items_collection: [{_relationships: {items_array: [{}]}}]
         }
       )
     end
 
     it "allows child resources and items_array to be included" do
-      serializer = klass.new(include: {item: true, items_array: true})
-
-      expect(serializer.render).to eq(
-        verify_depth: 0,
-        verify_include: ["item", "items_array"],
+      expect(klass.new(include: {item: true, items_array: true}).render).to eq(
         _relationships: {
-          item: {verify_depth: 1, verify_include: []},
-          items_array: [{verify_depth: 1, verify_include: []}]
+          item: {},
+          items_array: [{}]
         }
       )
     end
@@ -227,9 +153,6 @@ RSpec.describe "Include Options" do
               include Halitosis
               include Halitosis::ResourceRelationships
 
-              attribute(:verify_depth) { |ctx| ctx.depth }
-              attribute(:verify_include) { |ctx| ctx.include_options.keys }
-
               relationship :item do
                 self.class.new
               end
@@ -244,61 +167,28 @@ RSpec.describe "Include Options" do
             end.new
           ]
         end
-
-        attribute(:verify_depth) { |ctx| ctx.depth }
-        attribute(:verify_include) { |ctx| ctx.include_options.keys }
       end
     end
 
     it "excludes relationships by default" do
-      serializer = klass.new([])
-
-      expect(serializer.render).to eq(
-        verify_depth: 0,
-        verify_include: [],
-        items: [{verify_depth: 1, verify_include: []}]
-      )
+      expect(klass.new([]).render).to eq(items: [{}])
     end
 
     it "allows child resources to be included" do
-      serializer = klass.new([], include: {item: true})
-
-      expect(serializer.render).to eq(
-        verify_depth: 0,
-        verify_include: ["item"],
-        items: [{
-          verify_depth: 1,
-          verify_include: ["item"],
-          _relationships: {item: {verify_depth: 2, verify_include: []}}
-        }]
+      expect(klass.new([], include: {item: true}).render).to eq(
+        items: [{_relationships: {item: {}}}]
       )
     end
 
     it "allows child items_array to be included" do
-      serializer = klass.new([], include: {items_array: true})
-
-      expect(serializer.render).to eq(
-        verify_depth: 0,
-        verify_include: ["items_array"],
-        items: [{
-          verify_depth: 1,
-          verify_include: ["items_array"],
-          _relationships: {items_array: [{verify_depth: 2, verify_include: []}]}
-        }]
+      expect(klass.new([], include: {items_array: true}).render).to eq(
+        items: [{_relationships: {items_array: [{}]}}]
       )
     end
 
     it "allows child items_collection to be included" do
-      serializer = klass.new([], include: {items_collection: true})
-
-      expect(serializer.render).to eq(
-        verify_depth: 0,
-        verify_include: ["items_collection"],
-        items: [{
-          verify_depth: 1,
-          verify_include: ["items_collection"],
-          _relationships: {items_collection: [{verify_depth: 3, verify_include: []}]}
-        }]
+      expect(klass.new([], include: {items_collection: true}).render).to eq(
+        items: [{_relationships: {items_collection: [{}]}}]
       )
     end
 

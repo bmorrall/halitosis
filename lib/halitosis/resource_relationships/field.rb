@@ -80,7 +80,7 @@ module Halitosis
 
       def call_procedure(context, preloaded = nil)
         if procedure.arity != 0
-          context.call_instance_with(preloaded, procedure)
+          context.call_instance(preloaded, procedure)
         else
           context.call_instance(procedure)
         end

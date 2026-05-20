@@ -21,6 +21,25 @@ module Halitosis
         @fields ||= Fields.new
       end
 
+      # Declares a required initializer option, generating a reader method
+      # and raising +MissingOption+ at construction time if absent.
+      #
+      # @param name [Symbol]
+      #
+      def required_option(name)
+        required_option_keys << name.to_sym
+        define_method(name) { options.fetch(name.to_sym) }
+      end
+
+      def required_option_keys
+        @required_option_keys ||=
+          if superclass.respond_to?(:required_option_keys)
+            superclass.required_option_keys.dup
+          else
+            []
+          end
+      end
+
       def collection?
         false
       end
@@ -43,6 +62,9 @@ module Halitosis
       #
       def initialize(**options)
         @options = Halitosis::HashUtil.symbolize_hash(options).freeze
+
+        missing = self.class.required_option_keys.reject { |k| @options.key?(k) }
+        raise Halitosis::MissingOption.new(self.class, missing) if missing.any?
       end
 
       # @return [Hash, Array] rendered JSON

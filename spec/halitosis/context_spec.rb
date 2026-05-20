@@ -157,7 +157,7 @@ RSpec.describe Halitosis::Context do
     end
   end
 
-  describe "#call_instance_with" do
+  describe "#call_instance with args" do
     let(:instance) do
       Class.new do
         def double_it(x) = x * 2
@@ -168,25 +168,25 @@ RSpec.describe Halitosis::Context do
     context "when guard is a Proc" do
       it "passes args to the proc" do
         guard = proc { |x| x * 2 }
-        expect(context.call_instance_with(5, guard)).to eq(10)
+        expect(context.call_instance(5, guard)).to eq(10)
       end
     end
 
     context "when guard is a Symbol" do
       it "forwards args to the method" do
-        expect(context.call_instance_with(5, :double_it)).to eq(10)
+        expect(context.call_instance(5, :double_it)).to eq(10)
       end
     end
 
     context "when guard is a String" do
       it "forwards args to the method" do
-        expect(context.call_instance_with(5, "double_it")).to eq(10)
+        expect(context.call_instance(5, "double_it")).to eq(10)
       end
     end
 
     context "when guard is another value" do
       it "returns the value as-is" do
-        expect(context.call_instance_with(5, true)).to be(true)
+        expect(context.call_instance(5, true)).to be(true)
       end
     end
   end

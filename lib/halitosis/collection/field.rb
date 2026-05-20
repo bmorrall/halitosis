@@ -8,7 +8,7 @@ module Halitosis
       # Zero-arity blocks (+do raw_collection end+) ignore the argument.
       #
       def value(context)
-        options.fetch(:value) { context.call_instance_with(context.collection, procedure || name) }
+        options.fetch(:value) { context.call_instance(context.collection, procedure || name) }
       end
 
       # Returns the symbol key to use as the root envelope name, or +nil+ if

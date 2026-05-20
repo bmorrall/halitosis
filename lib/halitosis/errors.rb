@@ -11,6 +11,12 @@ module Halitosis
 
   class InvalidResource < StandardError; end
 
+  class MissingOption < StandardError
+    def initialize(klass, keys)
+      super("#{klass.name} missing required option#{"s" if keys.size > 1}: #{keys.join(", ")}")
+    end
+  end
+
   ### Rendering Errors ###
 
   class InvalidQueryParameter < Error

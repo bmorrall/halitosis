@@ -16,7 +16,7 @@ class FilterableArticlesSerializer
     nil
   end
 
-  link(:self) do |query_params|
+  link(:self) do |_collection, query_params|
     filterable_articles_path(query_params)
   end
 end

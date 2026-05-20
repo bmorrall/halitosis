@@ -28,7 +28,7 @@ module Halitosis
         page_params = context.fetch(:page, nil)
         page_params = {} unless page_params.is_a?(Hash)
 
-        collection = context.call_instance_with(context, context.collection, page_params, procedure)
+        collection = context.call_instance(context, context.collection, page_params, procedure)
         return if collection.nil?
 
         context.collection = collection

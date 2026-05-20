@@ -9,22 +9,10 @@ module Halitosis
 
     ### Instance ###
 
-    # Evaluate guard procedure or method on the serializer instance
+    # Evaluate guard procedure or method on the serializer instance,
+    # forwarding any leading args to the block or method.
     #
-    def call_instance(guard)
-      case guard
-      when Proc
-        instance.instance_exec(self, &guard)
-      when Symbol, String
-        instance.send(guard)
-      else
-        guard
-      end
-    end
-
-    # Like call_instance but forwards args instead of the context
-    #
-    def call_instance_with(*args, guard)
+    def call_instance(*args, guard)
       case guard
       when Proc
         instance.instance_exec(*args, &guard)
@@ -35,13 +23,16 @@ module Halitosis
       end
     end
 
-    # Evaluate :if/:unless conditional options against the serializer instance
+    # Evaluate :if/:unless conditional options against the serializer instance.
+    # Guards that accept an argument receive the context (for root?, depth, etc.).
     #
     def call_conditional?(options)
       if options.key?(:if)
-        !!call_instance(options.fetch(:if))
+        guard = options.fetch(:if)
+        !!call_guard(guard)
       elsif options.key?(:unless)
-        !call_instance(options.fetch(:unless))
+        guard = options.fetch(:unless)
+        !call_guard(guard)
       else
         true
       end
@@ -102,6 +93,14 @@ module Halitosis
       @depth ||= parent ? parent.depth + 1 : 0
     end
 
+    # Returns false for plain contexts; overridden in CollectionContext.
+    #
+    # @return [Boolean]
+    #
+    def collection?
+      false
+    end
+
     # Returns true when this context has no parent (i.e. it is the outermost render).
     #
     # @return [Boolean]
@@ -139,6 +138,20 @@ module Halitosis
     end
 
     private
+
+    # Calls a conditional guard. Procs/lambdas that accept one argument receive
+    # the context so they can query root?, depth, etc.
+    #
+    def call_guard(guard)
+      case guard
+      when Proc
+        guard.arity.nonzero? ? instance.instance_exec(self, &guard) : instance.instance_exec(&guard)
+      when Symbol, String
+        instance.send(guard)
+      else
+        guard
+      end
+    end
 
     # A mutable hash for context-local data that is never propagated to child
     # contexts.

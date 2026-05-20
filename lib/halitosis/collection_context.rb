@@ -16,5 +16,9 @@ module Halitosis
     end
 
     attr_accessor :collection
+
+    def collection?
+      true
+    end
   end
 end

@@ -27,15 +27,14 @@ module Halitosis
           link_opts[:preload_key] = field.preload_key if options[:preload]
 
           if link_value.is_a?(Proc)
-            # Lambdas enforce arity; call_instance passes context as the first arg,
-            # so wrap a 0-arity lambda in a regular proc that absorbs the context arg.
-            # For n-arity lambdas, forward the preloaded value as the first argument.
+            # Lambdas enforce arity; wrap so the preloaded value is forwarded correctly.
+            # For n-arity lambdas, forward the preloaded value as the sole argument.
             if link_value.lambda?
               captured = link_value
               link_value = if captured.arity != 0
                 proc { |preloaded| instance_exec(preloaded, &captured) }
               else
-                proc { instance_exec(&captured) }
+                captured
               end
             end
             link(name, link_opts, &link_value)
