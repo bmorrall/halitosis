@@ -710,6 +710,26 @@ ArticleSerializer.new(article, include_links: false).render
 # => { article: { id: 1, title: "Hello World" } }
 ```
 
+#### Self link
+
+Use `self_link` as a shorthand for `link(:self)`:
+
+```ruby
+class ArticleSerializer
+  include Halitosis
+
+  resource :article
+
+  self_link { "/articles/#{id}" }
+end
+```
+
+This is equivalent to:
+
+```ruby
+link(:self) { "/articles/#{id}" }
+```
+
 #### Profile link
 
 Use `profile` to declare a [HAL profile](https://datatracker.ietf.org/doc/html/draft-kelly-json-hal-11#section-5.6) link pointing to documentation for the resource type (e.g. your API docs):

@@ -15,6 +15,17 @@ module Halitosis
         fields.add(Links::Field.new(name, *, procedure))
       end
 
+      # Declare a HAL +self+ link for this resource.
+      #
+      # @example
+      #   self_link { article_url(id) }
+      #
+      def self_link(&procedure)
+        raise InvalidField, "#{name} self_link requires a block" unless procedure
+
+        link :self, &procedure
+      end
+
       # Declare a HAL +profile+ link for this resource.
       #
       # The link is only emitted when the serializer is rendered as the root
