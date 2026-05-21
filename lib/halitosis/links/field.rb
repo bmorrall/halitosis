@@ -76,7 +76,9 @@ module Halitosis
           call_procedure(context, preloaded)
         end
 
-        attrs = options.fetch(:attrs, {})
+        attrs = options.fetch(:attrs, {}).transform_values do |v|
+          v.is_a?(Proc) ? context.call_instance(v) : v
+        end
 
         case hrefs
         when Array

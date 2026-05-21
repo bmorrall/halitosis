@@ -56,6 +56,42 @@ RSpec.describe "Links" do
     end
   end
 
+  describe "external_link" do
+    it "renders an external link with type text/html" do
+      klass.external_link { "https://example.com/article" }
+
+      expect(klass.new({id: 1}).render).to eq(
+        item: {
+          id: 1,
+          _links: {external: {href: "https://example.com/article", type: "text/html"}}
+        }
+      )
+    end
+
+    it "evaluates a proc type at render time" do
+      klass.attribute(:pdf) { resource[:pdf] }
+      klass.external_link(type: -> { resource[:pdf] ? "application/pdf" : "text/html" }) do
+        resource[:url]
+      end
+
+      expect(klass.new({id: 1, url: "https://example.com/doc.pdf", pdf: true}).render).to eq(
+        item: {
+          id: 1,
+          pdf: true,
+          _links: {external: {href: "https://example.com/doc.pdf", type: "application/pdf"}}
+        }
+      )
+
+      expect(klass.new({id: 2, url: "https://example.com/article", pdf: false}).render).to eq(
+        item: {
+          id: 2,
+          pdf: false,
+          _links: {external: {href: "https://example.com/article", type: "text/html"}}
+        }
+      )
+    end
+  end
+
   describe "self_link on a collection" do
     let :collection_klass do
       Class.new do

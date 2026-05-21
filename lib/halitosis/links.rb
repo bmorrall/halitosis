@@ -26,6 +26,20 @@ module Halitosis
         link :self, &procedure
       end
 
+      # Declare a HAL +external+ link for this resource.
+      #
+      # Shorthand for +link(:external, type: "text/html")+. Use this to point
+      # to an external HTML resource (e.g. a human-readable web page).
+      #
+      # @example
+      #   external_link { article_external_url(id) }
+      #
+      def external_link(type: "text/html", &procedure)
+        raise InvalidField, "#{name} external_link requires a block" unless procedure
+
+        link :external, type: type, &procedure
+      end
+
       # Declare a HAL +profile+ link for this resource.
       #
       # The link is only emitted when the serializer is rendered as the root

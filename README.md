@@ -703,6 +703,14 @@ link(:search, :templated, title: "Search articles") { "/articles{?q}" }
 
 Supported properties: `type`, `deprecation`, `name`, `profile`, `title`, `hreflang`.
 
+Property values can be procs, evaluated at render time against the serializer instance:
+
+```ruby
+link(:external, type: -> { article.pdf? ? "application/pdf" : "text/html" }) do
+  article.external_url
+end
+```
+
 Suppress all links at render time with `include_links: false`:
 
 ```ruby
@@ -728,6 +736,30 @@ This is equivalent to:
 
 ```ruby
 link(:self) { "/articles/#{id}" }
+```
+
+On a collection serializer, `self_link` (like all `link` calls) is automatically promoted to the root-level `_links`.
+
+#### External link
+
+Use `external_link` to declare a link pointing to an external resource. It is shorthand for `link(:external, type: "text/html")`:
+
+```ruby
+class ArticleSerializer
+  include Halitosis
+
+  resource :article
+
+  external_link { article.canonical_url }
+end
+# => { article: { _links: { external: { href: "https://example.com/article", type: "text/html" } } } }
+```
+
+The `type` defaults to `"text/html"` but can be overridden with a static value or a proc:
+
+```ruby
+external_link(type: "application/pdf") { article.pdf_url }
+external_link(type: -> { article.content_type }) { article.download_url }
 ```
 
 #### Profile link
