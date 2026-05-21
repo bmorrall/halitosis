@@ -18,7 +18,7 @@ module Halitosis
       def render_root(context, result)
         super.tap do |root|
           if context.included_registry && context.include_options.any?
-            root[:included] = context.included_registry.each_with_object({}) do |((type, _id), value), hash|
+            root[:_included] = context.included_registry.each_with_object({}) do |((type, _id), value), hash|
               (hash[type.to_sym] ||= []) << value
             end
           end
