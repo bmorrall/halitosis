@@ -17,10 +17,11 @@ module Halitosis
         page_hash = page.respond_to?(:each_pair) ? {number: page[:number], size: page[:size]} : {number: page, size: params[:per_page]}
 
         render(
-          include: params[:include],
-          sort: params[:sort],
+          fields: params[:fields],
           filter: params[:filter],
-          page: page_hash
+          include: params[:include],
+          page: page_hash,
+          sort: params[:sort]
         )
       end
 

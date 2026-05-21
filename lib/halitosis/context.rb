@@ -58,6 +58,19 @@ module Halitosis
 
     attr_writer :included_registry
 
+    # Returns the sparse fieldset registry (resource type string → Set of
+    # permitted field name strings) shared across the entire render tree.
+    # Child contexts delegate to the root so nested resources always see the
+    # same registry.
+    #
+    # @return [Hash{String => Set<String>}, nil]
+    #
+    def sparse_fields_registry
+      parent ? parent.sparse_fields_registry : @sparse_fields_registry
+    end
+
+    attr_writer :sparse_fields_registry
+
     ### Query params ###
 
     # Returns a plain hash of normalized query params accumulated during rendering.

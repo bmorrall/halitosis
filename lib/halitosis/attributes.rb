@@ -26,9 +26,26 @@ module Halitosis
     end
 
     module InstanceMethods
+      # @return [void]
+      #
+      def before_render(context)
+        super
+
+        fields_param = context.fetch(:fields, nil)
+        if fields_param && (registry = FieldsUtil.build_registry(fields_param))
+          normalized = registry.to_h { |type, set| [type.to_sym, set.to_a.sort.join(",")] }
+          context.register_query_params(fields: normalized)
+          context.sparse_fields_registry = registry
+        end
+      end
+
       # @return [Hash] the rendered hash with attributes, if any
       #
       def render_with_context(context)
+        if (rt = self.class.resource_type) && (registry = context.sparse_fields_registry)
+          context.store_local(:current_sparse_fields, registry[rt.to_s] || registry[rt.to_sym])
+        end
+
         super.merge(attributes(context))
       end
 
