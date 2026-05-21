@@ -114,7 +114,5 @@ require_relative "halitosis/fields_util"
 require_relative "halitosis/configuration"
 
 # :nocov:
-require_relative "halitosis/parameter_exception_serializer" if defined?(::Rails)
-
 require "halitosis/railtie" if defined?(::Rails)
 # :nocov:

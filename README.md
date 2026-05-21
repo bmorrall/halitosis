@@ -1452,14 +1452,136 @@ en:
         title: "Unsupported Sort Field"
 ```
 
-If you need custom rescue logic, `Halitosis::ParameterExceptionSerializer` is available directly:
+Halitosis renders these errors using `ExceptionSerializer`. For custom rescue logic, use `ExceptionSerializer.build` to define the response inline:
 
 ```ruby
 rescue_from Halitosis::InvalidQueryParameter do |error|
-  render json: Halitosis::ParameterExceptionSerializer.new(error), status: :unprocessable_entity
+  render renderable: Halitosis::ExceptionSerializer.build(error) {
+    id     { error.class.name.demodulize.underscore }
+    detail { error.message }
+    source_parameter { error.parameter }
+  }, status: :bad_request
 end
 ```
 
+#### Validation errors
+
+`Halitosis::ErrorsSerializer` serializes an `ActiveModel::Errors` collection to a JSON:API-style errors array:
+
+```ruby
+render renderable: Halitosis::ErrorsSerializer.new(record.errors, param: "article"),
+  status: :unprocessable_entity
+```
+
+This produces:
+
+```json
+{
+  "errors": [
+    {
+      "code": "title_blank",
+      "detail": "Title can't be blank",
+      "source": { "pointer": "/article/title" }
+    },
+    {
+      "detail": "Record is invalid"
+    }
+  ]
+}
+```
+
+The `code` is omitted when the error type is not a symbol. The `source` pointer is omitted for base errors (errors on `:base` or with no attribute). The `param` option sets the leading path segment — use `"data/attributes"` for JSON:API-compliant request bodies.
+
+To add extra JSON:API-style error fields, subclass `Halitosis::ErrorSerializer` and pass the subclass via `error_serializer_class`:
+
+```ruby
+class MyErrorSerializer < Halitosis::ErrorSerializer
+  title  { error.type.to_s.humanize }
+  status { "422" }
+  link(:about) { "https://docs.example.com/errors/#{error.type}" }
+  meta(:attribute) { error.attribute }
+end
+
+render renderable: Halitosis::ErrorsSerializer.new(
+  record.errors,
+  param: "article",
+  error_serializer_class: MyErrorSerializer
+), status: :unprocessable_entity
+```
+
+This produces:
+
+```json
+{
+  "errors": [
+    {
+      "code": "title_blank",
+      "title": "Blank",
+      "status": "422",
+      "_links": { "about": { "href": "https://docs.example.com/errors/blank" } },
+      "detail": "Title can't be blank",
+      "source": { "pointer": "/article/title" },
+      "_meta": { "attribute": "title" }
+    },
+    {
+      "title": "Record is invalid",
+      "status": "422",
+      "_links": { "about": { "href": "https://docs.example.com/errors/Record is invalid" } },
+      "detail": "Record is invalid",
+      "_meta": { "attribute": "base" }
+    }
+  ]
+}
+```
+
+
+#### Exception serialization
+
+`Halitosis::ExceptionSerializer` serializes a single exception to a `{ errors: [...] }` envelope. It is used internally by Halitosis to render query parameter errors.
+
+Use `.build` to define fields inline without subclassing. Blocks execute in serializer instance context, so `error` refers to the exception:
+
+```ruby
+render renderable: Halitosis::ExceptionSerializer.build(error) {
+  code   { "unauthorized" }
+  title  { "Unauthorized" }
+  detail { error.message }
+  source_header { "Authorization" }
+  link(:about) { "https://docs.example.com/errors/unauthorized" }
+}, status: :unauthorized
+```
+
+For a reusable error class, subclass `ExceptionSerializer::ErrorEntry` — the same DSL methods are available:
+
+```ruby
+class UnauthorizedEntry < Halitosis::ExceptionSerializer::ErrorEntry
+  code   { "unauthorized" }
+  title  { "Unauthorized" }
+  detail { error.message }
+  source_header { "Authorization" }
+end
+
+render renderable: Halitosis::ExceptionSerializer.new(
+  error,
+  error_serializer_class: UnauthorizedEntry
+), status: :unauthorized
+```
+
+Both produce:
+
+```json
+{
+  "errors": [
+    {
+      "code": "unauthorized",
+      "title": "Unauthorized",
+      "detail": "Token is missing or invalid",
+      "source": { "header": "Authorization" },
+      "_links": { "about": { "href": "https://docs.example.com/errors/unauthorized" } }
+    }
+  ]
+}
+```
 
 ## Configuration
 
