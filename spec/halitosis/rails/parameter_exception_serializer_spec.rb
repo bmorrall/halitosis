@@ -9,13 +9,13 @@ RSpec.describe Halitosis::ParameterExceptionSerializer, :rails do
     context "with an InvalidSortParameter" do
       let(:error) { Halitosis::InvalidSortParameter.new("Cannot sort by '-name'") }
 
-      it "returns an errors array with I18n id and title", :aggregate_failures do
+      it "returns an errors array with I18n code and title", :aggregate_failures do
         result = serializer.as_json
 
         expect(result["errors"]).to be_an(Array).and have_attributes(size: 1)
 
         error_object = result["errors"].first
-        expect(error_object["id"]).to eq("invalid_sort_parameter")
+        expect(error_object["code"]).to eq("invalid_sort_parameter")
         expect(error_object["title"]).to eq("Invalid Sort Parameter")
         expect(error_object["detail"]).to eq("Cannot sort by '-name'")
         expect(error_object["source"]).to eq("parameter" => "sort")
@@ -35,13 +35,13 @@ RSpec.describe Halitosis::ParameterExceptionSerializer, :rails do
     context "with an InvalidFilterParameter" do
       let(:error) { Halitosis::InvalidFilterParameter.new("The articles collection can not be filtered by 'name'") }
 
-      it "returns an errors array with I18n id and title", :aggregate_failures do
+      it "returns an errors array with I18n code and title", :aggregate_failures do
         result = serializer.as_json
 
         expect(result["errors"]).to be_an(Array).and have_attributes(size: 1)
 
         error_object = result["errors"].first
-        expect(error_object["id"]).to eq("invalid_filter_parameter")
+        expect(error_object["code"]).to eq("invalid_filter_parameter")
         expect(error_object["title"]).to eq("Invalid Filter Parameter")
         expect(error_object["detail"]).to eq("The articles collection can not be filtered by 'name'")
         expect(error_object["source"]).to eq("parameter" => "filter")
@@ -57,10 +57,10 @@ RSpec.describe Halitosis::ParameterExceptionSerializer, :rails do
         expect(result["errors"].first["source"]).to eq("parameter" => "filter")
       end
 
-      it "falls back to class-based I18n for id and title" do
+      it "falls back to class-based I18n for code and title" do
         result = serializer.as_json
 
-        expect(result["errors"].first["id"]).to eq("invalid_query_parameter")
+        expect(result["errors"].first["code"]).to eq("invalid_query_parameter")
         expect(result["errors"].first["title"]).to eq("Invalid Query Parameter")
       end
     end
@@ -80,10 +80,10 @@ RSpec.describe Halitosis::ParameterExceptionSerializer, :rails do
         expect(result["errors"].first["title"]).to eq("Error")
       end
 
-      it "omits id when no I18n entry exists" do
+      it "omits code when no I18n entry exists" do
         result = serializer.as_json
 
-        expect(result["errors"].first).not_to have_key("id")
+        expect(result["errors"].first).not_to have_key("code")
       end
     end
   end

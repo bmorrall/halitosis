@@ -3,7 +3,7 @@
 module Halitosis
   class ParameterExceptionSerializer < ExceptionSerializer
     class ErrorEntry < ExceptionSerializer::ErrorEntry
-      attribute(:id, unless: -> { translate("id").nil? }) { translate("id") }
+      attribute(:code, unless: -> { translate("code").nil? }) { translate("code") }
       attribute(:title) { translate("title", default: error.class.name.demodulize.titleize) }
       attribute(:detail) { error.message }
       attribute(:source, unless: -> { source_hash.nil? }) { source_hash }

@@ -104,7 +104,7 @@ RSpec.describe "SortableArticles", :rails, type: :request do
 
         expect(response.parsed_body["errors"]).to match([
           {
-            "id" => "invalid_sort_parameter",
+            "code" => "invalid_sort_parameter",
             "title" => "Invalid Sort Parameter",
             "detail" => "The articles collection can not be sorted by 'unknown'",
             "source" => {"parameter" => "sort"}

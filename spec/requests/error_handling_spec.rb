@@ -9,7 +9,7 @@ RSpec.describe "Halitosis::ErrorHandling", :rails, type: :request do
 
       expect(response.parsed_body["errors"]).to match([
         {
-          "id" => "invalid_sort_parameter",
+          "code" => "invalid_sort_parameter",
           "title" => "Invalid Sort Parameter",
           "detail" => "The articles collection can not be sorted by 'nonexistent'",
           "source" => {"parameter" => "sort"}
@@ -26,7 +26,7 @@ RSpec.describe "Halitosis::ErrorHandling", :rails, type: :request do
 
       expect(response.parsed_body["errors"]).to match([
         {
-          "id" => "invalid_include_parameter",
+          "code" => "invalid_include_parameter",
           "title" => "Invalid Include Parameter",
           "detail" => "The simple resource does not have a `nonexistent` relationship path.",
           "source" => {"parameter" => "include"}
@@ -43,7 +43,7 @@ RSpec.describe "Halitosis::ErrorHandling", :rails, type: :request do
 
       expect(response.parsed_body["errors"]).to match([
         {
-          "id" => "invalid_pagination_parameter",
+          "code" => "invalid_pagination_parameter",
           "title" => "Invalid Pagination Parameter",
           "detail" => "The articles collection can not be paginated with the provided 'page[number]' value",
           "source" => {"parameter" => "page"}
