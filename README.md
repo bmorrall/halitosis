@@ -852,6 +852,30 @@ end
 ```
 
 
+#### Many-to-many (join resources)
+
+For many-to-many relationships, model the join as its own resource with its own serializer rather than using `relationship`. Expose it through two links on the parent: a plain link to the collection and a templated link for individual members.
+
+```ruby
+link :taggings, -> { article_taggings_path(article) }
+link :tagging, template: -> { "/articles/#{article.id}/taggings/{tag_id}" }
+```
+
+Output:
+
+```json
+{
+  "article": {
+    "_links": {
+      "taggings": { "href": "/articles/1/taggings" },
+      "tagging":  { "href": "/articles/1/taggings/{tag_id}", "templated": true }
+    }
+  }
+}
+```
+
+A client substitutes `{tag_id}` per [RFC 6570](https://tools.ietf.org/html/rfc6570) to address a specific tagging. No `relationship` block is needed — the join resource is independently addressable through its own serializer and URLs.
+
 #### Preloading relationship values
 
 Use `preload: true` to call a method matching the relationship name once and cache the result for the duration of the render. The cached value is passed as the first argument to the relationship block:

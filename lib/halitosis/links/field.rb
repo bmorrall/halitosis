@@ -7,7 +7,14 @@ module Halitosis
       # the standard initializer to build options from keywords
       #
       def initialize(name, *args, procedure)
-        super(name, self.class.build_options(args), procedure)
+        options = self.class.build_options(args)
+
+        if options.key?(:template)
+          procedure = options.delete(:template)
+          options[:attrs][:templated] = true
+        end
+
+        super(name, options, procedure)
       end
 
       # The key used to look up a stored preload value for this link, or +nil+
