@@ -1174,7 +1174,7 @@ Keys for middleware that was not triggered (e.g. no `filter` param, or no `pagin
 
 ### Collecting includes (JSON:API-style sideloading)
 
-Include `collect_includes!` in a serializer to hoist included relationships out of the nested `_relationships` structure and into a top-level `included` hash, grouped by resource type and deduplicated by id. This mirrors the [JSON:API compound document](https://jsonapi.org/format/#document-compound-documents) pattern.
+Include `collect_includes!` in a serializer to hoist included relationships out of the nested `_relationships` structure and into a top-level `_included` hash, grouped by resource type and deduplicated by id. This mirrors the [JSON:API compound document](https://jsonapi.org/format/#document-compound-documents) pattern.
 
 ```ruby
 class ArticleSerializer
@@ -1191,7 +1191,7 @@ class ArticleSerializer
 end
 ```
 
-When a relationship is included, the child serializer's full payload is placed in `included` and a typed stub (`{id:, _type:}`) is left inline:
+When a relationship is included, the child serializer's full payload is placed in `_included` and a typed stub (`{id:, _type:}`) is left inline:
 
 ```ruby
 ArticleSerializer.new(article, include: "author").render
@@ -1201,7 +1201,7 @@ ArticleSerializer.new(article, include: "author").render
 #        title: "Hello World",
 #        _relationships: { author: { id: 5, _type: "author" } }
 #      },
-#      included: {
+#      _included: {
 #        author: [
 #          { id: 5, name: "Alice" }
 #        ]
@@ -1209,11 +1209,11 @@ ArticleSerializer.new(article, include: "author").render
 #    }
 ```
 
-If no relationships are included, the `included` key is omitted entirely.
+If no relationships are included, the `_included` key is omitted entirely.
 
 #### Deduplication
 
-When multiple resources reference the same related object, it appears only once in `included`:
+When multiple resources reference the same related object, it appears only once in `_included`:
 
 ```ruby
 class ArticlesSerializer
@@ -1232,7 +1232,7 @@ ArticlesSerializer.new(articles, include: "author").render
 #        { id: 1, title: "First",  _relationships: { author: { id: 5, _type: "author" } } },
 #        { id: 2, title: "Second", _relationships: { author: { id: 5, _type: "author" } } }
 #      ],
-#      included: {
+#      _included: {
 #        author: [
 #          { id: 5, name: "Alice" }   # appears once despite two references
 #        ]

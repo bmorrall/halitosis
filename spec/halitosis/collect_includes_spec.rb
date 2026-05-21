@@ -52,7 +52,7 @@ RSpec.describe Halitosis::CollectIncludes do
 
         expect(klass.ancestors).to include(Halitosis::CollectIncludes::InstanceMethods)
         expect(result[:_relationships][:child]).to eq(id: 42, _type: "child")
-        expect(result[:included]).to eq(child: [{id: 42, name: "child"}])
+        expect(result[:_included]).to eq(child: [{id: 42, name: "child"}])
       end
     end
   end
@@ -64,7 +64,7 @@ RSpec.describe Halitosis::CollectIncludes do
           serializer = klass.new
 
           result = serializer.render
-          expect(result).not_to have_key(:included)
+          expect(result).not_to have_key(:_included)
         end
       end
 
@@ -84,7 +84,7 @@ RSpec.describe Halitosis::CollectIncludes do
           result = klass.new(include: {child: true}).render
 
           expect(result[:_relationships][:child]).to be_nil
-          expect(result[:included]).to eq({})
+          expect(result[:_included]).to eq({})
         end
       end
 
@@ -94,7 +94,7 @@ RSpec.describe Halitosis::CollectIncludes do
 
           result = serializer.render
           expect(result[:_relationships][:child]).to eq(id: 42, _type: "child")
-          expect(result[:included]).to eq(child: [{id: 42, name: "child"}])
+          expect(result[:_included]).to eq(child: [{id: 42, name: "child"}])
         end
       end
     end
