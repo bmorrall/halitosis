@@ -8,6 +8,9 @@ Rails.application.routes.draw do
   resources :simple_jsons, only: [:index, :show]
   resources :simple_renderables, only: [:index, :show]
 
+  resource :validation_errors, only: :create
+  resource :exception_error, only: :show
+
   resources :complex_renderables, only: :show
 
   resources :includeable_examples, only: :show
