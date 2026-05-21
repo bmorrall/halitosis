@@ -144,8 +144,8 @@ RSpec.describe Halitosis::Context do
     end
 
     context "when guard is a String" do
-      it "sends the method to the instance" do
-        expect(context.call_instance("some_method")).to eq("result")
+      it "returns the string as-is" do
+        expect(context.call_instance("some_method")).to eq("some_method")
       end
     end
 
@@ -179,8 +179,8 @@ RSpec.describe Halitosis::Context do
     end
 
     context "when guard is a String" do
-      it "forwards args to the method" do
-        expect(context.call_instance(5, "double_it")).to eq(10)
+      it "returns the string as-is" do
+        expect(context.call_instance(5, "double_it")).to eq("double_it")
       end
     end
 

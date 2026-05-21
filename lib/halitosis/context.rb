@@ -16,7 +16,7 @@ module Halitosis
       case guard
       when Proc
         instance.instance_exec(*args, &guard)
-      when Symbol, String
+      when Symbol
         instance.send(guard, *args)
       else
         guard
