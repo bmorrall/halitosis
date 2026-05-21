@@ -77,7 +77,7 @@ module Halitosis
         end
 
         attrs = options.fetch(:attrs, {}).transform_values do |v|
-          v.is_a?(Proc) ? context.call_instance(v) : v
+          context.call_instance(v)
         end
 
         case hrefs
