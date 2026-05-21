@@ -73,6 +73,31 @@ RSpec.describe Halitosis::Links do
 
         expect(link.name).to eq(:"ea:find")
       end
+
+      describe "with template: option" do
+        it "sets templated: true and uses the proc as the procedure" do
+          proc = -> { "/projects/1/memberships/{user_id}" }
+          link = klass.link(:membership, template: proc)
+
+          expect(link.options).to eq(attrs: {templated: true})
+          expect(link.send(:procedure)).to eq(proc)
+        end
+
+        it "renders with templated: true in output" do
+          klass.link(:membership, template: -> { "/projects/1/memberships/{user_id}" })
+
+          expect(klass.new.render[:_links][:membership]).to eq(
+            href: "/projects/1/memberships/{user_id}",
+            templated: true
+          )
+        end
+
+        it "can be combined with other options" do
+          link = klass.link(:membership, template: -> { "/projects/{id}/memberships/{user_id}" }, title: "Membership")
+
+          expect(link.options[:attrs]).to include(templated: true, title: "Membership")
+        end
+      end
     end
 
     describe "#profile" do
