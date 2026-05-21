@@ -80,7 +80,7 @@ RSpec.describe "FilterableArticles", :rails, type: :request do
         expect(response).to have_http_status(:bad_request)
 
         error = response.parsed_body["errors"].first
-        expect(error["id"]).to eq("invalid_filter_parameter")
+        expect(error["code"]).to eq("invalid_filter_parameter")
         expect(error["title"]).to eq("Invalid Filter Parameter")
         expect(error["detail"]).to match(/can not be filtered by 'score' with the provided value/i)
         expect(error["source"]).to eq("parameter" => "filter")
@@ -100,7 +100,7 @@ RSpec.describe "FilterableArticles", :rails, type: :request do
         expect(response).to have_http_status(:bad_request)
 
         error = response.parsed_body["errors"].first
-        expect(error["id"]).to eq("invalid_filter_parameter")
+        expect(error["code"]).to eq("invalid_filter_parameter")
         expect(error["detail"]).to match(/can not be filtered by 'unknown'/)
         expect(error["source"]).to eq("parameter" => "filter")
       end

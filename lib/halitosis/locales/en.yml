@@ -2,17 +2,17 @@ en:
   halitosis:
     errors:
       "Halitosis::InvalidQueryParameter":
-        id: invalid_query_parameter
+        code: invalid_query_parameter
         title: Invalid Query Parameter
       "Halitosis::InvalidSortParameter":
-        id: invalid_sort_parameter
+        code: invalid_sort_parameter
         title: Invalid Sort Parameter
       "Halitosis::InvalidIncludeParameter":
-        id: invalid_include_parameter
+        code: invalid_include_parameter
         title: Invalid Include Parameter
       "Halitosis::InvalidFilterParameter":
-        id: invalid_filter_parameter
+        code: invalid_filter_parameter
         title: Invalid Filter Parameter
       "Halitosis::InvalidPaginationParameter":
-        id: invalid_pagination_parameter
+        code: invalid_pagination_parameter
         title: Invalid Pagination Parameter
