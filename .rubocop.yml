@@ -28,6 +28,10 @@ RSpec/DescribeClass:
   Exclude:
     - spec/integrations/**/*.rb
 
+RSpec/SpecFilePathFormat:
+  Exclude:
+    - spec/halitosis/rails/**/*.rb
+
 RSpec/NestedGroups:
   Enabled: false
 
