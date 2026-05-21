@@ -113,6 +113,40 @@ RSpec.describe Halitosis::Links do
       end
     end
 
+    describe "#external_link" do
+      it "adds an external link with type text/html" do
+        klass.external_link { "https://example.com/article" }
+
+        expect(klass.new.render[:_links][:external]).to eq(
+          href: "https://example.com/article",
+          type: "text/html"
+        )
+      end
+
+      it "allows the type to be overridden" do
+        klass.external_link(type: "application/pdf") { "https://example.com/doc.pdf" }
+
+        expect(klass.new.render[:_links][:external]).to eq(
+          href: "https://example.com/doc.pdf",
+          type: "application/pdf"
+        )
+      end
+
+      it "allows the type to be a proc evaluated at render time" do
+        klass.external_link(type: -> { "application/pdf" }) { "https://example.com/doc.pdf" }
+
+        expect(klass.new.render[:_links][:external]).to eq(
+          href: "https://example.com/doc.pdf",
+          type: "application/pdf"
+        )
+      end
+
+      it "raises when no block is given" do
+        expect { klass.external_link }
+          .to raise_error(Halitosis::InvalidField, /external_link requires a block/i)
+      end
+    end
+
     describe "#profile" do
       it "adds a profile link with a static URL" do
         klass.profile("https://docs.example.com/article")
