@@ -33,6 +33,7 @@ RSpec.configure do |config|
   end
 
   if rails_version.empty?
+    config.exclude_pattern = "{spec/halitosis/rails,spec/requests}/**/*_spec.rb"
     config.filter_run_excluding rails: true
     require "halitosis"
   end
