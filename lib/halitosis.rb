@@ -110,6 +110,7 @@ require_relative "halitosis/collection_includeable"
 require_relative "halitosis/collection_preload"
 require_relative "halitosis/collection"
 require_relative "halitosis/hash_util"
+require_relative "halitosis/fields_util"
 require_relative "halitosis/configuration"
 
 # :nocov:
