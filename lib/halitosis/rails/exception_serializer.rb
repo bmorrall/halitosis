@@ -15,34 +15,28 @@ module Halitosis
   #     link(:about) { "https://docs.example.com/errors/unauthorized" }
   #   }, status: :unauthorized
   #
-  # Or subclass +ExceptionSerializer::ErrorEntry+ for a reusable class:
+  # Or subclass +Halitosis::ErrorEntry+ for a reusable class:
   #
   # @example
-  #   class AuthEntry < Halitosis::ExceptionSerializer::ErrorEntry
+  #   class AuthEntry < Halitosis::ErrorEntry
   #     code  { "unauthorized" }
   #     title { "Unauthorized" }
   #   end
   class ExceptionSerializer < ErrorsSerializer
-    # Alias to +ErrorSerializer::ClassMethods+ for backward compatibility.
-    ClassMethods = ErrorSerializer::ClassMethods
-
-    # Base Halitosis serializer for a single entry in the +errors+ array.
-    # Carries the +ClassMethods+ DSL shortcuts. Subclass to build reusable
-    # error entries, or use +ExceptionSerializer.build+ for inline definitions.
-    class ErrorEntry
-      include Halitosis
-      extend ClassMethods
-
-      required_option :error
-    end
-
     def self.build(exception, &dsl_block)
-      entry_class = Class.new(ErrorEntry)
-      entry_class.class_eval(&dsl_block) if dsl_block
+      raise ArgumentError, "#{name}.build requires a block" unless dsl_block
+
+      entry_class = Class.new(Halitosis::ErrorEntry)
+      entry_class.class_eval(&dsl_block)
+
+      if entry_class.fields.empty?
+        raise ArgumentError, "#{name}.build block must define at least one attribute, link, or meta field"
+      end
+
       new(exception, error_serializer_class: entry_class)
     end
 
-    def initialize(exception, error_serializer_class: ErrorEntry, **options)
+    def initialize(exception, error_serializer_class: Halitosis::ErrorEntry, **options)
       super([exception], param: nil, error_serializer_class: error_serializer_class, **options)
     end
   end

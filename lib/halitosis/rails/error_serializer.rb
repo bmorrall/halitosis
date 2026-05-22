@@ -16,41 +16,9 @@ module Halitosis
   #     param: "article",
   #     error_serializer_class: MyErrorSerializer
   #   ), status: :unprocessable_entity
-  class ErrorSerializer
-    include Halitosis
-
-    # Class-level DSL shortcuts for JSON:API error fields.
-    # Thin wrappers over the standard Halitosis +attribute+ DSL.
-    # Shared with +ExceptionSerializer::ErrorEntry+.
-    module ClassMethods
-      def id(&blk) = attribute(:id, &blk)
-      def code(&blk) = attribute(:code, &blk)
-      def title(&blk) = attribute(:title, &blk)
-      def status(&blk) = attribute(:status, &blk)
-      def detail(&blk) = attribute(:detail, &blk)
-
-      def source_pointer(&blk)
-        define_method(:_source_value, &blk)
-        private :_source_value
-        attribute(:source) { {pointer: _source_value} }
-      end
-
-      def source_parameter(&blk)
-        define_method(:_source_value, &blk)
-        private :_source_value
-        attribute(:source) { {parameter: _source_value} }
-      end
-
-      def source_header(&blk)
-        define_method(:_source_value, &blk)
-        private :_source_value
-        attribute(:source) { {header: _source_value} }
-      end
-    end
-
-    extend ClassMethods
-
-    required_option :error
+  #
+  # Only +attribute+, +link+, and +meta+ fields may be defined on an error serializer.
+  class ErrorSerializer < ErrorEntry
     required_option :param
 
     attribute(:code, unless: -> { !error.type.is_a?(Symbol) }) { error_code }

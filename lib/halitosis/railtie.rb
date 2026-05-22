@@ -28,6 +28,7 @@ end
 
 require_relative "error_handling"
 require_relative "rails/renderable"
+require_relative "rails/error_entry"
 require_relative "rails/error_serializer"
 require_relative "rails/errors_serializer"
 require_relative "rails/exception_serializer"
