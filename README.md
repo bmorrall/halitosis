@@ -1431,7 +1431,7 @@ Invalid `sort`, `filter`, or `include` parameters will now produce a response li
 {
   "errors": [
     {
-      "id": "invalid_sort_parameter",
+      "code": "invalid_sort_parameter",
       "title": "Invalid Sort Parameter",
       "detail": "The articles collection can not be sorted by 'nonexistent'",
       "source": { "parameter": "sort" }
@@ -1440,7 +1440,7 @@ Invalid `sort`, `filter`, or `include` parameters will now produce a response li
 }
 ```
 
-The `id` and `title` values come from Halitosis's built-in locale file (`en.halitosis.errors.{ClassName}.id` / `.title`). Override them in your application's locale file:
+The `code` and `title` values come from Halitosis's built-in locale file (`en.halitosis.errors.{ClassName}.code` / `.title`). Override them in your application's locale file:
 
 ```yaml
 # config/locales/en.yml
@@ -1448,7 +1448,7 @@ en:
   halitosis:
     errors:
       "Halitosis::InvalidSortParameter":
-        id: "unsupported_sort_field"
+        code: "unsupported_sort_field"
         title: "Unsupported Sort Field"
 ```
 
@@ -1457,7 +1457,7 @@ Halitosis renders these errors using `ExceptionSerializer`. For custom rescue lo
 ```ruby
 rescue_from Halitosis::InvalidQueryParameter do |error|
   render renderable: Halitosis::ExceptionSerializer.build(error) {
-    id     { error.class.name.demodulize.underscore }
+    code   { error.class.name.demodulize.underscore }
     detail { error.message }
     source_parameter { error.parameter }
   }, status: :bad_request
