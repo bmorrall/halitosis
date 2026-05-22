@@ -11,7 +11,7 @@ RSpec.describe "ExceptionSerializer", :rails do
     end
 
     let(:entry_class) do
-      Class.new(Halitosis::ExceptionSerializer::ErrorEntry) do
+      Class.new(Halitosis::ErrorEntry) do
         code { "unauthorized" }
         title { "Unauthorized" }
         detail { error.message }

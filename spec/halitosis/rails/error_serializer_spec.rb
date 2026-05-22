@@ -84,4 +84,18 @@ RSpec.describe Halitosis::ErrorSerializer, :rails do
       expect { described_class.new(error: error) }.to raise_error(Halitosis::MissingOption)
     end
   end
+
+  describe "field restrictions" do
+    it "does not support identifier" do
+      expect { described_class.identifier(:id) }.to raise_error(NoMethodError)
+    end
+
+    it "does not support permission" do
+      expect { described_class.permission(:read) { true } }.to raise_error(NoMethodError)
+    end
+
+    it "does not support relationship" do
+      expect { described_class.relationship(:author) { nil } }.to raise_error(NoMethodError)
+    end
+  end
 end

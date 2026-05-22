@@ -1494,7 +1494,7 @@ This produces:
 
 The `code` is omitted when the error type is not a symbol. The `source` pointer is omitted for base errors (errors on `:base` or with no attribute). The `param` option sets the leading path segment — use `"data/attributes"` for JSON:API-compliant request bodies.
 
-To add extra JSON:API-style error fields, subclass `Halitosis::ErrorSerializer` and pass the subclass via `error_serializer_class`:
+To add extra JSON:API-style error fields, subclass `Halitosis::ErrorSerializer` and pass the subclass via `error_serializer_class`. Only `attribute`, `link`, and `meta` fields may be defined — `identifier`, `permission`, `relationship`, and other field types are not supported:
 
 ```ruby
 class MyErrorSerializer < Halitosis::ErrorSerializer
@@ -1541,7 +1541,7 @@ This produces:
 
 `Halitosis::ExceptionSerializer` serializes a single exception to a `{ errors: [...] }` envelope. It is used internally by Halitosis to render query parameter errors.
 
-Use `.build` to define fields inline without subclassing. Blocks execute in serializer instance context, so `error` refers to the exception:
+Use `.build` to define fields inline without subclassing. Blocks execute in serializer instance context, so `error` refers to the exception. `.build` raises `ArgumentError` if called without a block or if the block defines no fields. Only `attribute`, `link`, and `meta` fields are supported:
 
 > **Note:** Always use `{ }` rather than `do...end` for the `.build` block. Ruby's block precedence rules mean a `do...end` block binds to the outer `render` call, not to `.build`, and no fields will be defined.
 
@@ -1555,10 +1555,10 @@ render renderable: Halitosis::ExceptionSerializer.build(error) {
 }, status: :unauthorized
 ```
 
-For a reusable error class, subclass `ExceptionSerializer::ErrorEntry` — the same DSL methods are available:
+For a reusable error class, subclass `Halitosis::ErrorEntry` — the same DSL methods are available:
 
 ```ruby
-class UnauthorizedEntry < Halitosis::ExceptionSerializer::ErrorEntry
+class UnauthorizedEntry < Halitosis::ErrorEntry
   code   { "unauthorized" }
   title  { "Unauthorized" }
   detail { error.message }
