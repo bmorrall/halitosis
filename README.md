@@ -1454,6 +1454,8 @@ en:
 
 Halitosis renders these errors using `ExceptionSerializer`. For custom rescue logic, use `ExceptionSerializer.build` to define the response inline:
 
+> **Note:** Always use `{ }` rather than `do...end` for the `.build` block. Ruby's block precedence rules mean a `do...end` block binds to the outer `render` call, not to `.build`, and no fields will be defined.
+
 ```ruby
 rescue_from Halitosis::InvalidQueryParameter do |error|
   render renderable: Halitosis::ExceptionSerializer.build(error) {
@@ -1540,6 +1542,8 @@ This produces:
 `Halitosis::ExceptionSerializer` serializes a single exception to a `{ errors: [...] }` envelope. It is used internally by Halitosis to render query parameter errors.
 
 Use `.build` to define fields inline without subclassing. Blocks execute in serializer instance context, so `error` refers to the exception:
+
+> **Note:** Always use `{ }` rather than `do...end` for the `.build` block. Ruby's block precedence rules mean a `do...end` block binds to the outer `render` call, not to `.build`, and no fields will be defined.
 
 ```ruby
 render renderable: Halitosis::ExceptionSerializer.build(error) {
