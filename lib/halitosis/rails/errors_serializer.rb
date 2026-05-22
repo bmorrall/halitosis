@@ -6,12 +6,32 @@ module Halitosis
   # Override +error_serializer_class+ in a subclass to substitute a custom
   # +ErrorSerializer+ subclass with extra JSON:API fields (e.g. title, status).
   #
+  # Use +.build+ with the JSON:API DSL to override or extend the default +code+,
+  # +detail+, and +source+ pointer fields inline. The block is evaluated in the
+  # context of an anonymous +ErrorSerializer+ subclass, so all defaults are
+  # inherited and any field you redefine (e.g. +source_parameter+) replaces the
+  # inherited one.
+  #
+  # @example Override the source with a query parameter instead of a pointer
+  #   render renderable: Halitosis::ErrorsSerializer.build(record.errors, param: "article") {
+  #     source_parameter { "filter[status]" }
+  #   }, status: :unprocessable_entity
+  #
   # @example
   #   render renderable: Halitosis::ErrorsSerializer.new(record.errors, param: "article")
   class ErrorsSerializer
     include Halitosis::Base
 
     required_option :param
+
+    def self.build(errors, **options, &dsl_block)
+      raise ArgumentError, "#{name}.build requires a block" unless dsl_block
+
+      entry_class = Class.new(Halitosis::ErrorSerializer)
+      entry_class.class_eval(&dsl_block)
+
+      new(errors, error_serializer_class: entry_class, **options)
+    end
 
     def initialize(errors, **options)
       @errors = errors

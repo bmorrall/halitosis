@@ -1537,6 +1537,17 @@ This produces:
 ```
 
 
+For a one-off override without defining a named class, use `.build` with a DSL block. The block is evaluated in the context of an anonymous `ErrorSerializer` subclass, so `code`, `detail`, and `source` pointer are inherited — define only what you want to change:
+
+```ruby
+render renderable: Halitosis::ErrorsSerializer.build(record.errors, param: "article") {
+  source_parameter { "filter[status]" }   # replaces the default source pointer
+}, status: :unprocessable_entity
+```
+
+Use `source_parameter`, `source_pointer`, or `source_header` to replace the inherited source field. Other DSL fields (`title`, `status`, etc.) are added alongside the defaults.
+
+
 #### Exception serialization
 
 `Halitosis::ExceptionSerializer` serializes a single exception to a `{ errors: [...] }` envelope. It is used internally by Halitosis to render query parameter errors.
