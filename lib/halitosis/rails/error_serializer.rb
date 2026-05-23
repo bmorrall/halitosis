@@ -24,10 +24,14 @@ module Halitosis
     attribute(:code, unless: -> { !error.type.is_a?(Symbol) }) { error_code }
     attribute(:detail) { error.full_message }
     attribute(:source, unless: -> { error.attribute.nil? || error.attribute == :base }) do
-      {pointer: "/#{param}/#{error.attribute}"}
+      {pointer: "/#{param}/#{attribute_as_pointer}"}
     end
 
     private
+
+    def attribute_as_pointer
+      error.attribute.to_s.gsub(/\[(\d+)\]/, '/\1').tr(".", "/")
+    end
 
     def error_code
       (error.attribute == :base) ? error.type.to_s : "#{error.attribute}_#{error.type}"

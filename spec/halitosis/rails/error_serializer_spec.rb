@@ -51,6 +51,30 @@ RSpec.describe Halitosis::ErrorSerializer, :rails do
         expect(result).not_to have_key("source")
       end
     end
+
+    context "with a nested attribute containing a dot" do
+      subject(:serializer) { described_class.new(error: error, param: "order") }
+
+      let(:error) { error_class.new(type: :blank, full_message: "Postcode can't be blank", attribute: :"billing_address.postcode") }
+
+      it "converts dots to slashes in the source pointer" do
+        result = serializer.as_json
+
+        expect(result["source"]).to eq("pointer" => "/order/billing_address/postcode")
+      end
+    end
+
+    context "with an array-indexed attribute containing a dot" do
+      subject(:serializer) { described_class.new(error: error, param: "order") }
+
+      let(:error) { error_class.new(type: :greater_than, full_message: "Quantity must be greater than 0", attribute: :"line_items[0].quantity") }
+
+      it "converts bracket index and dot to slashes in the source pointer" do
+        result = serializer.as_json
+
+        expect(result["source"]).to eq("pointer" => "/order/line_items/0/quantity")
+      end
+    end
   end
 
   describe "subclassing" do
