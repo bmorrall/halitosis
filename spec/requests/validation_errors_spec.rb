@@ -32,4 +32,13 @@ RSpec.describe "ValidationErrors", :rails, type: :request do
       expect(response.parsed_body["errors"]).to match(expected_errors)
     end
   end
+
+  describe "POST /validation_errors/inferred" do
+    it "infers the param from the model class and returns correct source pointers" do
+      post inferred_validation_errors_path
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body["errors"]).to match(expected_errors)
+    end
+  end
 end

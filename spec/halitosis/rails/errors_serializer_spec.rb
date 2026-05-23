@@ -64,6 +64,22 @@ RSpec.describe Halitosis::ErrorsSerializer, :rails do
 
       expect(result["errors"].first["source"]).to eq("pointer" => "/data/relationships/tags")
     end
+
+    it "infers param from the model when no param is given" do
+      model_class = Class.new do
+        include ActiveModel::Model
+
+        def self.name = "Order"
+
+        attr_accessor :title
+      end
+      model = model_class.new
+      model.errors.add(:title, :blank, message: "can't be blank")
+
+      result = described_class.build(model) { title { "Validation Error" } }.as_json
+
+      expect(result["errors"].first["source"]).to eq("pointer" => "/order/title")
+    end
   end
 
   describe "#as_json" do
@@ -145,8 +161,44 @@ RSpec.describe Halitosis::ErrorsSerializer, :rails do
       expect { described_class.new(param: "article") }.to raise_error(ArgumentError)
     end
 
-    it "raises MissingOption when param is absent" do
+    it "raises MissingOption when a plain errors collection is passed without param" do
       expect { described_class.new([]) }.to raise_error(Halitosis::MissingOption)
+    end
+  end
+
+  describe "inferring param from model" do
+    subject(:serializer) { described_class.new(model) }
+
+    let(:model_class) do
+      Class.new do
+        include ActiveModel::Model
+
+        def self.name = "Order"
+
+        attr_accessor :title
+      end
+    end
+
+    let(:model) { model_class.new }
+
+    it "does not require an explicit param" do
+      expect { serializer }.not_to raise_error
+    end
+
+    it "uses the model name as the param for source pointers" do
+      model.errors.add(:title, :blank, message: "can't be blank")
+
+      result = serializer.as_json
+
+      expect(result["errors"].first["source"]).to eq("pointer" => "/order/title")
+    end
+
+    it "allows an explicit param to override the inferred one" do
+      model.errors.add(:title, :blank, message: "can't be blank")
+
+      result = described_class.new(model, param: "data").as_json
+
+      expect(result["errors"].first["source"]).to eq("pointer" => "/data/title")
     end
   end
 

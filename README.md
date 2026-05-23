@@ -1468,14 +1468,21 @@ end
 
 #### Validation errors
 
-`Halitosis::ErrorsSerializer` serializes an `ActiveModel::Errors` collection to a JSON:API-style errors array:
+`Halitosis::ErrorsSerializer` serializes an `ActiveModel::Errors` collection to a JSON:API-style errors array. Pass the model directly and the `param` (the leading path segment in source pointers) is inferred from the model class name:
+
+```ruby
+render renderable: Halitosis::ErrorsSerializer.new(record),
+  status: :unprocessable_entity
+```
+
+Pass an errors collection with an explicit `param` when the path segment should differ from the model name:
 
 ```ruby
 render renderable: Halitosis::ErrorsSerializer.new(record.errors, param: "article"),
   status: :unprocessable_entity
 ```
 
-This produces:
+Both produce the same shape:
 
 ```json
 {
@@ -1492,7 +1499,15 @@ This produces:
 }
 ```
 
-The `code` is omitted when the error type is not a symbol. The `source` pointer is omitted for base errors (errors on `:base` or with no attribute). The `param` option sets the leading path segment — use `"data/attributes"` for JSON:API-compliant request bodies.
+The `code` is omitted when the error type is not a symbol. The `source` pointer is omitted for base errors (errors on `:base` or with no attribute).
+
+Nested attribute names — including dot notation (`billing_address.postcode`) and Rails array-index notation (`line_items[0].quantity`) — are converted to pointer segments automatically:
+
+| Attribute name | Source pointer |
+|---|---|
+| `title` | `/article/title` |
+| `billing_address.postcode` | `/article/billing_address/postcode` |
+| `line_items[0].quantity` | `/article/line_items/0/quantity` |
 
 To add extra JSON:API-style error fields, subclass `Halitosis::ErrorSerializer` and pass the subclass via `error_serializer_class`. Only `attribute`, `link`, and `meta` fields may be defined — `identifier`, `permission`, `relationship`, and other field types are not supported:
 
@@ -1505,8 +1520,7 @@ class MyErrorSerializer < Halitosis::ErrorSerializer
 end
 
 render renderable: Halitosis::ErrorsSerializer.new(
-  record.errors,
-  param: "article",
+  record,
   error_serializer_class: MyErrorSerializer
 ), status: :unprocessable_entity
 ```
@@ -1540,7 +1554,7 @@ This produces:
 For a one-off override without defining a named class, use `.build` with a DSL block. The block is evaluated in the context of an anonymous `ErrorSerializer` subclass, so `code`, `detail`, and `source` pointer are inherited — define only what you want to change:
 
 ```ruby
-render renderable: Halitosis::ErrorsSerializer.build(record.errors, param: "article") {
+render renderable: Halitosis::ErrorsSerializer.build(record) {
   source_parameter { "filter[status]" }   # replaces the default source pointer
 }, status: :unprocessable_entity
 ```
