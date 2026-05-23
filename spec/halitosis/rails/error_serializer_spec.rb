@@ -62,6 +62,12 @@ RSpec.describe Halitosis::ErrorSerializer, :rails do
 
         expect(result["source"]).to eq("pointer" => "/order/billing_address/postcode")
       end
+
+      it "converts dots to underscores in the code" do
+        result = serializer.as_json
+
+        expect(result["code"]).to eq("billing_address_postcode_blank")
+      end
     end
 
     context "with an array-indexed attribute containing a dot" do
@@ -73,6 +79,12 @@ RSpec.describe Halitosis::ErrorSerializer, :rails do
         result = serializer.as_json
 
         expect(result["source"]).to eq("pointer" => "/order/line_items/0/quantity")
+      end
+
+      it "converts bracket index and dot to underscores in the code" do
+        result = serializer.as_json
+
+        expect(result["code"]).to eq("line_items_0_quantity_greater_than")
       end
     end
   end

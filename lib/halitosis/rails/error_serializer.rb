@@ -34,7 +34,10 @@ module Halitosis
     end
 
     def error_code
-      (error.attribute == :base) ? error.type.to_s : "#{error.attribute}_#{error.type}"
+      return error.type.to_s if error.attribute == :base
+
+      sanitized = error.attribute.to_s.tr(".", "_").gsub(/\[(\d+)\]/, '_\1')
+      "#{sanitized}_#{error.type}"
     end
   end
 end
