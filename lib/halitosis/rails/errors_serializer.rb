@@ -12,29 +12,37 @@ module Halitosis
   # inherited and any field you redefine (e.g. +source_parameter+) replaces the
   # inherited one.
   #
+  # @example Pass a model — param is inferred from the model class name
+  #   render renderable: Halitosis::ErrorsSerializer.new(record)
+  #
+  # @example Pass an errors collection with an explicit param
+  #   render renderable: Halitosis::ErrorsSerializer.new(record.errors, param: "article")
+  #
   # @example Override the source with a query parameter instead of a pointer
   #   render renderable: Halitosis::ErrorsSerializer.build(record.errors, param: "article") {
   #     source_parameter { "filter[status]" }
   #   }, status: :unprocessable_entity
-  #
-  # @example
-  #   render renderable: Halitosis::ErrorsSerializer.new(record.errors, param: "article")
   class ErrorsSerializer
     include Halitosis::Base
 
     required_option :param
 
-    def self.build(errors, **options, &dsl_block)
+    def self.build(model_or_errors, **options, &dsl_block)
       raise ArgumentError, "#{name}.build requires a block" unless dsl_block
 
       entry_class = Class.new(Halitosis::ErrorSerializer)
       entry_class.class_eval(&dsl_block)
 
-      new(errors, error_serializer_class: entry_class, **options)
+      new(model_or_errors, error_serializer_class: entry_class, **options)
     end
 
-    def initialize(errors, **options)
-      @errors = errors
+    def initialize(model_or_errors, **options)
+      if model_or_errors.class.respond_to?(:model_name)
+        @errors = model_or_errors.errors
+        options = {param: model_or_errors.class.model_name.param_key, **options}
+      else
+        @errors = model_or_errors
+      end
       super(**options)
     end
 

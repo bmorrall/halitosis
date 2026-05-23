@@ -10,6 +10,7 @@ Rails.application.routes.draw do
 
   resource :validation_errors, only: :create
   post "validation_errors/json", to: "validation_errors#json_create", as: :json_validation_errors
+  post "validation_errors/inferred", to: "validation_errors#inferred_create", as: :inferred_validation_errors
 
   resource :exception_error, only: :show
   get "exception_error/json", to: "exception_errors#json_show", as: :json_exception_error
