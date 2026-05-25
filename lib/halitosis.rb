@@ -87,6 +87,7 @@ end
 require_relative "halitosis/context"
 require_relative "halitosis/base"
 require_relative "halitosis/errors"
+require_relative "halitosis/raises"
 require_relative "halitosis/field"
 require_relative "halitosis/fields"
 require_relative "halitosis/includeable"

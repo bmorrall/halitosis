@@ -99,8 +99,8 @@ RSpec.describe "CollectionFilterable" do
 
       expect { serializer.render }.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
-        expect(exception.message).to match(/can not be filtered by 'score' with the provided value/i)
-        expect(exception.parameter).to eq("filter")
+        expect(exception.message).to match(/can not be filtered by 'score': The provided value is invalid\./i)
+        expect(exception.parameter).to eq("filter[score]")
       end
     end
   end
@@ -112,7 +112,7 @@ RSpec.describe "CollectionFilterable" do
       expect { serializer.render }.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
         expect(exception.message).to match(/can not be filtered by 'unknown'/)
-        expect(exception.parameter).to eq("filter")
+        expect(exception.parameter).to eq("filter[unknown]")
       end
     end
   end
