@@ -109,7 +109,6 @@ module Halitosis
 
         result
       end
-
     end
   end
 end

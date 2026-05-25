@@ -150,7 +150,18 @@ module Halitosis
       @local&.[](key)
     end
 
+    # Returns the user-facing render params for this context (filter, sort,
+    # page, include, fields). Intended for use in precheck blocks.
+    #
+    # @return [Hash]
+    #
+    def params
+      @options.slice(:filter, :sort, :page, :include, :fields)
+    end
+
     private
+
+    attr_reader :instance, :options
 
     # Calls a conditional guard. Procs/lambdas that accept one argument receive
     # the context so they can query root?, depth, etc.
@@ -174,7 +185,5 @@ module Halitosis
     def local
       @local ||= {}
     end
-
-    attr_reader :instance, :options
   end
 end

@@ -129,6 +129,71 @@ ArticlesSerializer.new(Article.all).render
 # => { articles: [ { id: 1, title: "Hello World" }, ... ] }
 ```
 
+### Prechecks
+
+Register named precheck blocks with `precheck` to validate render params before rendering begins. Prechecks only fire at the root render level — they are skipped when the serializer is used as a nested relationship inside another serializer.
+
+The block receives a `params` hash containing the user-facing render params: `filter:`, `sort:`, `page:`, `include:`, and `fields:`. Use `Raises` methods inside the block to surface errors as structured exceptions.
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+
+  collection :articles do |collection|
+    collection.map { |article| ArticleSerializer.new(article) }
+  end
+
+  sortable_by :title do |collection, ascending|
+    collection.order(title: ascending ? :asc : :desc)
+  end
+
+  filterable_by :status do |collection, value|
+    collection.where(status: value)
+  end
+
+  precheck :validate_sort do |params|
+    allowed = %w[title]
+    sort = params[:sort]
+    raise_invalid_sort_parameter(sort) if sort && !allowed.include?(sort.delete_prefix("-"))
+  end
+
+  precheck :validate_status do |params|
+    status = params[:filter]&.dig(:status)
+    raise_invalid_filter_parameter("status", "must be one of: draft, published") if status && !%w[draft published].include?(status)
+  end
+end
+```
+
+Multiple `precheck` declarations are run in registration order. Each must have a unique name — reusing a name replaces the previous precheck with the new one.
+
+#### Available error methods
+
+| Method | Error class raised | `parameter` value |
+| --- | --- | --- |
+| `raise_invalid_filter_parameter(field_name, message = nil)` | `Halitosis::InvalidFilterParameter` | `"filter[field_name]"` |
+| `raise_invalid_sort_parameter(sort_token, message = nil)` | `Halitosis::InvalidSortParameter` | `"sort"` |
+| `raise_invalid_pagination_parameter(param = nil, message = nil)` | `Halitosis::InvalidPaginationParameter` | `"page"` |
+| `raise_invalid_include_parameter(relationship_path)` | `Halitosis::InvalidIncludeParameter` | `"include"` |
+
+All four error classes inherit from `Halitosis::InvalidQueryParameter < Halitosis::Error`. The Rails integration maps all of them to `400 Bad Request`.
+
+The optional `message` argument is appended after a colon as a standalone sentence:
+
+```ruby
+raise_invalid_filter_parameter("published_at", "Must be a valid ISO 8601 date.")
+# => "The articles collection can not be filtered by 'published_at': Must be a valid ISO 8601 date."
+```
+
+When `raise_invalid_pagination_parameter` is called without a `param`, the message refers to the provided values in general:
+
+```ruby
+raise_invalid_pagination_parameter
+# => "The articles collection can not be paginated with the provided values"
+
+raise_invalid_pagination_parameter("size", "must be less than 100")
+# => "The articles collection can not be paginated with the provided 'size' value: must be less than 100"
+```
+
 ### Sorting collections
 
 Declare sort fields on a collection serializer with `sortable_by`. The block receives the current collection and a Boolean — `true` for ascending, `false` for descending — and must return the sorted collection:

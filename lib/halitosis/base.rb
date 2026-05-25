@@ -10,6 +10,7 @@ module Halitosis
 
       base.send :include, InstanceMethods
       base.send :include, Raises
+      base.send :include, Precheck
 
       base.send :attr_reader, :options
 
@@ -100,6 +101,7 @@ module Halitosis
       #
       def render(**options)
         context = build_context(options)
+        run_prechecks!(context) if context.root?
         before_render(context)
         result = render_with_context(context)
         if context.include_root?
@@ -116,6 +118,14 @@ module Halitosis
       # @param _context [Halitosis::Context]
       #
       def before_render(_context)
+      end
+
+      # No-op default; overridden by +Halitosis::Precheck+ when prechecks
+      # are registered on the serializer class.
+      #
+      # @param _context [Halitosis::Context]
+      #
+      def run_prechecks!(_context)
       end
 
       # @param context [Halitosis::Context] the context instance
