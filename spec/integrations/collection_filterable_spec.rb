@@ -99,7 +99,7 @@ RSpec.describe "CollectionFilterable" do
 
       expect { serializer.render }.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
-        expect(exception.message).to match(/can not be filtered by 'score': The provided value is invalid\./i)
+        expect(exception.message).to eq("The items collection can not be filtered by 'score': The provided value is invalid.")
         expect(exception.parameter).to eq("filter[score]")
       end
     end
@@ -111,7 +111,7 @@ RSpec.describe "CollectionFilterable" do
 
       expect { serializer.render }.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
-        expect(exception.message).to match(/can not be filtered by 'unknown'/)
+        expect(exception.message).to eq("The items collection can not be filtered by 'unknown'")
         expect(exception.parameter).to eq("filter[unknown]")
       end
     end
@@ -180,7 +180,7 @@ RSpec.describe "CollectionFilterable" do
     it "raises InvalidFilterParameter for an unknown nested key" do
       serializer = nested_klass.new(items, filter: {item: {unknown: "x"}})
 
-      expect { serializer.render }.to raise_error(Halitosis::InvalidFilterParameter, /item\.unknown/)
+      expect { serializer.render }.to raise_error(Halitosis::InvalidFilterParameter, "The items collection can not be filtered by 'item.unknown'")
     end
   end
 
@@ -235,7 +235,7 @@ RSpec.describe "CollectionFilterable" do
 
       expect { serializer.render }.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
-        expect(exception.message).to match(/can not be filtered by 'date\.bogus'/i)
+        expect(exception.message).to eq("The items collection can not be filtered by 'date.bogus'")
       end
     end
 
@@ -244,7 +244,7 @@ RSpec.describe "CollectionFilterable" do
 
       expect { serializer.render }.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
-        expect(exception.message).to match(/can not be filtered by 'date\.to': is required/i)
+        expect(exception.message).to eq("The items collection can not be filtered by 'date.to': is required")
         expect(exception.parameter).to eq("filter[date][to]")
       end
     end

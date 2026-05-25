@@ -79,11 +79,12 @@ RSpec.describe "FilterableArticles", :rails, type: :request do
 
         expect(response).to have_http_status(:bad_request)
 
-        error = response.parsed_body["errors"].first
-        expect(error["code"]).to eq("invalid_filter_parameter")
-        expect(error["title"]).to eq("Invalid Filter Parameter")
-        expect(error["detail"]).to match(/can not be filtered by 'score': The provided value is invalid\./i)
-        expect(error["source"]).to eq("parameter" => "filter[score]")
+        expect(response.parsed_body["errors"].first).to match(
+          "code" => "invalid_filter_parameter",
+          "title" => "Invalid Filter Parameter",
+          "detail" => "The articles collection can not be filtered by 'score': The provided value is invalid.",
+          "source" => {"parameter" => "filter[score]"}
+        )
       end
 
       it "does not reflect the bad value in the response" do
@@ -99,10 +100,12 @@ RSpec.describe "FilterableArticles", :rails, type: :request do
 
         expect(response).to have_http_status(:bad_request)
 
-        error = response.parsed_body["errors"].first
-        expect(error["code"]).to eq("invalid_filter_parameter")
-        expect(error["detail"]).to match(/can not be filtered by 'unknown'/)
-        expect(error["source"]).to eq("parameter" => "filter[unknown]")
+        expect(response.parsed_body["errors"].first).to match(
+          "code" => "invalid_filter_parameter",
+          "title" => "Invalid Filter Parameter",
+          "detail" => "The articles collection can not be filtered by 'unknown'",
+          "source" => {"parameter" => "filter[unknown]"}
+        )
       end
     end
   end
