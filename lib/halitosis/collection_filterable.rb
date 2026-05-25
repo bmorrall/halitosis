@@ -72,7 +72,7 @@ module Halitosis
         known_names = self.class.fields.for_type(CollectionFilterable::Field).map { |f| f.name.to_s }
         unknown = pairs.map(&:first) - known_names
 
-        raise_unknown_filter_error(unknown.first) if unknown.any?
+        raise_invalid_filter_parameter(unknown.first) if unknown.any?
 
         pairs.each do |name, value|
           field = self.class.fields.find_by_name(CollectionFilterable::Field, name)
@@ -81,7 +81,7 @@ module Halitosis
           allowed = field.compound_keys.map(&:to_s)
           unknown_sub = value.keys.map(&:to_s) - allowed
 
-          raise_unknown_filter_error("#{name}.#{unknown_sub.first}") if unknown_sub.any?
+          raise_invalid_filter_parameter("#{name}.#{unknown_sub.first}") if unknown_sub.any?
         end
       end
 
@@ -109,56 +109,14 @@ module Halitosis
           result, errors = field.apply_filter(context, context.collection, resolved_value)
 
           if errors&.any?
-            raise_custom_filter_error(errors)
+            field_name, messages = errors.first
+            raise_invalid_filter_parameter(field_name, messages.first)
           elsif result.nil?
-            raise_invalid_filter_value_error(field.name)
+            raise_invalid_filter_parameter(field.name, "The provided value is invalid.")
           end
 
           context.collection = result
         end
-      end
-
-      # Raise an error with a user-provided message for a declared filter field.
-      # Reads the field name and first message directly from the +errors+ object,
-      # allowing the block to override the field name via +errors.field_name=+.
-      #
-      # @param errors [Halitosis::FilterErrors]
-      # @raise [Halitosis::InvalidFilterParameter]
-      #
-      def raise_custom_filter_error(errors)
-        resource_label = [self.class.resource_type, "collection"].compact.join(" ")
-        field_name, messages = errors.first
-        raise Halitosis::InvalidFilterParameter.new(
-          "The #{resource_label} can not be filtered by '#{field_name}': #{messages.first}",
-          field_name
-        )
-      end
-
-      # Raise an error for an unknown (user-supplied) filter key.
-      # The key is sanitized before interpolation.
-      #
-      # @param raw_key [String] the unrecognised key from the request
-      # @raise [Halitosis::InvalidFilterParameter]
-      #
-      def raise_unknown_filter_error(raw_key)
-        safe_key = raw_key.to_s.gsub(/[^\w.]/, "")[0, 50]
-        resource_label = [self.class.resource_type, "collection"].compact.join(" ")
-        raise Halitosis::InvalidFilterParameter.new(
-          "The #{resource_label} can not be filtered by '#{safe_key}'"
-        )
-      end
-
-      # Raise an error when a declared filter field returns nil (invalid value).
-      # The field name is a declared symbol so safe to interpolate directly.
-      #
-      # @param field_name [Symbol] the declared filter field name
-      # @raise [Halitosis::InvalidFilterParameter]
-      #
-      def raise_invalid_filter_value_error(field_name)
-        resource_label = [self.class.resource_type, "collection"].compact.join(" ")
-        raise Halitosis::InvalidFilterParameter.new(
-          "The #{resource_label} can not be filtered by '#{field_name}' with the provided value"
-        )
       end
     end
   end

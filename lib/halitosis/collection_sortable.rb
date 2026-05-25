@@ -102,26 +102,14 @@ module Halitosis
       def apply_sort(context, collection, name, ascending)
         sort_token = ascending ? name : "-#{name}"
         field = self.class.fields.find_by_name(CollectionSortable::Field, name)
-        raise_sort_error(sort_token) unless field
+        raise_invalid_sort_parameter(sort_token) unless field
 
         result = field.apply_sort(context, collection, ascending)
-        raise_sort_error(sort_token) if result.nil?
+        raise_invalid_sort_parameter(sort_token) if result.nil?
 
         result
       end
 
-      # Build and raise an InvalidSortParameter for the given sort token.
-      #
-      # @param sort_token [String] the sort token, e.g. "name" or "-name"
-      #
-      # @raise [Halitosis::InvalidSortParameter]
-      #
-      def raise_sort_error(sort_token)
-        resource_label = [self.class.resource_type, "collection"].compact.join(" ")
-        raise Halitosis::InvalidSortParameter.new(
-          "The #{resource_label} can not be sorted by '#{sort_token}'"
-        )
-      end
     end
   end
 end

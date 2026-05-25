@@ -30,14 +30,14 @@ Always add a blank line after a `raise`, a call to a method that raises (e.g. `r
 
 ```ruby
 # Correct
-raise_unknown_filter_error(key)
+raise_invalid_filter_parameter(key)
 
 result
 ```
 
 ```ruby
 # Incorrect
-raise_unknown_filter_error(key)
+raise_invalid_filter_parameter(key)
 result
 ```
 

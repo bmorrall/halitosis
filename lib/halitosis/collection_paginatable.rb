@@ -175,9 +175,7 @@ module Halitosis
         return unless field
 
         if field.apply_pagination(context).nil?
-          resource_label = [self.class.resource_type, "collection"].compact.join(" ")
-          raise Halitosis::InvalidPaginationParameter,
-            "The #{resource_label} can not be paginated with the provided values"
+          raise_invalid_pagination_parameter
         end
 
         field.process(context, context.collection) unless field.fetch_result(context)
@@ -196,19 +194,7 @@ module Halitosis
 
         Integer(value)
       rescue ArgumentError, TypeError
-        raise_invalid_param_error(param)
-      end
-
-      # Raise an error for an unparseable pagination parameter.
-      #
-      # @param param [Symbol] the parameter name (e.g. +page[number]+ or +page[size]+)
-      # @raise [Halitosis::InvalidPaginationParameter]
-      #
-      def raise_invalid_param_error(param)
-        resource_label = [self.class.resource_type, "collection"].compact.join(" ")
-        raise Halitosis::InvalidPaginationParameter.new(
-          "The #{resource_label} can not be paginated with the provided '#{param}' value"
-        )
+        raise_invalid_pagination_parameter(param)
       end
 
       protected

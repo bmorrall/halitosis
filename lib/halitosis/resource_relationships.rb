@@ -132,8 +132,7 @@ module Halitosis
 
         return if opts.none?
 
-        resource_label = [self.class.resource_type, "resource"].compact.join(" ")
-        raise Halitosis::InvalidIncludeParameter.new("The #{resource_label} does not have a `#{opts.first}` relationship path.")
+        raise_invalid_include_parameter(opts.first)
       end
     end
   end
