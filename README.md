@@ -739,6 +739,55 @@ relationship :comments, unless: proc { article.comments.empty? } do
 end
 ```
 
+### Sparse fieldsets
+
+Pass a `fields:` hash to limit which attributes are returned, scoped by resource type. This follows the [JSON:API sparse fieldsets](https://jsonapi.org/format/#fetching-sparse-fieldsets) convention and uses the resource type declared with `resource` as the key:
+
+```ruby
+# Only return :title and :body for articles
+ArticleSerializer.new(article, fields: { article: "title,body" }).render
+# => { article: { title: "Hello World", body: "..." } }
+
+# Array input is also accepted
+ArticleSerializer.new(article, fields: { article: ["title", "body"] }).render
+```
+
+When the `fields:` key does not match the serializer's resource type, all attributes are returned unchanged. An empty string suppresses all attributes for that type:
+
+```ruby
+# Different type — no filtering applied
+ArticleSerializer.new(article, fields: { people: "name" }).render
+# => { article: { id: 1, title: "Hello World", body: "..." } }
+
+# Empty string — all attributes hidden
+ArticleSerializer.new(article, fields: { article: "" }).render
+# => { article: {} }
+```
+
+Sparse fieldsets apply independently to each resource in the render tree. When relationships are included, pass multiple type entries to filter each level:
+
+```ruby
+ArticleSerializer.new(article,
+  include: "author",
+  fields: { article: "title", author: "name" }
+).render
+# => {
+#      article: {
+#        title: "Hello World",
+#        _relationships: { author: { name: "Alice" } }
+#      }
+#    }
+```
+
+The `fields:` param is forwarded automatically when using `renderable:` in a Rails controller — clients can request sparse fieldsets via `?fields[article]=title,body` without any extra controller code. It is also included in `query_params` so self links reflect the active fieldset:
+
+```ruby
+paginate_links do |page_number, query_params|
+  articles_url(query_params.merge(page: { number: page_number }))
+end
+# Self link: /articles?fields[article]=title&page[number]=1
+```
+
 ### Links
 
 Simple link:
