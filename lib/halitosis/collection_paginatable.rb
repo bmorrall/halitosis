@@ -22,6 +22,8 @@ module Halitosis
       base.send :include, InstanceMethods
       base.send :include, CollectionPaginatable::Links
       base.send :include, CollectionPaginatable::Meta
+      base.send :include, CollectionPaginatable::CursorLinks
+      base.send :include, CollectionPaginatable::CursorMeta
     end
 
     module ClassMethods
@@ -133,6 +135,79 @@ module Halitosis
         end
       end
 
+      # Declare cursor-based pagination for this collection serializer.
+      #
+      # The block receives four arguments: +collection+, +after+ (String or nil),
+      # +before+ (String or nil), and +size+ (Integer or nil). It should return
+      # either the paginated collection directly, or a +Halitosis::CursorResult+
+      # wrapping the collection with +next_cursor+ and/or +prev_cursor+ values.
+      #
+      # +default_size+ sets the default page size when no +page[:size]+ is provided
+      # at render time. Omit to require explicit sizing at render time.
+      #
+      # Cursor values are extracted from +page[:after]+ and +page[:before]+ in the
+      # render context, following the JSON:API recommendation.
+      #
+      # Cannot be used on the same serializer as +paginate_by_page+ or +paginate_with+.
+      #
+      # @param default_size [Integer, nil] default number of items per page
+      #
+      # @example
+      #   paginate_by_cursor default_size: 25 do |collection, after, _before, size|
+      #     records = collection.where("id > ?", after || 0).limit(size + 1)
+      #     has_more = records.size > size
+      #     records = records.first(size)
+      #
+      #     Halitosis::CursorResult.new(
+      #       records,
+      #       next_cursor: has_more ? records.last.id.to_s : nil
+      #     )
+      #   end
+      #
+      def paginate_by_cursor(default_size: nil, &procedure)
+        unless procedure
+          raise InvalidField, "#{name} paginate_by_cursor must be defined with a block"
+        end
+
+        if fields.singleton(CollectionPaginatable::Field)
+          raise InvalidField, "#{name} pagination is already defined"
+        end
+
+        if fields.singleton(CollectionPaginatable::CursorField)
+          raise InvalidField, "#{name} cursor pagination is already defined"
+        end
+
+        user_procedure = procedure
+        resolved_default_size = default_size
+
+        outer = lambda do |context, collection, page_params|
+          after = page_params[:after]
+          before = page_params[:before]
+          size = parse_page_integer(page_params[:size], default: resolved_default_size, param: :"page[size]")
+
+          result = context.call_instance(collection, after, before, size, user_procedure)
+          return nil if result.nil?
+
+          paginated = if result.is_a?(Halitosis::CursorResult)
+            context.store_local(:collection_cursor_result, result)
+            result.collection
+          else
+            result
+          end
+
+          qp = {size: size}
+          qp[:after] = after if after
+          qp[:before] = before if before
+          context.register_query_params(page: qp)
+
+          paginated
+        end
+
+        field = CollectionPaginatable::CursorField.new(:cursor_pagination, {}, outer)
+        fields.add_singleton(field)
+        field
+      end
+
       private
 
       def add_pagination_field(adapter = nil, &block)
@@ -171,14 +246,17 @@ module Halitosis
       # @param context [Halitosis::Context] the render context
       #
       def apply_pagination!(context)
-        field = self.class.fields.singleton(CollectionPaginatable::Field)
-        return unless field
+        if (field = self.class.fields.singleton(CollectionPaginatable::Field))
+          if field.apply_pagination(context).nil?
+            raise_invalid_pagination_parameter
+          end
 
-        if field.apply_pagination(context).nil?
-          raise_invalid_pagination_parameter
+          field.process(context, context.collection) unless field.fetch_result(context)
+        elsif (cursor_field = self.class.fields.singleton(CollectionPaginatable::CursorField))
+          if cursor_field.apply_pagination(context).nil?
+            raise_invalid_pagination_parameter
+          end
         end
-
-        field.process(context, context.collection) unless field.fetch_result(context)
       end
 
       # Parse a value to a positive Integer, falling back to the default on nil.
@@ -209,3 +287,7 @@ require "halitosis/collection_paginatable/pagy_helper"
 require "halitosis/collection_paginatable/adapters"
 require "halitosis/collection_paginatable/links"
 require "halitosis/collection_paginatable/meta"
+require "halitosis/collection_paginatable/cursor_result"
+require "halitosis/collection_paginatable/cursor_field"
+require "halitosis/collection_paginatable/cursor_links"
+require "halitosis/collection_paginatable/cursor_meta"

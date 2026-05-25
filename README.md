@@ -682,6 +682,129 @@ paginate_meta only: %i[current_page total_pages]
 
 `paginate_meta` and `paginate_links` may be declared together on the same serializer. In that case both `_links` (URLs) and `_meta` (page numbers) are emitted. `paginate_meta` also merges with any other `root_meta` fields on the serializer.
 
+### Cursor-based pagination
+
+Use `paginate_by_cursor` when page-number pagination is not appropriate — for example, when paginating a large, frequently-updated dataset where consistent forward/backward traversal is more important than random access.
+
+Declare `paginate_by_cursor` with a block that receives four arguments: `collection`, `after` (opaque cursor string or `nil`), `before` (opaque cursor string or `nil`), and `size` (Integer or `nil` when no `default_size` was set). The block must return either the paginated collection directly, or a `Halitosis::CursorResult` that wraps the collection together with optional `next_cursor` and `prev_cursor` values:
+
+```ruby
+class ArticlesSerializer
+  include Halitosis
+
+  collection :articles do |collection|
+    collection.map { |article| ArticleSerializer.new(article) }
+  end
+
+  paginate_by_cursor default_size: 25 do |collection, after, _before, size|
+    # Decode the cursor (here a simple integer id) and fetch one extra record
+    # to determine whether a next page exists.
+    start_id = after&.to_i || 0
+    records = collection.where("id > ?", start_id).order(:id).limit(size + 1)
+    has_more = records.size > size
+    records = records.first(size)
+
+    Halitosis::CursorResult.new(
+      records,
+      next_cursor: has_more ? records.last.id.to_s : nil
+    )
+  end
+end
+```
+
+Pagination is controlled by a nested `page:` hash:
+
+| Key | Default | Description |
+| --- | --- | --- |
+| `page[:after]` | `nil` | Opaque cursor — fetch items _after_ this position |
+| `page[:before]` | `nil` | Opaque cursor — fetch items _before_ this position |
+| `page[:size]` | `default_size` | Items per page |
+
+```ruby
+# First page
+ArticlesSerializer.new(Article.all).render
+
+# Next page using a cursor returned from the previous response
+ArticlesSerializer.new(Article.all, page: { after: "42" }).render
+
+# Custom page size
+ArticlesSerializer.new(Article.all, page: { after: "42", size: 10 }).render
+```
+
+When using `render_with_params` (the Rails integration helper), `page[after]`, `page[before]`, and `page[size]` are accepted as query parameters and forwarded automatically.
+
+If `page[:size]` cannot be coerced to an integer, or the block returns `nil`, an `InvalidPaginationParameter` is raised (mapped to `400 Bad Request` by the Rails integration).
+
+`paginate_by_cursor` cannot be combined with `paginate_by_page` or `paginate_with` on the same serializer.
+
+#### Cursor links
+
+Use `cursor_links` to emit `prev`/`next` cursor-based navigation links. The block receives the cursor string for that direction (or `nil` when unavailable) and the active `query_params` hash:
+
+```ruby
+paginate_by_cursor default_size: 25 do |collection, after, _before, size|
+  # ... return CursorResult ...
+end
+
+cursor_links do |cursor, query_params|
+  size = query_params.dig(:page, :size)
+  cursor ? articles_url(page: { after: cursor, size: size }) : nil
+end
+```
+
+Both `prev` and `next` are always present in `_links` as Link Objects. Unavailable cursors — `prev` on the first page, `next` on the last — are emitted as `null`.
+
+Pass `only:` to emit a subset of keys:
+
+```ruby
+cursor_links only: %i[next] do |cursor, query_params|
+  cursor ? articles_url(page: { after: cursor }) : nil
+end
+```
+
+```json
+{
+  "articles": [...],
+  "_links": {
+    "prev": null,
+    "next": { "href": "/articles?page[after]=abc123&page[size]=25" }
+  }
+}
+```
+
+`cursor_links` must be declared after `paginate_by_cursor`.
+
+#### Cursor meta
+
+Use `cursor_meta` to emit `next_cursor` and `prev_cursor` as root-level `_meta` keys. No block is required:
+
+```ruby
+paginate_by_cursor default_size: 25 do |collection, after, _before, size|
+  # ... return CursorResult ...
+end
+
+cursor_meta
+```
+
+This produces a `_meta` hash at the root level:
+
+```json
+{
+  "articles": [...],
+  "_meta": { "next_cursor": "abc123", "prev_cursor": null }
+}
+```
+
+Pass `only:` to emit a subset of keys:
+
+```ruby
+cursor_meta only: %i[next_cursor]
+```
+
+`cursor_meta` must be declared after `paginate_by_cursor`.
+
+`cursor_meta` and `cursor_links` may be declared together on the same serializer.
+
 ### Identifiers
 
 Identifiers are rendered before other attributes and are typically used for primary keys:

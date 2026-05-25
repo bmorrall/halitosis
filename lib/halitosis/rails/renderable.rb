@@ -9,7 +9,7 @@ module Halitosis
     #
     def render_with_params(params)
       page = params[:page]
-      page_hash = page.respond_to?(:each_pair) ? {number: page[:number], size: page[:size]} : {number: page, size: params[:per_page]}
+      page_hash = page.respond_to?(:each_pair) ? {number: page[:number], size: page[:size], after: page[:after], before: page[:before]} : {number: page, size: params[:per_page]}
 
       render(
         fields: params[:fields],
