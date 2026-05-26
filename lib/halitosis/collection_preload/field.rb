@@ -10,7 +10,7 @@ module Halitosis
       # Override: a procedure is always required.
       #
       def validate
-        raise InvalidField, "preload_collection requires a block" unless procedure
+        raise InvalidField, "default_preload requires a block" unless procedure
 
         true
       end

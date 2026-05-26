@@ -423,7 +423,7 @@ Namespaces can be nested to any depth. A block with no arguments opens a namespa
 
 ### Bulk collection preload
 
-Use `preload_collection` to run a single block against the raw collection immediately after it is assigned — before filtering, sorting, and pagination. This is the place to call `includes` unconditionally on every render:
+Use `default_preload` to run a single block against the raw collection immediately after it is assigned — before filtering, sorting, and pagination. This is the place to call `includes` unconditionally on every render:
 
 ```ruby
 class ArticlesSerializer
@@ -433,13 +433,13 @@ class ArticlesSerializer
     collection.map { |article| ArticleSerializer.new(article) }
   end
 
-  preload_collection { |collection| collection.includes(:author, :tags) }
+  default_preload { |collection| collection.includes(:author, :tags) }
 end
 ```
 
 The block receives the current collection and must return the updated collection. Returning `nil` leaves the collection unchanged.
 
-`preload_collection` only fires for root-level renders — it is skipped when the serializer is used as a nested relationship inside another serializer.
+`default_preload` only fires for root-level renders — it is skipped when the serializer is used as a nested relationship inside another serializer.
 
 Use `allow_include` instead when the preload should only fire for specific requested include paths.
 

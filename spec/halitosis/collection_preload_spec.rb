@@ -13,21 +13,21 @@ RSpec.describe Halitosis::CollectionPreload do
     end
   end
 
-  describe ".preload_collection" do
+  describe ".default_preload" do
     it "raises InvalidField when no block is given" do
-      expect { klass.preload_collection }
+      expect { klass.default_preload }
         .to raise_error(Halitosis::InvalidField, /requires a block/)
     end
 
     it "raises InvalidField when called twice" do
-      klass.preload_collection { |coll| coll }
+      klass.default_preload { |coll| coll }
 
-      expect { klass.preload_collection { |coll| coll } }
+      expect { klass.default_preload { |coll| coll } }
         .to raise_error(Halitosis::InvalidField)
     end
 
     it "registers a CollectionPreload::Field singleton" do
-      klass.preload_collection { |coll| coll }
+      klass.default_preload { |coll| coll }
 
       expect(klass.fields.singleton(Halitosis::CollectionPreload::Field))
         .to be_a(Halitosis::CollectionPreload::Field)
@@ -36,7 +36,7 @@ RSpec.describe Halitosis::CollectionPreload do
 
   describe "#build_context" do
     it "applies the preload block to the collection" do
-      klass.preload_collection { |coll| coll.first(2) }
+      klass.default_preload { |coll| coll.first(2) }
 
       ctx = klass.new(items).send(:build_context)
 
@@ -44,7 +44,7 @@ RSpec.describe Halitosis::CollectionPreload do
     end
 
     it "does not apply the preload for nested contexts" do
-      klass.preload_collection { |coll| coll.first(1) }
+      klass.default_preload { |coll| coll.first(1) }
 
       parent_ctx = Halitosis::Context.new(nil)
       ctx = klass.new(items).send(:build_context, parent: parent_ctx)
@@ -53,7 +53,7 @@ RSpec.describe Halitosis::CollectionPreload do
     end
 
     it "does not modify collection when the block returns nil" do
-      klass.preload_collection { |_coll| nil }
+      klass.default_preload { |_coll| nil }
 
       ctx = klass.new(items).send(:build_context)
 
@@ -63,7 +63,7 @@ RSpec.describe Halitosis::CollectionPreload do
     it "runs before filtering" do
       call_order = []
 
-      klass.preload_collection do |coll|
+      klass.default_preload do |coll|
         call_order << :preload
         coll
       end
@@ -81,7 +81,7 @@ RSpec.describe Halitosis::CollectionPreload do
     it "runs before sorting" do
       call_order = []
 
-      klass.preload_collection do |coll|
+      klass.default_preload do |coll|
         call_order << :preload
         coll
       end
