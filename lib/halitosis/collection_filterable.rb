@@ -151,7 +151,8 @@ module Halitosis
           default_value = field.resolve_default(context)
           next if default_value.nil?
 
-          effective_filter = HashUtil.deep_merge(effective_filter, nest_filter_entry(field.name.to_s, default_value)) unless effective_filter.nil?
+          effective_filter ||= {}
+          effective_filter = HashUtil.deep_merge(effective_filter, nest_filter_entry(field.name.to_s, default_value))
 
           resolved_value = (field.compound? && default_value.respond_to?(:transform_keys)) ? default_value.transform_keys(&:to_sym) : default_value
 

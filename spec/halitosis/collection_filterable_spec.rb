@@ -698,7 +698,7 @@ RSpec.describe Halitosis::CollectionFilterable do
       expect(context.collection).to eq(items)
     end
 
-    it "does not register the default value in query_params" do
+    it "registers the default value in query_params" do
       default_klass = Class.new do
         include Halitosis
 
@@ -713,7 +713,7 @@ RSpec.describe Halitosis::CollectionFilterable do
 
       context = render_context(default_klass.new(items))
 
-      expect(context.query_params).to eq({})
+      expect(context.query_params[:filter]).to eq(name: "Alice")
     end
 
     it "includes default values in query_params alongside user-provided filters" do
