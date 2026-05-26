@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Halitosis
-  # Provides a +preload_collection+ DSL for collection serializers that runs
+  # Provides a +default_preload+ DSL for collection serializers that runs
   # a single block against the working collection immediately after
   # +build_context+ seeds it — before filtering, sorting, and pagination.
   #
@@ -9,7 +9,7 @@ module Halitosis
   # are skipped.
   #
   # @example
-  #   preload_collection { |collection| collection.includes(:author) }
+  #   default_preload { |collection| collection.includes(:author) }
   #
   module CollectionPreload
     def self.included(base)
@@ -28,7 +28,7 @@ module Halitosis
       #
       # @raise [Halitosis::InvalidField] if no block is given, or if called twice
       #
-      def preload_collection(&procedure)
+      def default_preload(&procedure)
         fields.add_singleton(CollectionPreload::Field.new(procedure))
 
         nil
