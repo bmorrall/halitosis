@@ -578,4 +578,252 @@ RSpec.describe Halitosis::CollectionFilterable do
       expect(context.query_params[:filter]).to eq(user: {name: "Alice"})
     end
   end
+
+  describe "default: option" do
+    it "applies a primitive default when no filter param is provided" do
+      default_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :name, default: "Alice" do |collection, value|
+          collection.select { |i| i[:name] == value }
+        end
+      end
+
+      context = render_context(default_klass.new(items))
+
+      expect(context.collection).to eq([{name: "Alice", score: 1}, {name: "Alice", score: 3}])
+    end
+
+    it "applies a proc default called in serializer instance context" do
+      default_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :name, default: -> { preferred_name } do |collection, value|
+          collection.select { |i| i[:name] == value }
+        end
+
+        def preferred_name
+          "Bob"
+        end
+      end
+
+      context = render_context(default_klass.new(items))
+
+      expect(context.collection).to eq([{name: "Bob", score: 2}])
+    end
+
+    it "applies a symbol default by calling the named method on the serializer" do
+      default_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :name, default: :default_name do |collection, value|
+          collection.select { |i| i[:name] == value }
+        end
+
+        def default_name
+          "Alice"
+        end
+      end
+
+      context = render_context(default_klass.new(items))
+
+      expect(context.collection).to eq([{name: "Alice", score: 1}, {name: "Alice", score: 3}])
+    end
+
+    it "does not apply the default when the filter param is explicitly provided" do
+      default_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :name, default: "Alice" do |collection, value|
+          collection.select { |i| i[:name] == value }
+        end
+      end
+
+      context = render_context(default_klass.new(items, filter: {name: "Bob"}))
+
+      expect(context.collection).to eq([{name: "Bob", score: 2}])
+    end
+
+    it "skips applying the default when the resolved value is nil" do
+      default_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :name, default: -> {} do |collection, value|
+          collection.select { |i| i[:name] == value }
+        end
+      end
+
+      context = render_context(default_klass.new(items))
+
+      expect(context.collection).to eq(items)
+    end
+
+    it "does not register the default value in query_params" do
+      default_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :name, default: "Alice" do |collection, value|
+          collection.select { |i| i[:name] == value }
+        end
+      end
+
+      context = render_context(default_klass.new(items))
+
+      expect(context.query_params).to eq({})
+    end
+
+    it "includes default values in query_params alongside user-provided filters" do
+      range_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :start, default: 1 do |collection, value|
+          collection.select { |i| i[:score] >= value }
+        end
+
+        filterable_by :end, default: 3 do |collection, value|
+          collection.select { |i| i[:score] <= value }
+        end
+      end
+
+      context = render_context(range_klass.new(items, filter: {start: 2}))
+
+      expect(context.query_params[:filter]).to eq(start: 2, end: 3)
+    end
+
+    it "includes nil in query_params when the user explicitly provides nil for a filter" do
+      range_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :start, default: 1 do |collection, value|
+          value.nil? ? collection : collection.select { |i| i[:score] >= value }
+        end
+
+        filterable_by :end, default: 3 do |collection, value|
+          collection.select { |i| i[:score] <= value }
+        end
+      end
+
+      context = render_context(range_klass.new(items, filter: {start: nil}))
+
+      expect(context.query_params[:filter]).to eq(start: nil, end: 3)
+    end
+
+    it "passes a symbolized hash to a compound filter (keys:) default" do
+      dated_items = [
+        {name: "Alice", date: "2024-01-15"},
+        {name: "Bob", date: "2024-06-01"},
+        {name: "Carol", date: "2024-09-20"}
+      ]
+
+      default_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :period, keys: [:from, :to], default: {from: "2024-01-01", to: "2024-06-30"} do |collection, value|
+          collection.select { |i| i[:date] >= value[:from] && i[:date] <= value[:to] } # rubocop:disable Style/ComparableBetween
+        end
+      end
+
+      context = render_context(default_klass.new(dated_items))
+
+      expect(context.collection).to eq([{name: "Alice", date: "2024-01-15"}, {name: "Bob", date: "2024-06-01"}])
+    end
+
+    it "does not apply the compound default when the filter param is explicitly provided" do
+      dated_items = [
+        {name: "Alice", date: "2024-01-15"},
+        {name: "Bob", date: "2024-06-01"}
+      ]
+
+      default_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :period, keys: [:from, :to], default: {from: "2024-01-01", to: "2024-06-30"} do |collection, value|
+          collection.select { |i| i[:date] >= value[:from] && i[:date] <= value[:to] } # rubocop:disable Style/ComparableBetween
+        end
+      end
+
+      context = render_context(default_klass.new(dated_items, filter: {period: {from: "2024-05-01", to: "2024-12-31"}}))
+
+      expect(context.collection).to eq([{name: "Bob", date: "2024-06-01"}])
+    end
+
+    it "raises InvalidFilterParameter when the default filter block adds errors" do
+      default_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :name, default: "bad" do |collection, value, errors|
+          errors.add("must be 'Alice' or 'Bob'")
+          nil
+        end
+      end
+
+      expect { render_context(default_klass.new(items)) }.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
+        expect(exception.message).to match(/can not be filtered by 'name': must be 'Alice' or 'Bob'/)
+      end
+    end
+
+    it "raises InvalidFilterParameter when the default filter block returns nil without errors" do
+      default_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :name, default: "bad" do |_collection, _value|
+          nil
+        end
+      end
+
+      expect { render_context(default_klass.new(items)) }.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
+        expect(exception.message).to match(/can not be filtered by 'name': The provided value is invalid/)
+      end
+    end
+  end
 end

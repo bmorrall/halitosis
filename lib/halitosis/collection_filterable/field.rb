@@ -25,6 +25,21 @@ module Halitosis
         Array(options[:keys]).map(&:to_sym)
       end
 
+      def has_default?
+        options.key?(:default)
+      end
+
+      # Resolve the default filter value in serializer instance context.
+      # Supports Proc/lambda (called via instance_exec), Symbol (method call),
+      # or any primitive (returned as-is).
+      #
+      # @param context [Halitosis::Context]
+      # @return [Object] the resolved default value
+      #
+      def resolve_default(context)
+        context.call_instance(options[:default])
+      end
+
       def apply_filter(context, collection, value)
         if procedure.arity == 3
           errors = FilterErrors.new(name, prefix: (compound? ? name.to_s : nil))
