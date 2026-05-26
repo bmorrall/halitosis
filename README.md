@@ -335,7 +335,7 @@ def default_status
 end
 ```
 
-When the client provides an explicit `filter[status]` param it takes full precedence — the default is ignored. When the resolved default is `nil`, the filter is skipped entirely and the collection passes through unchanged. Default filters are not included in `query_params`, so self and pagination links are not affected.
+When the client provides an explicit `filter[status]` param it takes full precedence — the default is ignored. When the resolved default is `nil`, the filter is skipped entirely and the collection passes through unchanged. Default filter values are included in `query_params` alongside any user-supplied filters, so self and pagination links automatically reflect the active defaults.
 
 For compound filters (`keys:`), pass a hash as the default:
 
