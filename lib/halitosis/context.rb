@@ -150,15 +150,6 @@ module Halitosis
       @local&.[](key)
     end
 
-    # Returns the user-facing render params for this context (filter, sort,
-    # page, include, fields). Intended for use in precheck blocks.
-    #
-    # @return [Hash]
-    #
-    def params
-      @options.slice(:filter, :sort, :page, :include, :fields)
-    end
-
     private
 
     attr_reader :instance, :options

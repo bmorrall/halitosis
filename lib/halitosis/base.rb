@@ -101,8 +101,8 @@ module Halitosis
       #
       def render(**options)
         context = build_context(options)
-        run_prechecks!(context) if context.root?
         before_render(context)
+        run_prechecks!(context) if context.root?
         result = render_with_context(context)
         if context.include_root?
           render_root(context.freeze, result)

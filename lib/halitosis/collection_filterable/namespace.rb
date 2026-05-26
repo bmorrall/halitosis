@@ -30,8 +30,14 @@ module Halitosis
       # @param name [Symbol, String]
       # @param options [Hash]
       #
-      def filterable_by(name, options = {}, &procedure)
+      def filterable_by(name, type_or_options = nil, options = {}, &procedure)
         full_name = "#{prefix}.#{name}"
+
+        if type_or_options.is_a?(Hash)
+          options = type_or_options
+        elsif !type_or_options.nil?
+          options = options.merge(type: type_or_options)
+        end
 
         case procedure&.arity
         when 0

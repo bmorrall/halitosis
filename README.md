@@ -347,6 +347,43 @@ end
 
 Sub-key validation only applies to client-supplied values — defaults bypass it and the hash is passed directly to the block. The block is responsible for handling whatever keys the default contains.
 
+#### Type casting
+
+Pass a type as the second argument to `filterable_by` to have the raw string value cast before it reaches the block. Any ActiveModel type name (`:integer`, `:date`, `:float`, `:boolean`, etc.) or any object responding to `cast` is accepted:
+
+```ruby
+filterable_by :published_on, :date do |collection, value|
+  collection.where(published_on: value)
+end
+
+filterable_by :score, :integer do |collection, value|
+  collection.where("score >= ?", value)
+end
+```
+
+The block receives the already-cast value (`Date`, `Integer`, etc.). If the value cannot be cast (i.e. the type returns `nil` for it), `InvalidFilterParameter` is raised automatically — you do not need to handle the error inside the block.
+
+A `nil` filter value is passed through unchanged without raising.
+
+You can also pass a custom type object directly:
+
+```ruby
+my_type = MyApp::CustomType.new
+filterable_by :tags, my_type do |collection, value|
+  collection.where(tags: value)
+end
+```
+
+Type casting can be combined with `keys:` — the type is applied to each sub-key value independently. If any sub-key value cannot be cast, `InvalidFilterParameter` is raised naming that specific sub-key (e.g. `filter[period][to]`):
+
+```ruby
+filterable_by :period, :date, keys: [:from, :to] do |collection, value|
+  collection.where(created_at: value[:from]..value[:to])
+end
+```
+
+`nil` sub-key values (omitted keys) are passed through unchanged without raising.
+
 #### Rejecting invalid values
 
 Return `nil` from a `filterable_by` block to signal that the provided value cannot be applied. Halitosis will raise `InvalidFilterParameter` naming the field, without reflecting the user-supplied value back in the message:
