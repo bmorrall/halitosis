@@ -310,6 +310,43 @@ ArticlesSerializer.new(Article.all, filter: { name: "Alice", published: "true" }
 
 Requesting a key that has not been declared with `filterable_by` raises `Halitosis::InvalidFilterParameter`, which Rails maps to a `400 Bad Request` response.
 
+#### Default filter value
+
+Use `default:` to apply a filter automatically when the client does not supply that filter key. The value can be a primitive, a lambda called in serializer instance context, or a symbol naming a method:
+
+```ruby
+# Primitive — always filter to published unless overridden
+filterable_by :status, default: "published" do |collection, value|
+  collection.where(status: value)
+end
+
+# Lambda — resolved at render time in serializer instance context
+filterable_by :status, default: -> { current_user.preferred_status } do |collection, value|
+  collection.where(status: value)
+end
+
+# Symbol — calls the named method on the serializer instance
+filterable_by :status, default: :default_status do |collection, value|
+  collection.where(status: value)
+end
+
+def default_status
+  "published"
+end
+```
+
+When the client provides an explicit `filter[status]` param it takes full precedence — the default is ignored. When the resolved default is `nil`, the filter is skipped entirely and the collection passes through unchanged. Default filters are not included in `query_params`, so self and pagination links are not affected.
+
+For compound filters (`keys:`), pass a hash as the default:
+
+```ruby
+filterable_by :period, keys: [:from, :to], default: { from: "2024-01-01", to: "2024-12-31" } do |collection, value|
+  collection.where(date: value[:from]..value[:to])
+end
+```
+
+Sub-key validation only applies to client-supplied values — defaults bypass it and the hash is passed directly to the block. The block is responsible for handling whatever keys the default contains.
+
 #### Rejecting invalid values
 
 Return `nil` from a `filterable_by` block to signal that the provided value cannot be applied. Halitosis will raise `InvalidFilterParameter` naming the field, without reflecting the user-supplied value back in the message:

@@ -96,16 +96,39 @@ module Halitosis
           .map { |f| f.name.to_s }
         pairs = FilterUtil.parse_filter_param(filter_param, compound_names: compound_names)
 
-        return if pairs.empty?
+        unless pairs.empty?
+          validate_filters!(pairs)
 
-        validate_filters!(pairs)
+          pairs.each do |name, value|
+            field = self.class.fields.find_by_name(CollectionFilterable::Field, name)
+            resolved_value = (field.compound? && value.respond_to?(:transform_keys)) ? value.transform_keys(&:to_sym) : value
 
-        context.register_query_params(filter: HashUtil.symbolize_hash(filter_param))
+            result, errors = field.apply_filter(context, context.collection, resolved_value)
 
-        pairs.each do |name, value|
-          field = self.class.fields.find_by_name(CollectionFilterable::Field, name)
-          resolved_value = (field.compound? && value.respond_to?(:transform_keys)) ? value.transform_keys(&:to_sym) : value
+            if errors&.any?
+              field_name, messages = errors.first
+              raise_invalid_filter_parameter(field_name, messages.first)
+            elsif result.nil?
+              raise_invalid_filter_parameter(field.name, "The provided value is invalid.")
+            end
 
+            context.collection = result
+          end
+        end
+
+        requested_names = pairs.map(&:first).to_set
+        effective_filter = pairs.empty? ? nil : (HashUtil.symbolize_hash(filter_param) || {})
+
+        self.class.fields.for_type(CollectionFilterable::Field).each do |field|
+          next unless field.has_default?
+          next if requested_names.include?(field.name.to_s)
+
+          default_value = field.resolve_default(context)
+          next if default_value.nil?
+
+          effective_filter[field.name.to_sym] = default_value unless effective_filter.nil?
+
+          resolved_value = (field.compound? && default_value.respond_to?(:transform_keys)) ? default_value.transform_keys(&:to_sym) : default_value
           result, errors = field.apply_filter(context, context.collection, resolved_value)
 
           if errors&.any?
@@ -117,6 +140,8 @@ module Halitosis
 
           context.collection = result
         end
+
+        context.register_query_params(filter: effective_filter) unless effective_filter.nil?
       end
     end
   end
