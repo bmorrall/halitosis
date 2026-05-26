@@ -46,7 +46,7 @@ RSpec.describe "Halitosis::ErrorHandling", :rails, type: :request do
           "code" => "invalid_pagination_parameter",
           "title" => "Invalid Pagination Parameter",
           "detail" => "The articles collection can not be paginated with the provided 'page[number]' value",
-          "source" => {"parameter" => "page"}
+          "source" => {"parameter" => "page[number]"}
         }
       ])
     end

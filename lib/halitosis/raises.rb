@@ -42,11 +42,12 @@ module Halitosis
     #
     def raise_invalid_pagination_parameter(param = nil, error_message = nil)
       safe_param = sanitize_parameter(param, /[^\w.\[\]]/)
-      base = safe_param ? "The #{resource_label} can not be paginated with the provided '#{safe_param}' value" :
-                          "The #{resource_label} can not be paginated with the provided values"
+      display_param = safe_param ? "page[#{safe_param}]" : nil
+      base = display_param ? "The #{resource_label} can not be paginated with the provided '#{display_param}' value" :
+                             "The #{resource_label} can not be paginated with the provided values"
       message = error_message ? "#{base}: #{error_message}" : base
 
-      raise Halitosis::InvalidPaginationParameter.new(message)
+      raise Halitosis::InvalidPaginationParameter.new(message, safe_param)
     end
 
     # Raise an +InvalidSortParameter+ error for a sort token.

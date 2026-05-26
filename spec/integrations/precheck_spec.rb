@@ -193,8 +193,8 @@ RSpec.describe "Precheck" do
         end
 
         expect(exception).to be_an_instance_of(Halitosis::InvalidPaginationParameter)
-        expect(exception.parameter).to eq("page")
-        expect(exception.message).to match(/can not be paginated with the provided 'size' value/i)
+        expect(exception.parameter).to eq("page[size]")
+        expect(exception.message).to match(/can not be paginated with the provided 'page\[size\]' value/i)
         expect(exception.message).to match(/must be less than 50/i)
       end
     end
