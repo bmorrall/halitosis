@@ -70,4 +70,30 @@ RSpec.describe "RootMeta" do
       expect(collection_klass.new([]).render[:_meta]).to eq(count: 0)
     end
   end
+
+  context "with a collection and a root meta block that receives the collection and query_params" do
+    let(:collection_klass) do
+      Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection
+        end
+
+        filterable_by :name do |collection, value|
+          collection.select { |i| i == value }
+        end
+
+        root_meta(:filter_summary) { |_collection, query_params| query_params[:filter]&.map { |k, v| "#{k}=#{v}" }&.join(", ") }
+      end
+    end
+
+    it "passes query_params to the root meta block" do
+      expect(collection_klass.new(["Alice"], filter: {name: "Alice"}).render[:_meta]).to eq(filter_summary: "name=Alice")
+    end
+
+    it "passes an empty hash when no query_params are set" do
+      expect(collection_klass.new(["Alice"]).render[:_meta]).to eq(filter_summary: nil)
+    end
+  end
 end

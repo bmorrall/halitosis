@@ -7,7 +7,7 @@ module Halitosis
 
       def call_procedure(context)
         if context.collection? && procedure&.arity&.nonzero?
-          context.call_instance(context.collection, procedure)
+          context.call_instance(context.collection, context.query_params, procedure)
         else
           super
         end

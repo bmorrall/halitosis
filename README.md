@@ -1337,9 +1337,9 @@ ArticlesSerializer.new(articles).render
 #    }
 ```
 
-#### Generating links with `query_params`
+#### Generating links and meta with `query_params`
 
-When a `root_link` (or `link`) block accepts arguments, collection serializers receive the current collection and the accumulated `query_params` hash; resource serializers receive only `query_params`. Both are optional — use whichever you need:
+When a `root_link`, `link`, or `root_meta` block accepts arguments, collection serializers receive the current collection and the accumulated `query_params` hash; resource serializers receive only `query_params`. Both are optional — use whichever you need:
 
 | Key | Contributed by | Shape |
 | --- | --- | --- |
