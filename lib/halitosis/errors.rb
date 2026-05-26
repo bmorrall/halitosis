@@ -121,8 +121,8 @@ module Halitosis
   end
 
   class InvalidPaginationParameter < InvalidQueryParameter
-    def initialize(message)
-      super(message, "page")
+    def initialize(message, sub_param = nil)
+      super(message, sub_param ? "page[#{sub_param}]" : "page")
     end
   end
 

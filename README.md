@@ -172,7 +172,7 @@ Multiple `precheck` declarations are run in registration order. Each must have a
 | --- | --- | --- |
 | `raise_invalid_filter_parameter(field_name, message = nil)` | `Halitosis::InvalidFilterParameter` | `"filter[field_name]"` |
 | `raise_invalid_sort_parameter(sort_token, message = nil)` | `Halitosis::InvalidSortParameter` | `"sort"` |
-| `raise_invalid_pagination_parameter(param = nil, message = nil)` | `Halitosis::InvalidPaginationParameter` | `"page"` |
+| `raise_invalid_pagination_parameter(param = nil, message = nil)` | `Halitosis::InvalidPaginationParameter` | `"page"` / `"page[param]"` |
 | `raise_invalid_include_parameter(relationship_path)` | `Halitosis::InvalidIncludeParameter` | `"include"` |
 
 All four error classes inherit from `Halitosis::InvalidQueryParameter < Halitosis::Error`. The Rails integration maps all of them to `400 Bad Request`.

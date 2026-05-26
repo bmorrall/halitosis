@@ -236,7 +236,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
       end.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidPaginationParameter)
         expect(exception.message).to match(/can not be paginated with the provided 'page\[number\]' value/i)
-        expect(exception.parameter).to eq("page")
+        expect(exception.parameter).to eq("page[number]")
       end
     end
 
@@ -248,7 +248,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
       end.to raise_error do |exception|
         expect(exception).to be_an_instance_of(Halitosis::InvalidPaginationParameter)
         expect(exception.message).to match(/can not be paginated with the provided 'page\[size\]' value/i)
-        expect(exception.parameter).to eq("page")
+        expect(exception.parameter).to eq("page[size]")
       end
     end
 

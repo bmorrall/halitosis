@@ -88,8 +88,8 @@ module Halitosis
         end
 
         add_pagination_field(adapter) do |context, collection, page_params|
-          number = parse_page_integer(page_params[:number], default: 1, param: :"page[number]")
-          size = parse_page_integer(page_params[:size], default: default_page_size, param: :"page[size]")
+          number = parse_page_integer(page_params[:number], default: 1, param: :number)
+          size = parse_page_integer(page_params[:size], default: default_page_size, param: :size)
 
           result = procedure.call(collection, number, size)
 
