@@ -6,6 +6,7 @@ RSpec.describe "WillPaginateArticles", :rails, :will_paginate, type: :request do
       create_table :articles, force: true do |t|
         t.string :name
         t.integer :score
+        t.date :published_on
       end
     end
   end

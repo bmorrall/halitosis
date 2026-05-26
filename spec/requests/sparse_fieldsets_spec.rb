@@ -6,6 +6,7 @@ RSpec.describe "Sparse fieldsets via request params", :rails, type: :request do
       create_table :articles, force: true do |t|
         t.string :name
         t.integer :score
+        t.date :published_on
       end
     end
   end

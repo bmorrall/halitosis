@@ -35,7 +35,13 @@ module Halitosis
       #     end
       #   end
       #
-      def filterable_by(name, options = {}, &procedure)
+      def filterable_by(name, type_or_options = nil, options = {}, &procedure)
+        if type_or_options.is_a?(Hash)
+          options = type_or_options
+        elsif !type_or_options.nil?
+          options = options.merge(type: type_or_options)
+        end
+
         case procedure&.arity
         when 0
           CollectionFilterable::Namespace.new(name, self).instance_eval(&procedure)
@@ -96,12 +102,32 @@ module Halitosis
           .map { |f| f.name.to_s }
         pairs = FilterUtil.parse_filter_param(filter_param, compound_names: compound_names)
 
+        effective_filter = pairs.empty? ? nil : {}
+
         unless pairs.empty?
           validate_filters!(pairs)
 
           pairs.each do |name, value|
             field = self.class.fields.find_by_name(CollectionFilterable::Field, name)
             resolved_value = (field.compound? && value.respond_to?(:transform_keys)) ? value.transform_keys(&:to_sym) : value
+
+            if field.typed? && !resolved_value.nil?
+              if field.compound?
+                cast_hash = field.cast_compound_hash(resolved_value)
+                cast_hash.each do |key, cast_val|
+                  raise_invalid_filter_parameter("#{field.name}.#{key}") if !resolved_value[key].nil? && cast_val.nil?
+                end
+
+                resolved_value = cast_hash
+              else
+                cast = field.cast_value(resolved_value)
+                raise_invalid_filter_parameter(field.name) if cast.nil?
+
+                resolved_value = cast
+              end
+            end
+
+            effective_filter = HashUtil.deep_merge(effective_filter, nest_filter_entry(name, resolved_value))
 
             result, errors = field.apply_filter(context, context.collection, resolved_value)
 
@@ -117,7 +143,6 @@ module Halitosis
         end
 
         requested_names = pairs.map(&:first).to_set
-        effective_filter = pairs.empty? ? nil : (HashUtil.symbolize_hash(filter_param) || {})
 
         self.class.fields.for_type(CollectionFilterable::Field).each do |field|
           next unless field.has_default?
@@ -126,9 +151,26 @@ module Halitosis
           default_value = field.resolve_default(context)
           next if default_value.nil?
 
-          effective_filter[field.name.to_sym] = default_value unless effective_filter.nil?
+          effective_filter = HashUtil.deep_merge(effective_filter, nest_filter_entry(field.name.to_s, default_value)) unless effective_filter.nil?
 
           resolved_value = (field.compound? && default_value.respond_to?(:transform_keys)) ? default_value.transform_keys(&:to_sym) : default_value
+
+          if field.typed? && !resolved_value.nil?
+            if field.compound?
+              cast_hash = field.cast_compound_hash(resolved_value)
+              cast_hash.each do |key, cast_val|
+                raise_invalid_filter_parameter("#{field.name}.#{key}") if !resolved_value[key].nil? && cast_val.nil?
+              end
+
+              resolved_value = cast_hash
+            else
+              cast = field.cast_value(resolved_value)
+              raise_invalid_filter_parameter(field.name) if cast.nil?
+
+              resolved_value = cast
+            end
+          end
+
           result, errors = field.apply_filter(context, context.collection, resolved_value)
 
           if errors&.any?
@@ -142,6 +184,11 @@ module Halitosis
         end
 
         context.register_query_params(filter: effective_filter) unless effective_filter.nil?
+      end
+
+      def nest_filter_entry(key_string, value)
+        parts = key_string.to_s.split(".")
+        parts.reverse.inject(value) { |v, k| {k.to_sym => v} }
       end
     end
   end

@@ -37,7 +37,7 @@ module Halitosis
       # @param context [Halitosis::Context]
       #
       def execute(context)
-        context.call_instance(context.params, procedure)
+        context.call_instance(context.query_params, procedure)
       end
 
       def validate

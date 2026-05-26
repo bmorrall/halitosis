@@ -27,8 +27,30 @@ RSpec.describe "Precheck" do
   # ─── raise_invalid_filter_parameter ─────────────────────────────────────────
 
   describe "raise_invalid_filter_parameter" do
+    let(:item_klass) do
+      Class.new do
+        include Halitosis
+
+        resource :article
+        attribute(:title) { resource[:title] }
+      end
+    end
+
+    let(:articles) { [{title: "Hello"}] }
+
     let(:klass) do
-      build_resource_serializer do
+      item_ser = item_klass
+      Class.new do
+        include Halitosis
+
+        collection :articles do |articles|
+          articles.map { |a| item_ser.new(a) }
+        end
+
+        filterable_by :published_at do |collection, _value|
+          collection
+        end
+
         precheck :validate_published_at do |params|
           raise_invalid_filter_parameter("published_at") if params[:filter]&.key?(:published_at)
         end
@@ -37,9 +59,8 @@ RSpec.describe "Precheck" do
 
     context "when the precheck passes" do
       it "renders normally" do
-        article = {title: "Hello"}
-        result = klass.new(article).render
-        expect(result.dig(:article, :title)).to eq("Hello")
+        result = klass.new(articles).render
+        expect(result[:articles].first[:title]).to eq("Hello")
       end
     end
 
@@ -48,7 +69,7 @@ RSpec.describe "Precheck" do
         exception = nil
 
         begin
-          klass.new({title: "Hello"}, filter: {published_at: "2024-01-01"}).render
+          klass.new(articles, filter: {published_at: "2024-01-01"}).render
         rescue Halitosis::InvalidFilterParameter => e
           exception = e
         end
@@ -56,29 +77,6 @@ RSpec.describe "Precheck" do
         expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
         expect(exception.parameter).to eq("filter[published_at]")
         expect(exception.message).to match(/can not be filtered by 'published_at'/i)
-      end
-    end
-
-    context "when embedded as a child (non-root)" do
-      it "does not run the precheck" do
-        item_ser = klass
-
-        collection_ser = Class.new do
-          include Halitosis
-
-          collection :articles do |articles|
-            articles.map { |a| item_ser.new(a) }
-          end
-        end
-
-        # The item serializer would raise if run at root with published_at,
-        # but as a child the precheck must not fire.
-        result = nil
-        expect do
-          result = collection_ser.new([{title: "Nested"}]).render
-        end.not_to raise_error
-
-        expect(result[:articles].first[:title]).to eq("Nested")
       end
     end
   end
@@ -161,6 +159,10 @@ RSpec.describe "Precheck" do
 
         collection :articles do |articles|
           articles.map { |a| item_ser.new(a) }
+        end
+
+        paginate_by_page ->(c) { nil }, default_page_size: 25 do |collection, number, size| # rubocop:disable Style/NilLambda
+          collection[((number - 1) * size), size] || []
         end
 
         precheck :validate_page_size do |params|

@@ -21,6 +21,7 @@ Rails.application.routes.draw do
 
   resources :sortable_articles, only: :index
   resources :filterable_articles, only: :index
+  resources :typed_articles, only: :index
   resources :paginatable_articles, only: :index
   resources :linkable_articles, only: :index
 

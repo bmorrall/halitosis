@@ -25,6 +25,31 @@ module Halitosis
         Array(options[:keys]).map(&:to_sym)
       end
 
+      def typed?
+        options.key?(:type)
+      end
+
+      # Cast +value+ using the declared type.
+      # Supports any object responding to +cast+, or a symbol/string looked up
+      # via +ActiveModel::Type+.
+      #
+      # @param value [Object] the raw filter value
+      # @return [Object] the cast value, or +nil+ if the cast failed
+      #
+      def cast_value(value)
+        resolve_type(options[:type]).cast(value)
+      end
+
+      # Cast each value in a compound filter hash using the declared type.
+      #
+      # @param hash [Hash] the symbolized compound filter hash
+      # @return [Hash] new hash with each value cast; nil values are passed through
+      #
+      def cast_compound_hash(hash)
+        type = resolve_type(options[:type])
+        hash.transform_values { |v| v.nil? ? v : type.cast(v) }
+      end
+
       def has_default?
         options.key?(:default)
       end
@@ -49,6 +74,15 @@ module Halitosis
           result = context.call_instance(collection, value, procedure)
           [result, nil]
         end
+      end
+
+      private
+
+      def resolve_type(type_arg)
+        return type_arg if type_arg.respond_to?(:cast)
+
+        require "active_model/type"
+        ActiveModel::Type.lookup(type_arg)
       end
     end
   end

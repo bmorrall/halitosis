@@ -17,7 +17,7 @@ module Halitosis
       # @param context [Halitosis::Context] the render context
       # @return [Hash] the rendered hash
       #
-      def render_with_context(context)
+      def before_render(context)
         include_value = context.fetch(:include, nil)
         if (normalized = normalize_include_param(include_value))
           context.register_query_params(include: normalized)

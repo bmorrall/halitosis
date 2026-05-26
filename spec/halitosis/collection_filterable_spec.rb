@@ -157,6 +157,26 @@ RSpec.describe Halitosis::CollectionFilterable do
           end
         end.not_to raise_error
       end
+
+      it "registers a typed nested field with dot-prefixed name", :rails do
+        ns_klass = Class.new do
+          include Halitosis
+
+          collection :items do |items|
+            items
+          end
+
+          filterable_by :user do
+            filterable_by :age, :integer do |collection, value|
+              collection.select { |i| i[:age] == value }
+            end
+          end
+        end
+
+        field = ns_klass.fields.find_by_name(Halitosis::CollectionFilterable::Field, "user.age")
+        expect(field).not_to be_nil
+        expect(field).to be_typed
+      end
     end
   end
 
@@ -824,6 +844,257 @@ RSpec.describe Halitosis::CollectionFilterable do
         expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
         expect(exception.message).to match(/can not be filtered by 'name': The provided value is invalid/)
       end
+    end
+
+    it "casts a typed default value before applying the filter", :rails do
+      typed_items = [{name: "Alice", score: 1}, {name: "Bob", score: 5}]
+
+      typed_default_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :score, :integer, default: "3" do |collection, value|
+          collection.select { |i| i[:score] <= value }
+        end
+      end
+
+      context = render_context(typed_default_klass.new(typed_items))
+
+      expect(context.collection).to eq([{name: "Alice", score: 1}])
+    end
+
+    it "casts each sub-value in a typed compound default before applying the filter", :rails do
+      typed_items = [{name: "Alice", score: 1}, {name: "Bob", score: 5}]
+
+      typed_compound_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :score_range, :integer, keys: [:min, :max], default: {min: "1", max: "3"} do |collection, value|
+          collection.select { |i| i[:score].between?(value[:min], value[:max]) } # rubocop:disable Style/ComparableBetween
+        end
+      end
+
+      context = render_context(typed_compound_klass.new(typed_items))
+
+      expect(context.collection).to eq([{name: "Alice", score: 1}])
+    end
+  end
+
+  describe "type casting", :rails do
+    def build_context(serializer, options)
+      serializer.send(:build_context, options)
+    end
+
+    it "casts the filter value using the declared type before passing to the block" do
+      typed_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :score, :integer do |collection, value|
+          collection.select { |i| i[:score] == value }
+        end
+      end
+
+      serializer = typed_klass.new(items)
+      context = build_context(serializer, {filter: {score: "2"}})
+
+      serializer.send(:apply_filters!, context)
+
+      expect(context.collection).to eq([{name: "Bob", score: 2}])
+    end
+
+    it "raises InvalidFilterParameter when the value cannot be cast" do
+      typed_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :created_on, :date do |collection, value|
+          collection.select { |i| i[:created_on] == value }
+        end
+      end
+
+      serializer = typed_klass.new(items)
+      context = build_context(serializer, {filter: {created_on: "not-a-date"}})
+
+      expect { serializer.send(:apply_filters!, context) }.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
+        expect(exception.parameter).to eq("filter[created_on]")
+      end
+    end
+
+    it "accepts a type object responding to cast" do
+      custom_type = Class.new do
+        def cast(value)
+          value.to_s.strip
+        end
+      end.new
+
+      typed_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :name, custom_type do |collection, value|
+          collection.select { |i| i[:name] == value }
+        end
+      end
+
+      serializer = typed_klass.new(items)
+      context = build_context(serializer, {filter: {name: "  Alice  "}})
+
+      serializer.send(:apply_filters!, context)
+
+      expect(context.collection).to eq([{name: "Alice", score: 1}, {name: "Alice", score: 3}])
+    end
+
+    it "accepts a type object responding to cast for compound filters" do
+      custom_type = Class.new do
+        def cast(value)
+          value.to_s.strip
+        end
+      end.new
+
+      typed_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :name_range, custom_type, keys: [:from, :to] do |collection, value|
+          collection.select { |i| i[:name].between?(value[:from], value[:to]) } # rubocop:disable Style/ComparableBetween
+        end
+      end
+
+      serializer = typed_klass.new(items)
+      context = build_context(serializer, {filter: {name_range: {from: "  Alice  ", to: "  Bob  "}}})
+
+      serializer.send(:apply_filters!, context)
+
+      expect(context.collection).to eq([{name: "Alice", score: 1}, {name: "Bob", score: 2}, {name: "Alice", score: 3}])
+    end
+
+    it "casts each sub-key value in a compound filter using the declared type" do
+      items_with_dates = [
+        {name: "Alice", created_on: Date.new(2024, 1, 15)},
+        {name: "Bob", created_on: Date.new(2024, 6, 1)},
+        {name: "Carol", created_on: Date.new(2024, 11, 20)}
+      ]
+
+      typed_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :created_on, :date, keys: [:from, :to] do |collection, value|
+          collection.select { |i| i[:created_on].between?(value[:from], value[:to]) } # rubocop:disable Style/ComparableBetween
+        end
+      end
+
+      serializer = typed_klass.new(items_with_dates)
+      context = build_context(serializer, {filter: {created_on: {from: "2024-01-01", to: "2024-07-01"}}})
+
+      serializer.send(:apply_filters!, context)
+
+      expect(context.collection).to eq([
+        {name: "Alice", created_on: Date.new(2024, 1, 15)},
+        {name: "Bob", created_on: Date.new(2024, 6, 1)}
+      ])
+    end
+
+    it "raises InvalidFilterParameter naming the specific sub-key when a compound value cannot be cast" do
+      typed_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :period, :date, keys: [:from, :to] do |collection, value|
+          collection
+        end
+      end
+
+      serializer = typed_klass.new(items)
+      context = build_context(serializer, {filter: {period: {from: "2024-01-01", to: "not-a-date"}}})
+
+      expect { serializer.send(:apply_filters!, context) }.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidFilterParameter)
+        expect(exception.parameter).to eq("filter[period][to]")
+      end
+    end
+
+    it "passes nil sub-key values through without raising" do
+      typed_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :period, :date, keys: [:from, :to] do |collection, value|
+          collection
+        end
+      end
+
+      serializer = typed_klass.new(items)
+      context = build_context(serializer, {filter: {period: {from: "2024-01-01"}}})
+
+      expect { serializer.send(:apply_filters!, context) }.not_to raise_error
+    end
+
+    it "passes nil through without raising when the value is nil" do
+      typed_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :score, :integer do |collection, value|
+          collection.select { |i| i[:score] == value }
+        end
+      end
+
+      serializer = typed_klass.new(items)
+      context = build_context(serializer, {})
+
+      expect { serializer.send(:apply_filters!, context) }.not_to raise_error
+    end
+
+    it "registers the cast value in query_params" do
+      typed_klass = Class.new do
+        include Halitosis
+
+        collection :items do |items|
+          items
+        end
+
+        filterable_by :score, :integer do |collection, value|
+          collection.select { |i| i[:score] == value }
+        end
+      end
+
+      context = render_context(typed_klass.new(items, filter: {score: "2"}))
+
+      expect(context.query_params[:filter]).to eq(score: 2)
     end
   end
 end
