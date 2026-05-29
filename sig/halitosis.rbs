@@ -1,4 +1,176 @@
 module Halitosis
   VERSION: String
-  # See the writing guide of rbs: https://github.com/ruby/rbs#guides
+
+  # Class-level DSL mixed into every serializer via +include Halitosis+.
+  # Resource and collection serializers extend these methods plus their own.
+  module Base
+    module ClassMethods
+      # Declare a required initializer option; generates a reader method.
+      # Raises +MissingOption+ at construction time if absent.
+      def required_option: (Symbol name) -> void
+
+      # Register a named precheck block. Runs before rendering at the root
+      # level only. The block receives the current query params hash.
+      def precheck: (Symbol name) { (::Hash[Symbol, untyped] params) -> void } -> void
+
+      # Enable JSON:API-style sideloading into a root-level +_included+ hash.
+      def collect_includes!: () -> void
+
+      # @return [Boolean] true for collection serializers, false for resource serializers
+      def collection?: () -> bool
+    end
+  end
+
+  # DSL class methods available to resource serializers.
+  # Mixed in automatically when +resource :name+ is called.
+  module Resource
+    module ClassMethods
+      # Declare the primary resource, setting the root key and exposing an
+      # accessor with the given name on the serializer instance.
+      def resource: (Symbol | String name) -> void
+
+      # Declare the single primary-key identifier. Only one allowed per class.
+      def identifier: (Symbol | String name, ?::Hash[Symbol, untyped] options) ?{ () -> untyped } -> untyped
+
+      # Declare an attribute field. Delegates to a same-named serializer method
+      # if defined, otherwise falls back to the resource.
+      def attribute: (Symbol | String name, ?::Hash[Symbol, untyped] options) ?{ () -> untyped } -> untyped
+
+      # Declare a HAL link. Pass +:templated+ as a positional flag to mark the
+      # link as an RFC 6570 URI template.
+      def link: (Symbol | String name, *Symbol flags, **untyped options) ?{ () -> String? } -> untyped
+
+      # Shorthand for +link(:self)+.
+      def self_link: () { () -> String } -> untyped
+
+      # Shorthand for +link(:external, type: "text/html")+.
+      def external_link: (?type: String | Proc) { () -> String } -> untyped
+
+      # Declare a HAL +profile+ link. Only emitted at root render level.
+      def profile: (String url) -> void
+
+      # Declare a metadata field, rendered inside +_meta+.
+      def meta: (Symbol | String name, **untyped options) ?{ () -> untyped } -> untyped
+
+      # Declare a permission flag, rendered inside +_permissions+.
+      def permission: (Symbol | String name, **untyped options) ?{ () -> bool } -> untyped
+
+      # Declare a root-level link (rendered outside the resource envelope).
+      def root_link: (Symbol | String name, **untyped options) ?{ () -> untyped } -> untyped
+
+      # Declare a root-level meta field.
+      def root_meta: (Symbol | String name, **untyped options) ?{ () -> untyped } -> untyped
+
+      # Declare a root-level permission flag.
+      def root_permission: (Symbol | String name, **untyped options) ?{ () -> bool } -> untyped
+
+      # Declare an opt-in relationship. Only evaluated when requested via +include:+.
+      # Pass +preload: true+ to call a same-named method once and cache the result.
+      def relationship: (Symbol | String name, ?::Hash[Symbol, untyped] options) ?{ (untyped) -> untyped } -> untyped
+
+      # Alias for +relationship+.
+      def rel: (Symbol | String name, ?::Hash[Symbol, untyped] options) ?{ (untyped) -> untyped } -> untyped
+
+      # Declare which nested relationship paths are supported and how to enrich
+      # the preload cache when those paths are requested.
+      # Block arity 0 opens a namespace; arity 1 is a preload procedure.
+      def allow_include: (Symbol | String name) ?{ () -> void } -> void
+
+      # Register a named precheck block (inherited from Base::ClassMethods).
+      def precheck: (Symbol name) { (::Hash[Symbol, untyped] params) -> void } -> void
+
+      # Enable JSON:API-style sideloading into +_included+ (inherited from Base::ClassMethods).
+      def collect_includes!: () -> void
+    end
+  end
+
+  # DSL class methods available to collection serializers.
+  # Mixed in automatically when +collection :name+ is called.
+  module Collection
+    module ClassMethods
+      # Declare the primary collection. The block maps the raw collection to an
+      # array of serializer instances.
+      def collection: (Symbol | String name, ?::Hash[Symbol, untyped] options) { (untyped collection) -> ::Array[untyped] } -> void
+
+      # Declare a named sort field. The block receives the collection and a
+      # Boolean (+true+ = ascending). Return +nil+ to signal an unsupported direction.
+      def sortable_by: (Symbol | String name, ?::Hash[Symbol, untyped] options) { (untyped collection, bool ascending) -> untyped? } -> void
+
+      # Declare a fallback sort applied when no +sort:+ param is provided.
+      # Pass a sort string (e.g. +"-name"+) or a block.
+      def default_sort: (?String sort_string) ?{ (untyped collection) -> untyped } -> void
+
+      # Declare a named filter field or open a namespace.
+      # Block arity 2 = filter implementation (collection, value); arity 0 = namespace.
+      # Pass an ActiveModel type name or a +cast+-responding object as the second arg for type casting.
+      def filterable_by: (Symbol | String name, ?untyped type_or_options, ?::Hash[Symbol, untyped] options) ?{ () -> void } -> void
+
+      # Declare page-number/page-size pagination. Built-in adapters +:kaminari+
+      # and +:will_paginate+ provide a default block.
+      def paginate_by_page: (?Symbol adapter, default_page_size: Integer) ?{ (untyped collection, Integer number, Integer size) -> untyped? } -> void
+
+      # Low-level pagination hook with full control over page param interpretation.
+      def paginate_with: (?Symbol adapter) { (untyped context, untyped collection, ::Hash[Symbol, untyped] page) -> untyped } -> void
+
+      # Declare Pagy-backed pagination. Optional block returns extra kwargs for +Pagy::Offset.new+.
+      def paginate_with_pagy: () ?{ (untyped collection, ::Hash[Symbol, untyped] page_params) -> ::Hash[Symbol, untyped] } -> void
+
+      # Emit +self+/+first+/+last+/+prev+/+next+ links for a paginated collection.
+      # Block receives the target page number and the accumulated +query_params+ hash.
+      def paginate_links: (?only: ::Array[Symbol]) { (Integer page_number, ::Hash[Symbol, untyped] query_params) -> String } -> void
+
+      # Emit page numbers (+self+, +first+, +last+, +prev+, +next+) into +_meta+.
+      def paginate_meta: (?only: ::Array[Symbol]) -> void
+
+      # Run a block against the raw collection before filtering, sorting, and
+      # pagination. Only fires at root render level.
+      def default_preload: () { (untyped collection) -> untyped? } -> void
+
+      # Declare which include paths are accepted and optionally attach a preload block.
+      # Block arity 0 opens a namespace; arity 1 is a runtime preload.
+      def allow_include: (Symbol | String name) ?{ () -> void } -> void
+
+      # Declare a root-level link (outside the collection envelope).
+      # Also aliased as +link+ on collection serializers.
+      def root_link: (Symbol | String name, **untyped options) ?{ () -> untyped } -> untyped
+
+      # Declare a root-level meta field.
+      # Also aliased as +meta+ on collection serializers.
+      def root_meta: (Symbol | String name, **untyped options) ?{ () -> untyped } -> untyped
+
+      # Declare a root-level permission flag.
+      # Also aliased as +permission+ on collection serializers.
+      def root_permission: (Symbol | String name, **untyped options) ?{ () -> bool } -> untyped
+
+      # Alias for +root_link+ on collection serializers.
+      def link: (Symbol | String name, **untyped options) ?{ () -> untyped } -> untyped
+
+      # Alias for +root_meta+ on collection serializers.
+      def meta: (Symbol | String name, **untyped options) ?{ () -> untyped } -> untyped
+
+      # Alias for +root_permission+ on collection serializers.
+      def permission: (Symbol | String name, **untyped options) ?{ () -> bool } -> untyped
+
+      # Declare the single primary-key identifier (optional on collections).
+      def identifier: (Symbol | String name, ?::Hash[Symbol, untyped] options) ?{ () -> untyped } -> untyped
+
+      # Declare an attribute field.
+      def attribute: (Symbol | String name, ?::Hash[Symbol, untyped] options) ?{ () -> untyped } -> untyped
+
+      # Declare a HAL link on individual collection items.
+      def self_link: () { () -> String } -> untyped
+
+      # Declare a HAL +profile+ link (only emitted at root render level).
+      def profile: (String url) -> void
+
+      # Register a named precheck block.
+      def precheck: (Symbol name) { (::Hash[Symbol, untyped] params) -> void } -> void
+
+      # Enable JSON:API-style sideloading into +_included+.
+      def collect_includes!: () -> void
+
+      # Declare a required initializer option.
+      def required_option: (Symbol name) -> void
+    end
+  end
 end
