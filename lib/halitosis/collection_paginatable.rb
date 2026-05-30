@@ -68,13 +68,21 @@ module Halitosis
       #   using +paginate_links+ or +paginate_meta+ unless a global default is
       #   set via +Halitosis.config.pagination_adapter+.
       # @param default_page_size [Integer] the default number of items per page
+      # @param max_size [Integer, nil] optional upper bound on the page size;
+      #   when set, any requested +page[size]+ larger than this value is silently
+      #   clamped to +max_size+.
       #
       # @example
       #   paginate_by_page :kaminari, default_page_size: 25 do |collection, number, size|
       #     collection.page(number).per(size)
       #   end
       #
-      def paginate_by_page(adapter = nil, default_page_size:, &procedure)
+      # @example With a size cap
+      #   paginate_by_page :kaminari, default_page_size: 25, max_size: 100 do |collection, number, size|
+      #     collection.page(number).per(size)
+      #   end
+      #
+      def paginate_by_page(adapter = nil, default_page_size:, max_size: nil, &procedure)
         unless procedure
           resolved_adapter = adapter || Halitosis.config.pagination_adapter
           if resolved_adapter
@@ -90,6 +98,7 @@ module Halitosis
         add_pagination_field(adapter) do |context, collection, page_params|
           number = parse_page_integer(page_params[:number], default: 1, param: :number)
           size = parse_page_integer(page_params[:size], default: default_page_size, param: :size)
+          raise_invalid_pagination_parameter("size", "must not exceed #{max_size}") if max_size && size > max_size
 
           result = procedure.call(collection, number, size)
 
