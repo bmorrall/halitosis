@@ -616,6 +616,21 @@ When using `render_with_params` (the Rails integration helper), both the JSON:AP
 
 If `page[:number]` or `page[:size]` cannot be coerced to an integer, or the block returns `nil`, an `InvalidPaginationParameter` is raised (mapped to `400 Bad Request` by the Rails integration).
 
+#### Limiting page size
+
+Pass `max_size:` to enforce an upper bound on the page size clients can request. When the requested `page[:size]` exceeds the limit, an `InvalidPaginationParameter` is raised:
+
+```ruby
+paginate_by_page :kaminari, default_page_size: 25, max_size: 100 do |collection, number, size|
+  collection.page(number).per(size)
+end
+```
+
+```ruby
+# Raises InvalidPaginationParameter — 400 Bad Request via the Rails integration
+ArticlesSerializer.new(Article.all, page: { size: 500 }).render
+```
+
 #### Pagination adapter
 
 The adapter tells Halitosis how to read page metadata from the paginated collection. Set a global default in an initializer:

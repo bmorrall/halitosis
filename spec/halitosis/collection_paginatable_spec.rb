@@ -206,6 +206,61 @@ RSpec.describe Halitosis::CollectionPaginatable do
       expect(context.query_params[:page]).to eq(number: 1, size: 5)
     end
 
+    context "with max_size" do
+      let :capped_klass do
+        Class.new do
+          include Halitosis
+
+          collection :items do |collection|
+            collection
+          end
+
+          paginate_by_page :kaminari, default_page_size: 10, max_size: 20 do |collection, number, size|
+            offset = (number - 1) * size
+            collection[offset, size] || []
+          end
+        end
+      end
+
+      it "raises InvalidPaginationParameter when the requested size exceeds max_size" do
+        serializer = capped_klass.new(items)
+
+        expect do
+          serializer.send(:apply_pagination!, serializer.send(:build_context, {page: {size: 100}}))
+        end.to raise_error do |exception|
+          expect(exception).to be_an_instance_of(Halitosis::InvalidPaginationParameter)
+          expect(exception.message).to match(/must not exceed 20/i)
+          expect(exception.parameter).to eq("page[size]")
+        end
+      end
+
+      it "does not raise when the requested size is exactly max_size" do
+        serializer = capped_klass.new(items)
+        context = serializer.send(:build_context, {page: {size: 20}})
+        serializer.send(:apply_pagination!, context)
+
+        expect(context.query_params[:page]).to eq(number: 1, size: 20)
+      end
+
+      it "does not raise when the requested size is within max_size" do
+        serializer = capped_klass.new(items)
+        context = serializer.send(:build_context, {page: {size: 5}})
+        serializer.send(:apply_pagination!, context)
+
+        expect(context.collection.map { |i| i[:id] }).to eq((1..5).to_a)
+        expect(context.query_params[:page]).to eq(number: 1, size: 5)
+      end
+
+      it "uses the default size when no size param is given and default is within max_size" do
+        serializer = capped_klass.new(items)
+        context = serializer.send(:build_context, {})
+        serializer.send(:apply_pagination!, context)
+
+        expect(context.collection.map { |i| i[:id] }).to eq((1..10).to_a)
+        expect(context.query_params[:page]).to eq(number: 1, size: 10)
+      end
+    end
+
     it "raises InvalidPaginationParameter when the block returns nil" do
       bad_klass = Class.new do
         include Halitosis
