@@ -64,7 +64,7 @@ RSpec.describe Halitosis::ResourceRelationships do
       end
 
       it "uses the relationship field's preload_key when preload: is a custom symbol" do
-        full_klass.relationship(:articles, preload: :user_articles, link: -> { "/articles" }) { nil }
+        full_klass.relationship(:articles, preload: :user_articles, link: -> { "/articles" }) { |articles| articles }
 
         link_field = full_klass.fields.find_by_name(Halitosis::Links::Field, :articles)
         expect(link_field.preload_key).to eq(:user_articles)

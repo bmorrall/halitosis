@@ -3,6 +3,17 @@
 module Halitosis
   module ResourceRelationships
     class Field < Halitosis::Field
+      # When the procedure accepts arguments and no +preload:+ option is given,
+      # infer +preload: true+ so callers don't need to repeat themselves.
+      #
+      def initialize(name, options, procedure)
+        super
+
+        if !@options.key?(:preload) && @procedure&.arity&.nonzero?
+          @options[:preload] = true
+        end
+      end
+
       # @return [true] if nothing is raised
       #
       # @raise [Halitosis::InvalidField] if the definition is invalid
@@ -15,8 +26,8 @@ module Halitosis
           raise InvalidField, "Relationship #{name} preload option must be a Symbol, String, true, or false"
         end
 
-        if procedure&.arity&.nonzero? && !options.key?(:preload)
-          raise InvalidField, "Relationship #{name} block accepts arguments but no `preload:` option is set"
+        if (options[:preload].is_a?(Symbol) || options[:preload].is_a?(String)) && procedure&.arity == 0
+          raise InvalidField, "Relationship #{name} preload key is set but block accepts no arguments"
         end
 
         return true if procedure
