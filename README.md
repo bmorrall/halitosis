@@ -1015,14 +1015,14 @@ Relationships allow embedding associated serializers inside `_relationships`. Th
 One-to-one:
 
 ```ruby
-relationship(:author, preload: true) { |author| UserSerializer.new(author) }
+relationship(:author) { |author| UserSerializer.new(author) }
 # => { article: { ..., _relationships: { author: { id: 5, name: "Alice" } } } }
 ```
 
 One-to-many (array of serializers):
 
 ```ruby
-relationship(:comments, preload: true) do |comments|
+relationship(:comments) do |comments|
   comments.map { |comment| CommentSerializer.new(comment) }
 end
 # => { article: { ..., _relationships: { comments: [ ... ] } } }
@@ -1031,7 +1031,15 @@ end
 One-to-many (collection serializer):
 
 ```ruby
-relationship(:comments, preload: true) { |comments| CommentsSerializer.new(comments) }
+relationship(:comments) { |comments| CommentsSerializer.new(comments) }
+```
+
+When a block accepts an argument, `preload: true` is inferred automatically — the preloaded value is delivered to the block. Writing `preload: true` explicitly is still accepted but not required.
+
+To use a custom preload key, pass a symbol. The block must accept an argument:
+
+```ruby
+relationship(:articles, preload: :user_articles) { |articles| ArticlesSerializer.new(articles) }
 ```
 
 The `rel` method is a shorthand alias for `relationship`:
@@ -1089,7 +1097,7 @@ end
 When `preload:` is also set, a lambda passed to `link:` receives the preloaded value — the same value delivered to the relationship block. This avoids a second lookup just to build the URL:
 
 ```ruby
-relationship(:author, preload: true, link: ->(author) { "/people/#{author.id}" }) do |author|
+relationship(:author, link: ->(author) { "/people/#{author.id}" }) do |author|
   UserSerializer.new(author)
 end
 
@@ -1101,7 +1109,7 @@ end
 A 0-arity lambda continues to work as before when the URL does not depend on the preloaded value:
 
 ```ruby
-relationship(:author, preload: true, link: -> { "/people" }) do |author|
+relationship(:author, link: -> { "/people" }) do |author|
   UserSerializer.new(author)
 end
 ```
