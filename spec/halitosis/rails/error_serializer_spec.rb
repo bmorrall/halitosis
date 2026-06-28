@@ -5,7 +5,7 @@ return unless defined?(Rails)
 RSpec.describe Halitosis::ErrorSerializer, :rails do
   subject(:serializer) { described_class.new(error: error, param: "article") }
 
-  let(:error_class) { Struct.new(:type, :full_message, :attribute, keyword_init: true) }
+  let(:error_class) { Struct.new(:type, :full_message, :attribute) }
 
   describe "#as_json" do
     context "with a field error" do
