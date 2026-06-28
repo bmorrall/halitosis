@@ -5,7 +5,7 @@ return unless defined?(Rails)
 RSpec.describe Halitosis::ErrorsSerializer, :rails do
   subject(:serializer) { described_class.new(errors, param: "article") }
 
-  let(:error_class) { Struct.new(:type, :full_message, :attribute, keyword_init: true) }
+  let(:error_class) { Struct.new(:type, :full_message, :attribute) }
 
   describe ".build" do
     let(:errors) { [error_class.new(type: :blank, full_message: "Title can't be blank", attribute: :title)] }
