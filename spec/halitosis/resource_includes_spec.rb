@@ -288,6 +288,22 @@ RSpec.describe Halitosis::ResourceIncludes do
             expect(ctx.fetch_local(:includeable_preloads)).to be_nil
           end
         end
+
+        context "when the serializer is embedded (non-root)" do
+          it "does not apply the leaf procedure" do
+            parent_klass = Class.new { include Halitosis::Base }
+            parent_ctx = parent_klass.new.send(:build_context)
+
+            s = klass.new(include: "enriched")
+            ctx = s.send(:build_context, parent: parent_ctx)
+
+            expect(ctx.root?).to be(false)
+
+            s.before_render(ctx)
+
+            expect(ctx.fetch_local(:includeable_preloads)[:enriched]).to eq(%w[x y z])
+          end
+        end
       end
     end
   end
