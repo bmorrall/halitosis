@@ -84,18 +84,28 @@ module Halitosis
     end
 
     module ClassMethods
-      # Declare a supported top-level include path. The block must be a builder
-      # block (arity 0) containing nested +allow_include+ declarations.
+      # Declare a supported top-level include path.
+      #
+      # - No block: registers the path with no procedure and no children.
+      # - Arity 1: leaf field — the block receives the cached preload value and
+      #   must return the updated value.
+      # - Arity 0: builder block — nested +allow_include+ and +preload+ calls
+      #   configure children.
       #
       # @param name [Symbol, String] must match a declared +relationship+ name
-      # @param block [Proc] builder block (required)
       #
       def allow_include(name, &block)
-        builder = Builder.new
+        field = if block.nil?
+          ResourceIncludes::Field.new(name, nil, [])
+        elsif block.arity == 1
+          ResourceIncludes::Field.new(name, block, [])
+        else
+          builder = Builder.new
+          builder.instance_eval(&block)
+          ResourceIncludes::Field.new(name, nil, builder.children)
+        end
 
-        builder.instance_eval(&block) if block
-
-        fields.add(ResourceIncludes::Field.new(name, nil, builder.children))
+        fields.add(field)
       end
     end
 
@@ -121,6 +131,8 @@ module Halitosis
 
           next unless allow_field
           next unless preloaded?(context, name)
+
+          apply_include_procedure(context, allow_field, name.to_sym)
 
           traverse_include_tree(context, allow_field.children, context.include_options[name], name.to_sym)
         end

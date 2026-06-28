@@ -1172,9 +1172,25 @@ relationship(:author, preload: false) { UserSerializer.new(article.author) }
 
 #### Preloading nested includes
 
-When a relationship exposes deeply nested associations, use `allow_include` to declare which nested paths are supported and how to enrich the preload cache when those paths are requested. This prevents N+1 queries as the render walks into nested relationships.
+When a relationship exposes associations that would otherwise N+1, use `allow_include` to enrich the preload cache when those paths are requested.
 
-`allow_include` takes a top-level relationship name and a builder block. Each nested `allow_include` declaration accepts an arity-1 block that receives the current cached preload value and returns the enriched one:
+**Leaf procedure** — pass an arity-1 block directly to enrich the cached value whenever the relationship itself is included:
+
+```ruby
+class ProjectSerializer
+  include Halitosis
+
+  resource :project
+
+  relationship(:tasks) { |tasks| tasks.map { TaskSerializer.new(_1) } }
+
+  allow_include(:tasks) { |tasks| tasks.includes(:task_plan) }
+end
+```
+
+When `include: "tasks"` is requested, the block fires with the cached value from `resource.tasks` and its return value replaces it in the preload cache. The relationship block then receives the enriched collection.
+
+**Builder block** — pass an arity-0 block to declare nested paths. Each inner `allow_include` accepts an arity-1 block that receives and returns the cached preload value for the root relationship:
 
 ```ruby
 class ArticleSerializer
@@ -1182,17 +1198,11 @@ class ArticleSerializer
 
   resource :article
 
-  relationship :author, preload: true do |author|
-    UserSerializer.new(author)
-  end
+  relationship(:author) { |author| UserSerializer.new(author) }
 
   allow_include :author do
     allow_include(:avatar)  { |author| author.includes(:avatar) }
     allow_include(:summary) { |author| author.includes(:summary) }
-  end
-
-  def author
-    article.author
   end
 end
 ```
