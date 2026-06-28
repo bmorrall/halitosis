@@ -120,7 +120,7 @@ module Halitosis
       def before_render(context)
         super
 
-        process_resource_includes(context)
+        process_resource_includes(context) if context.root?
       end
 
       private
