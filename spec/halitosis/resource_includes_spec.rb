@@ -101,6 +101,16 @@ RSpec.describe Halitosis::ResourceIncludes do
         expect(field.name).to eq(:accounts)
         expect(field.children).to be_empty
       end
+
+      it "stores the arity-1 block as the procedure on a leaf field" do
+        proc = ->(v) { v }
+        klass.allow_include(:accounts, &proc)
+
+        field = klass.fields.for_type(Halitosis::ResourceIncludes::Field).first
+
+        expect(field.procedure).to eq(proc)
+        expect(field.children).to be_empty
+      end
     end
   end
 
@@ -245,6 +255,38 @@ RSpec.describe Halitosis::ResourceIncludes do
           serializer.before_render(context)
 
           expect(context.fetch_local(:includeable_preloads)[:items]).to eq(%w[a:meta b:meta c:meta])
+        end
+      end
+
+      context "when allow_include is declared with an arity-1 leaf procedure" do
+        before do
+          klass.relationship(:enriched, preload: :enriched_data) { |items| items }
+          klass.allow_include(:enriched) { |items| items.map { |i| "#{i}:enriched" } }
+          klass.define_method(:enriched_data) { %w[x y z] }
+        end
+
+        context "when the relationship is included" do
+          let(:include_param) { "enriched" }
+
+          it "applies the leaf procedure to the cached preload value" do
+            s = klass.new(include: include_param)
+            ctx = s.send(:build_context)
+            s.before_render(ctx)
+
+            expect(ctx.fetch_local(:includeable_preloads)[:enriched]).to eq(%w[x:enriched y:enriched z:enriched])
+          end
+        end
+
+        context "when the relationship is not included" do
+          let(:include_param) { "other" }
+
+          it "does not modify the cache" do
+            s = klass.new(include: include_param)
+            ctx = s.send(:build_context)
+            s.before_render(ctx)
+
+            expect(ctx.fetch_local(:includeable_preloads)).to be_nil
+          end
         end
       end
     end
