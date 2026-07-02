@@ -25,8 +25,9 @@ RSpec.describe Halitosis::ResourcePreloader do
         expect { serializer.send(:process_resource_includes, context) }.not_to raise_error
       end
 
-      it "raises ArgumentError when no preload value is cached" do
-        klass.relationship(:accounts) { |v| v }
+      it "raises ArgumentError when no preload is registered (relationship has no preload)" do
+        # arity-0 block means no auto-registered preload, so preload_registered? is false
+        klass.relationship(:accounts) { nil }
         klass.allow_include(:accounts) { |v| v }
 
         serializer = klass.new(include: "accounts")

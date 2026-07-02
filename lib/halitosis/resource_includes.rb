@@ -155,6 +155,8 @@ module Halitosis
         return unless field.procedure
 
         unless preloaded?(context, cache_key)
+          return if self.class.preload_registered?(cache_key)
+
           raise ArgumentError,
             "allow_include :#{cache_key} depends on a preloaded value, but :#{cache_key} has not been preloaded"
         end
