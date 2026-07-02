@@ -64,6 +64,31 @@ RSpec.describe Halitosis::CollectionFilterable::Field do
       expect(result).to be_nil
     end
 
+    context "when the block raises InvalidFilterParameter" do
+      it "re-raises with the field name when no field name was given" do
+        field = described_class.new(:status, {}, proc { |_col, _v|
+          raise Halitosis::InvalidFilterParameter.new("Invalid status value")
+        })
+
+        expect { field.apply_filter(Halitosis::Context.new(Object.new), [], "bad") }
+          .to raise_error(Halitosis::InvalidFilterParameter) do |e|
+            expect(e.message).to eq("Invalid status value")
+            expect(e.parameter).to eq("filter[status]")
+          end
+      end
+
+      it "preserves the original exception when a specific field name was already set" do
+        field = described_class.new(:status, {}, proc { |_col, _v|
+          raise Halitosis::InvalidFilterParameter.new("Invalid sub-field", "status.code")
+        })
+
+        expect { field.apply_filter(Halitosis::Context.new(Object.new), [], "bad") }
+          .to raise_error(Halitosis::InvalidFilterParameter) do |e|
+            expect(e.parameter).to eq("filter[status][code]")
+          end
+      end
+    end
+
     context "with a 3-argument block (collection, value, errors)" do
       it "yields a FilterErrors object initialized with the field name" do
         received_errors = nil
