@@ -8,10 +8,10 @@ RSpec.describe Halitosis::ResourceIncludes::Field do
       expect(field.name).to eq(:accounts)
     end
 
-    it "defaults to DEFAULT_PROCEDURE when no procedure is given" do
+    it "stores nil when no procedure is given" do
       field = described_class.new(:accounts, nil, [])
 
-      expect(field.procedure).to eq(described_class::DEFAULT_PROCEDURE)
+      expect(field.procedure).to be_nil
     end
 
     it "uses the given procedure when provided" do

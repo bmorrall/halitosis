@@ -155,4 +155,37 @@ RSpec.describe "ResourceIncludes integration" do
       end
     end
   end
+
+  describe "allow_include without a block (no procedure)" do
+    # Regression: bare `allow_include :parts` (no block) used to default to
+    # DEFAULT_PROCEDURE, causing apply_include_procedure to run unnecessarily
+    # and raise ArgumentError when a preload was registered for that key.
+    #
+    let(:no_block_serializer_class) do
+      part_class = part_serializer_class
+
+      Class.new do
+        include Halitosis
+
+        resource :record
+
+        relationship :parts, preload: :raw_parts do |parts|
+          (parts || []).map { |p| part_class.new(p) }
+        end
+
+        allow_include :parts
+
+        def raw_parts
+          %w[alpha beta]
+        end
+      end
+    end
+
+    it "renders without raising an error" do
+      result = render(no_block_serializer_class, include: "parts")
+
+      labels = parts_from(result).map { |p| p[:label] }
+      expect(labels).to eq(%w[alpha beta])
+    end
+  end
 end

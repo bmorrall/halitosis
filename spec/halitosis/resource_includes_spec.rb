@@ -79,24 +79,24 @@ RSpec.describe Halitosis::ResourceIncludes do
         expect(child.procedure).to eq(preload_proc)
       end
 
-      it "uses DEFAULT_PROCEDURE for a builder child without a preload call" do
+      it "uses nil procedure for a builder child without a preload call" do
         klass.allow_include(:accounts) do
           allow_include(:owner) {}
         end
 
         child = klass.fields.for_type(Halitosis::ResourceIncludes::Field).first.children.first
 
-        expect(child.procedure).to eq(Halitosis::ResourceIncludes::Field::DEFAULT_PROCEDURE)
+        expect(child.procedure).to be_nil
       end
 
-      it "uses DEFAULT_PROCEDURE for a leaf child declared without a block" do
+      it "uses nil procedure for a leaf child declared without a block" do
         klass.allow_include(:accounts) do
           allow_include(:owner)
         end
 
         child = klass.fields.for_type(Halitosis::ResourceIncludes::Field).first.children.first
 
-        expect(child.procedure).to eq(Halitosis::ResourceIncludes::Field::DEFAULT_PROCEDURE)
+        expect(child.procedure).to be_nil
       end
 
       it "builds an empty field when called without a block" do

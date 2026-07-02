@@ -17,7 +17,7 @@ module Halitosis
       #
       def initialize(name, procedure, children)
         @name = name.to_sym
-        @procedure = procedure || DEFAULT_PROCEDURE
+        @procedure = procedure
         @children = children.dup.freeze
       end
 
