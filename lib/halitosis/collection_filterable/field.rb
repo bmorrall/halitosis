@@ -74,6 +74,8 @@ module Halitosis
           result = context.call_instance(collection, value, procedure)
           [result, nil]
         end
+      rescue Halitosis::InvalidFilterParameter => e
+        raise((e.parameter == "filter") ? Halitosis::InvalidFilterParameter.new(e.message, name) : e)
       end
 
       private
