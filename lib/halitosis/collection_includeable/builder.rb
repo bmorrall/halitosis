@@ -31,7 +31,8 @@ module Halitosis
           target_class.fields.add(CollectionIncludeable::Field.new(child_path, {}, nil))
           self.class.new(child_path, target_class).instance_eval(&procedure)
         when 1
-          target_class.fields.add(CollectionIncludeable::Field.new(child_path, {}, procedure))
+          target_class.fields.add(CollectionIncludeable::Field.new(child_path, {}, nil))
+          target_class.preload(child_path, &procedure)
         when nil
           target_class.fields.add(CollectionIncludeable::Field.new(child_path, {}, nil))
         else
@@ -45,12 +46,13 @@ module Halitosis
 
       # Register a preload implementation at the current path.
       #
-      # @param proc [Proc] a lambda or proc that receives the subject and returns the preloaded result
+      # @param proc [Proc] a lambda or proc that receives the collection and
+      #   returns the updated collection
       #
       # @return [self]
       #
       def preload(proc)
-        target_class.fields.add(CollectionIncludeable::Field.new(path, {}, proc))
+        target_class.preload(path, &proc)
         self
       end
 

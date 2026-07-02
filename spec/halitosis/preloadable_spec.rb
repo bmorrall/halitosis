@@ -53,14 +53,14 @@ RSpec.describe Halitosis::Preloadable do
       it "stores the given value" do
         serializer.send(:store_preload, context, :my_field, "stored_value")
 
-        expect(context.fetch_local(:includeable_preloads)).to eq(my_field: "stored_value")
+        expect(context.fetch_local(:preloaded)).to eq(my_field: "stored_value")
       end
 
       it "does not clobber existing preloads for other fields" do
         serializer.send(:store_preload, context, :field_a, "a")
         serializer.send(:store_preload, context, :field_b, "b")
 
-        preloads = context.fetch_local(:includeable_preloads)
+        preloads = context.fetch_local(:preloaded)
 
         expect(preloads[:field_a]).to eq("a")
         expect(preloads[:field_b]).to eq("b")
@@ -69,14 +69,14 @@ RSpec.describe Halitosis::Preloadable do
       it "stores a string field_name as a symbol key" do
         serializer.send(:store_preload, context, "my_field", "value")
 
-        expect(context.fetch_local(:includeable_preloads)).to have_key(:my_field)
+        expect(context.fetch_local(:preloaded)).to have_key(:my_field)
       end
 
       it "overwrites an existing entry for the same field" do
         serializer.send(:store_preload, context, :my_field, "first")
         serializer.send(:store_preload, context, :my_field, "second")
 
-        expect(context.fetch_local(:includeable_preloads)[:my_field]).to eq("second")
+        expect(context.fetch_local(:preloaded)[:my_field]).to eq("second")
       end
     end
 

@@ -35,15 +35,14 @@ RSpec.describe Halitosis::CollectionIncludeable do
     end
 
     context "without a block" do
-      it "adds the path to fields as a pass-through field without a preload" do
+      it "does not register a CollectionPreloader::Field" do
         klass.allow_include(:author)
 
         field = klass.fields.find_by_name(Halitosis::CollectionIncludeable::Field, :author)
         expect(field).not_to be_nil
 
-        ctx = instance_double(Halitosis::CollectionContext, collection: [1, 2, 3])
-        allow(ctx).to receive(:call_instance).with([1, 2, 3], Halitosis::CollectionIncludeable::Field::DEFAULT_PROCEDURE).and_return([1, 2, 3])
-        expect(field.apply(ctx)).to eq([1, 2, 3])
+        preloader_field = klass.fields.find_by_name(Halitosis::CollectionPreloader::Field, :author)
+        expect(preloader_field).to be_nil
       end
 
       it "returns nil" do
@@ -60,12 +59,12 @@ RSpec.describe Halitosis::CollectionIncludeable do
         expect(klass.fields.find_by_name(Halitosis::CollectionIncludeable::Field, :author)).not_to be_nil
       end
 
-      it "preload replaces the nil-proc declaration field, leaving exactly one field with a proc" do
+      it "registers a CollectionPreloader::Field with a proc" do
         klass.allow_include(:author) do
           preload ->(coll) { coll }
         end
 
-        fields = klass.fields.for_type(Halitosis::CollectionIncludeable::Field)
+        fields = klass.fields.for_type(Halitosis::CollectionPreloader::Field)
         author_fields = fields.select { |f| f.path == [:author] }
         expect(author_fields.size).to eq(1)
         ctx = Halitosis::CollectionContext.new(klass.new([]), {})

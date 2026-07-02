@@ -3,7 +3,7 @@
 module Halitosis
   # Provides per-field value caching into the render context's local storage.
   #
-  # Values are stored under the +:includeable_preloads+ key in context local
+  # Values are stored under the +:preloaded+ key in context local
   # storage as a +Symbol => value+ hash. Each entry is keyed by +field_name+
   # and is scoped to the context instance — never shared with child contexts.
   #
@@ -39,9 +39,9 @@ module Halitosis
       # @param value [Object] the value to cache
       #
       def store_preload(context, field_name, value)
-        current = context.fetch_local(:includeable_preloads) || {}
+        current = context.fetch_local(:preloaded) || {}
 
-        context.store_local(:includeable_preloads, current.merge(field_name.to_sym => value))
+        context.store_local(:preloaded, current.merge(field_name.to_sym => value))
       end
 
       # Retrieve a previously stored preloaded value for +field_name+.
@@ -51,7 +51,7 @@ module Halitosis
       # @return [Object, nil]
       #
       def fetch_preload(context, field_name)
-        (context.fetch_local(:includeable_preloads) || {})[field_name.to_sym]
+        (context.fetch_local(:preloaded) || {})[field_name.to_sym]
       end
 
       # Returns +true+ when a preloaded value has been stored for +field_name+,
@@ -62,7 +62,7 @@ module Halitosis
       # @return [Boolean]
       #
       def preloaded?(context, field_name)
-        !!context.fetch_local(:includeable_preloads)&.key?(field_name.to_sym)
+        !!context.fetch_local(:preloaded)&.key?(field_name.to_sym)
       end
     end
   end
