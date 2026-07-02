@@ -248,11 +248,8 @@ RSpec.describe Halitosis::ResourceIncludes do
 
         let(:include_param) { "guarded.child" }
 
-        it "raises ArgumentError because the preload was skipped by the guard" do
-          expect { serializer.before_render(context) }.to raise_error(
-            ArgumentError,
-            /allow_include :guarded.*not been preloaded/
-          )
+        it "silently skips because the preload was suppressed by the guard" do
+          expect { serializer.before_render(context) }.not_to raise_error
         end
       end
 

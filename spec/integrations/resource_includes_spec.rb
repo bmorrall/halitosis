@@ -188,4 +188,49 @@ RSpec.describe "ResourceIncludes integration" do
       expect(labels).to eq(%w[alpha beta])
     end
   end
+
+  describe "allow_include with a procedure when the relationship is gated by if:" do
+    # Regression: when a relationship has an `if:` condition that is not satisfied,
+    # its preload is never populated. The allow_include enhancer should silently
+    # skip rather than raising ArgumentError.
+    #
+    let(:gated_serializer_class) do
+      part_class = part_serializer_class
+
+      Class.new do
+        include Halitosis
+
+        resource :record
+
+        relationship :parts, if: :parts_enabled?, preload: :raw_parts do |parts|
+          (parts || []).map { |p| part_class.new(p) }
+        end
+
+        allow_include :parts do |parts|
+          parts.map { |p| "#{p}:enhanced" }
+        end
+
+        def raw_parts
+          %w[alpha beta]
+        end
+
+        def parts_enabled?
+          options.fetch(:parts_enabled, true)
+        end
+      end
+    end
+
+    it "renders without raising when the gated relationship is disabled" do
+      serializer = gated_serializer_class.new(record_resource, include: "parts", parts_enabled: false)
+
+      expect { serializer.render }.not_to raise_error
+    end
+
+    it "applies the procedure when the relationship is enabled" do
+      result = render(gated_serializer_class, include: "parts")
+
+      labels = parts_from(result).map { |p| p[:label] }
+      expect(labels).to eq(["alpha:enhanced", "beta:enhanced"])
+    end
+  end
 end
