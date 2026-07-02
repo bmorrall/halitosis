@@ -18,6 +18,12 @@ RSpec.describe Halitosis::ResourceIncludes do
         klass.allow_include(:accounts) {}
       end
 
+      it "does not register a preload" do
+        klass.allow_include(:accounts) {}
+
+        expect(klass.preload_registered?(:accounts)).to be(false)
+      end
+
       it "stores the field with the correct name" do
         klass.allow_include(:accounts) {}
 
@@ -119,8 +125,8 @@ RSpec.describe Halitosis::ResourceIncludes do
       klass.relationship(:items, preload: :items_data) { |items| items }
 
       klass.allow_include(:items) do
-        allow_include(:detail) { |items| items.map { |i| "#{i}:detail" } }
-        allow_include(:summary) { |items| items.map { |i| "#{i}:summary" } }
+        allow_include(:detail) { |items| items&.map { |i| "#{i}:detail" } }
+        allow_include(:summary) { |items| items&.map { |i| "#{i}:summary" } }
       end
 
       klass.define_method(:items_data) { %w[a b c] }
@@ -136,7 +142,7 @@ RSpec.describe Halitosis::ResourceIncludes do
         it "does not modify the cached preload value" do
           serializer.before_render(context)
 
-          expect(context.fetch_local(:includeable_preloads)[:items]).to eq(%w[a b c])
+          expect(context.fetch_local(:preloaded)[:items]).to eq(%w[a b c])
         end
       end
 
@@ -146,7 +152,7 @@ RSpec.describe Halitosis::ResourceIncludes do
         it "applies the :detail procedure to the cached value" do
           serializer.before_render(context)
 
-          expect(context.fetch_local(:includeable_preloads)[:items]).to eq(%w[a:detail b:detail c:detail])
+          expect(context.fetch_local(:preloaded)[:items]).to eq(%w[a:detail b:detail c:detail])
         end
       end
 
@@ -156,22 +162,26 @@ RSpec.describe Halitosis::ResourceIncludes do
         it "applies the :summary procedure to the cached value" do
           serializer.before_render(context)
 
-          expect(context.fetch_local(:includeable_preloads)[:items]).to eq(%w[a:summary b:summary c:summary])
+          expect(context.fetch_local(:preloaded)[:items]).to eq(%w[a:summary b:summary c:summary])
         end
       end
 
-      context "when the relationship has no preload key" do
+      context "when the relationship is not preloaded (no preload: option declared)" do
         before do
           klass.relationship(:blocked) { nil }
+          klass.define_method(:blocked) { nil }
           klass.allow_include(:blocked) do
-            allow_include(:detail) { |v| raise "should not be called" }
+            allow_include(:detail) { |v| v }
           end
         end
 
         let(:include_param) { "blocked.detail" }
 
-        it "skips processing for that relationship" do
-          expect { serializer.before_render(context) }.not_to raise_error
+        it "raises ArgumentError because :blocked has not been preloaded" do
+          expect { serializer.before_render(context) }.to raise_error(
+            ArgumentError,
+            /allow_include :blocked.*not been preloaded/
+          )
         end
       end
 
@@ -181,7 +191,7 @@ RSpec.describe Halitosis::ResourceIncludes do
         it "does not modify the cached preload value for items" do
           serializer.before_render(context)
 
-          expect(context.fetch_local(:includeable_preloads)).to be_nil
+          expect(context.fetch_local(:preloaded)).to be_nil
         end
       end
 
@@ -192,10 +202,10 @@ RSpec.describe Halitosis::ResourceIncludes do
 
         let(:include_param) { "items.detail" }
 
-        it "does not apply the include procedure" do
+        it "does not apply the include procedure and leaves the cache as nil" do
           serializer.before_render(context)
 
-          expect(context.fetch_local(:includeable_preloads)[:items]).to be_nil
+          expect(context.fetch_local(:preloaded)[:items]).to be_nil
         end
       end
 
@@ -205,7 +215,7 @@ RSpec.describe Halitosis::ResourceIncludes do
         it "does not raise and leaves the cached value unchanged" do
           serializer.before_render(context)
 
-          expect(context.fetch_local(:includeable_preloads)[:items]).to eq(%w[a b c])
+          expect(context.fetch_local(:preloaded)[:items]).to eq(%w[a b c])
         end
       end
 
@@ -218,8 +228,11 @@ RSpec.describe Halitosis::ResourceIncludes do
 
         let(:include_param) { "orphan.child" }
 
-        it "skips the allow_include field gracefully" do
-          expect { serializer.before_render(context) }.not_to raise_error
+        it "raises ArgumentError because :orphan has not been preloaded" do
+          expect { serializer.before_render(context) }.to raise_error(
+            ArgumentError,
+            /allow_include :orphan.*not been preloaded/
+          )
         end
       end
 
@@ -227,7 +240,7 @@ RSpec.describe Halitosis::ResourceIncludes do
         before do
           klass.relationship(:guarded, preload: :guarded_data, if: :show_guarded?) { |v| v }
           klass.allow_include(:guarded) do
-            allow_include(:child) { |v| raise "should not be called" }
+            allow_include(:child) { |v| v }
           end
           klass.define_method(:guarded_data) { %w[x y] }
           klass.define_method(:show_guarded?) { false }
@@ -235,8 +248,11 @@ RSpec.describe Halitosis::ResourceIncludes do
 
         let(:include_param) { "guarded.child" }
 
-        it "skips processing for the disabled relationship" do
-          expect { serializer.before_render(context) }.not_to raise_error
+        it "raises ArgumentError because the preload was skipped by the guard" do
+          expect { serializer.before_render(context) }.to raise_error(
+            ArgumentError,
+            /allow_include :guarded.*not been preloaded/
+          )
         end
       end
 
@@ -254,7 +270,7 @@ RSpec.describe Halitosis::ResourceIncludes do
         it "applies the deepest procedure" do
           serializer.before_render(context)
 
-          expect(context.fetch_local(:includeable_preloads)[:items]).to eq(%w[a:meta b:meta c:meta])
+          expect(context.fetch_local(:preloaded)[:items]).to eq(%w[a:meta b:meta c:meta])
         end
       end
 
@@ -273,7 +289,7 @@ RSpec.describe Halitosis::ResourceIncludes do
             ctx = s.send(:build_context)
             s.before_render(ctx)
 
-            expect(ctx.fetch_local(:includeable_preloads)[:enriched]).to eq(%w[x:enriched y:enriched z:enriched])
+            expect(ctx.fetch_local(:preloaded)[:enriched]).to eq(%w[x:enriched y:enriched z:enriched])
           end
         end
 
@@ -285,7 +301,7 @@ RSpec.describe Halitosis::ResourceIncludes do
             ctx = s.send(:build_context)
             s.before_render(ctx)
 
-            expect(ctx.fetch_local(:includeable_preloads)).to be_nil
+            expect(ctx.fetch_local(:preloaded)).to be_nil
           end
         end
 
@@ -301,7 +317,7 @@ RSpec.describe Halitosis::ResourceIncludes do
 
             s.before_render(ctx)
 
-            expect(ctx.fetch_local(:includeable_preloads)[:enriched]).to eq(%w[x y z])
+            expect(ctx.fetch_local(:preloaded)[:enriched]).to eq(%w[x y z])
           end
         end
       end

@@ -16,6 +16,27 @@ RSpec.describe Halitosis::ResourceRelationships do
 
         klass.relationship(:foo, {}) { "bar" }
       end
+
+      it "raises when preload: is a lambda" do
+        expect {
+          klass.relationship(:foo, preload: -> {}) { "bar" }
+        }.to raise_error(Halitosis::InvalidField, /preload option must be a Symbol, String, true, or false/i)
+      end
+
+      it "raises when preload: is an arbitrary object" do
+        expect {
+          klass.relationship(:foo, preload: 123) { "bar" }
+        }.to raise_error(Halitosis::InvalidField, /preload option must be a Symbol, String, true, or false/i)
+      end
+
+      it "does not raise when preload: is a Symbol" do
+        expect { klass.relationship(:foo, preload: :source) { |v| v } }.not_to raise_error
+      end
+
+      it "does not raise when preload: is true or false" do
+        expect { klass.relationship(:foo, preload: true) { "bar" } }.not_to raise_error
+        expect { klass.relationship(:bar, preload: false) { "bar" } }.not_to raise_error
+      end
     end
 
     describe "#rel" do

@@ -35,6 +35,9 @@ module Halitosis
   module CollectionIncludeable
     def self.included(base)
       base.extend ClassMethods
+
+      base.send :include, CollectionPreloader
+
       base.send :include, InstanceMethods
     end
 
@@ -55,7 +58,8 @@ module Halitosis
           fields.add(CollectionIncludeable::Field.new(path, {}, nil))
           CollectionIncludeable::Builder.new(path, self).instance_eval(&procedure)
         when 1
-          fields.add(CollectionIncludeable::Field.new(path, {}, procedure))
+          fields.add(CollectionIncludeable::Field.new(path, {}, nil))
+          preload(path, &procedure)
         when nil
           fields.add(CollectionIncludeable::Field.new(path, {}, nil))
         else
@@ -93,11 +97,10 @@ module Halitosis
         collect_leaf_paths(item_includes).each do |leaf_path|
           leaf_path.length.downto(1) do |len|
             candidate = leaf_path[0, len].join(".")
-            next unless (field = self.class.fields.find_by_name(CollectionIncludeable::Field, candidate))
+            next unless (field = self.class.fields.find_by_name(CollectionPreloader::Field, candidate))
 
             unless applied.include?(candidate)
-              result = field.apply(context)
-              context.collection = result unless result.nil?
+              execute_collection_preload(context, field)
               applied << candidate
             end
 

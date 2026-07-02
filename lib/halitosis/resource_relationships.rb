@@ -5,6 +5,8 @@ module Halitosis
     def self.included(base)
       base.extend ClassMethods
 
+      base.send :include, ResourcePreloader
+
       base.send :include, InstanceMethods
     end
 
@@ -17,6 +19,15 @@ module Halitosis
       def relationship(name, options = {}, &procedure)
         link_value = options.delete(:link)
 
+        preload_option = options.key?(:preload) ? options.delete(:preload) : nil
+        preload_option = true if preload_option.nil? && procedure&.arity&.nonzero?
+
+        condition_opts = {}
+        condition_opts[:if] = options[:if] if options.key?(:if)
+        condition_opts[:unless] = options[:unless] if options.key?(:unless)
+
+        preload_key = setup_relationship_preload(name.to_sym, preload_option, **condition_opts)
+
         field = ResourceRelationships::Field.new(name, options, procedure)
 
         if link_value
@@ -24,7 +35,7 @@ module Halitosis
           link_opts[:if] = options[:if] if options.key?(:if)
           link_opts[:unless] = options[:unless] if options.key?(:unless)
 
-          link_opts[:preload_key] = field.preload_key if options[:preload]
+          link_opts[:preload_key] = preload_key if preload_key
 
           if link_value.is_a?(Proc)
             # Lambdas enforce arity; wrap so the preloaded value is forwarded correctly.
@@ -47,6 +58,29 @@ module Halitosis
       end
 
       alias_method :rel, :relationship
+
+      private
+
+      # Validate the raw +preload:+ option from a +relationship+ declaration,
+      # register a preload when appropriate, and return the resolved preload
+      # key (or +nil+ when no preload should run).
+      #
+      # @param name [Symbol] the relationship name
+      # @param preload_option [nil, true, false, Symbol, String]
+      # @param condition_opts [Hash] +:if:+/+:unless:+ to gate the preload
+      # @return [Symbol, nil]
+      #
+      def setup_relationship_preload(name, preload_option, **condition_opts)
+        return nil unless preload_option
+
+        if preload_option != true && !preload_option.is_a?(Symbol) && !preload_option.is_a?(String)
+          raise InvalidField, "Relationship #{name} preload option must be a Symbol, String, true, or false"
+        end
+
+        preload_key = (preload_option.is_a?(Symbol) || preload_option.is_a?(String)) ? preload_option.to_sym : name.to_sym
+        preload(preload_key, as: name, **condition_opts)
+        preload_key
+      end
     end
 
     module InstanceMethods
@@ -56,25 +90,17 @@ module Halitosis
         decorate_render :relationships, context, super
       end
 
-      # Pre-populate the preload cache for all relationship fields that
-      # declare a +preload:+ key. Each unique +preload_key+ is evaluated once
-      # via +default_procedure_for+; the result is stored under the field's
-      # own name so the rendering step can look it up directly by field name.
+      # Pre-populate the preload cache for all relationship fields that have a
+      # registered preload. Only fires for relationship fields that are enabled
+      # for the given context.
       #
       # @param context [Halitosis::Context]
       #
       def preload_context(context)
-        preloads = {}
-
         self.class.fields.for_type(ResourceRelationships::Field).each do |field|
-          next unless field.preload?(context)
+          next unless field.enabled?(context)
 
-          unless preloads.key?(field.preload_key)
-            preloads[field.preload_key] = context.call_instance(self.class.default_procedure_for(field.preload_key))
-          end
-
-          value = preloads[field.preload_key]
-          store_preload(context, field.name, value)
+          preload_value(context, field.name)
         end
 
         super

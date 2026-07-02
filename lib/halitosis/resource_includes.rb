@@ -80,6 +80,8 @@ module Halitosis
     def self.included(base)
       base.extend ClassMethods
 
+      base.send :include, ResourcePreloader
+
       base.send :include, InstanceMethods
     end
 
@@ -130,7 +132,6 @@ module Halitosis
           allow_field = self.class.fields.find_by_name(ResourceIncludes::Field, name)
 
           next unless allow_field
-          next unless preloaded?(context, name)
 
           apply_include_procedure(context, allow_field, name.to_sym)
 
@@ -151,6 +152,13 @@ module Halitosis
       end
 
       def apply_include_procedure(context, field, cache_key)
+        return unless field.procedure
+
+        unless preloaded?(context, cache_key)
+          raise ArgumentError,
+            "allow_include :#{cache_key} depends on a preloaded value, but :#{cache_key} has not been preloaded"
+        end
+
         current = fetch_preload(context, cache_key)
         return if current.nil?
 
