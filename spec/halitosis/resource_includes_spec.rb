@@ -118,6 +118,26 @@ RSpec.describe Halitosis::ResourceIncludes do
         expect(field.children).to be_empty
       end
     end
+
+    describe "#enforce_allow_include!" do
+      it "is disabled by default" do
+        expect(klass.enforce_allow_include?).to be(false)
+      end
+
+      it "enables enforcement when called" do
+        klass.enforce_allow_include!
+
+        expect(klass.enforce_allow_include?).to be(true)
+      end
+
+      it "is inherited by subclasses" do
+        klass.enforce_allow_include!
+
+        subclass = Class.new(klass)
+
+        expect(subclass.enforce_allow_include?).to be(true)
+      end
+    end
   end
 
   describe Halitosis::ResourceIncludes::InstanceMethods do

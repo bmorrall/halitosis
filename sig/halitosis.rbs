@@ -76,6 +76,13 @@ module Halitosis
       # Block arity 0 opens a namespace; arity 1 is a preload procedure.
       def allow_include: (Symbol | String name) ?{ () -> void } -> void
 
+      # Enable strict include enforcement: requested include paths without a
+      # matching +allow_include+ declaration raise +InvalidIncludeParameter+.
+      def enforce_allow_include!: () -> void
+
+      # Whether strict include enforcement is enabled.
+      def enforce_allow_include?: () -> bool
+
       # Register a named precheck block (inherited from Base::ClassMethods).
       def precheck: (Symbol name) { (::Hash[Symbol, untyped] params) -> void } -> void
 
@@ -129,6 +136,13 @@ module Halitosis
       # Declare which include paths are accepted and optionally attach a preload block.
       # Block arity 0 opens a namespace; arity 1 is a runtime preload.
       def allow_include: (Symbol | String name) ?{ () -> void } -> void
+
+      # Enable strict include enforcement: requested include paths without a
+      # matching +allow_include+ declaration raise +InvalidIncludeParameter+.
+      def enforce_allow_include!: () -> void
+
+      # Whether strict include enforcement is enabled.
+      def enforce_allow_include?: () -> bool
 
       # Declare a root-level link (outside the collection envelope).
       # Also aliased as +link+ on collection serializers.

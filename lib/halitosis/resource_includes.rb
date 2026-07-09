@@ -82,6 +82,8 @@ module Halitosis
 
       base.send :include, ResourcePreloader
 
+      base.send :include, EnforceAllowInclude
+
       base.send :include, InstanceMethods
     end
 
@@ -120,12 +122,40 @@ module Halitosis
       # @param context [Halitosis::Context]
       #
       def before_render(context)
+        enforce_allow_include!(context) if self.class.enforce_allow_include?
+
         super
 
         process_resource_includes(context) if context.root?
       end
 
       private
+
+      # Raise +InvalidIncludeParameter+ for any requested include path that is
+      # not backed by an +allow_include+ declaration. Walks the requested include
+      # tree against the declared +allow_include+ field tree.
+      #
+      # @param context [Halitosis::Context]
+      #
+      def enforce_allow_include!(context)
+        enforce_include_tree(
+          context.include_options,
+          self.class.fields.for_type(ResourceIncludes::Field),
+          nil
+        )
+      end
+
+      def enforce_include_tree(include_opts, allow_fields, prefix)
+        include_opts.each_key do |name|
+          full_path = prefix ? "#{prefix}.#{name}" : name.to_s
+          field = allow_fields.find { |f| f.name.to_s == name.to_s }
+
+          raise_invalid_include_parameter(full_path) unless field
+
+          nested = include_opts[name]
+          enforce_include_tree(nested, field.children, full_path) if nested.is_a?(Hash) && nested.any?
+        end
+      end
 
       def process_resource_includes(context)
         context.include_options.each_key do |name|

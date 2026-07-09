@@ -176,4 +176,82 @@ RSpec.describe "CollectionIncludeable" do
       expect(rendered_names(result)).to eq(%w[Alice Bob])
     end
   end
+
+  context "with enforce_allow_include!" do
+    before do
+      klass.enforce_allow_include!
+
+      klass.allow_include(:author) do
+        preload ->(coll) { coll }
+        allow_include(:avatar) { |coll| coll }
+      end
+    end
+
+    it "renders an include path that has a matching allow_include" do
+      expect { klass.new(items).render(include: "author") }.not_to raise_error
+    end
+
+    it "renders a nested path that has a matching allow_include" do
+      expect { klass.new(items).render(include: "author.avatar") }.not_to raise_error
+    end
+
+    it "raises for an include path without a matching allow_include" do
+      expect {
+        klass.new(items).render(include: "comments")
+      }.to raise_error(
+        Halitosis::InvalidIncludeParameter,
+        /does not have a `comments` relationship path/
+      )
+    end
+
+    it "raises for a nested path without a matching allow_include" do
+      expect {
+        klass.new(items).render(include: "author.summary")
+      }.to raise_error(
+        Halitosis::InvalidIncludeParameter,
+        /does not have a `author.summary` relationship path/
+      )
+    end
+
+    it "does not raise when no include is requested" do
+      expect { klass.new(items).render }.not_to raise_error
+    end
+
+    it "is not enabled by default" do
+      unenforced = Class.new do
+        include Halitosis
+
+        collection(:items) { |c| c.map { Object.new } }
+      end
+
+      expect(unenforced.enforce_allow_include?).to be(false)
+    end
+  end
+
+  context "with enforce_allow_include! but no allow_include declared" do
+    let :bare_klass do
+      Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection.map { |i| i }
+        end
+
+        enforce_allow_include!
+      end
+    end
+
+    it "raises when any include is requested" do
+      expect {
+        bare_klass.new(items).render(include: "author")
+      }.to raise_error(
+        Halitosis::InvalidIncludeParameter,
+        /does not have a `author` relationship path/
+      )
+    end
+
+    it "does not raise when no include is requested" do
+      expect { bare_klass.new(items).render }.not_to raise_error
+    end
+  end
 end

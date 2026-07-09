@@ -1230,6 +1230,34 @@ allow_include :author do
 end
 ```
 
+#### Enforcing allow_include
+
+By default, any declared `relationship` can be requested via `include:`, and `allow_include` only controls preload enrichment. Call `enforce_allow_include!` to make `allow_include` mandatory: any requested include path (top-level or nested) that lacks a matching `allow_include` declaration is treated as if the relationship does not exist and raises `Halitosis::InvalidIncludeParameter`.
+
+```ruby
+class ArticleSerializer
+  include Halitosis
+
+  resource :article
+
+  enforce_allow_include!
+
+  relationship(:author)   { |author| UserSerializer.new(author) }
+  relationship(:comments) { |comments| comments.map { CommentSerializer.new(_1) } }
+
+  allow_include :author do
+    allow_include(:avatar) { |author| author.includes(:avatar) }
+  end
+end
+
+ArticleSerializer.new(article, include: "author")         # OK
+ArticleSerializer.new(article, include: "author.avatar")  # OK
+ArticleSerializer.new(article, include: "comments")       # raises InvalidIncludeParameter (no allow_include)
+ArticleSerializer.new(article, include: "author.summary") # raises InvalidIncludeParameter (no nested allow_include)
+```
+
+Enforcement is opt-in per serializer and is inherited by subclasses.
+
 #### Including relationships
 
 Pass `include:` when instantiating to request relationships. Excluded relationships are not evaluated:
