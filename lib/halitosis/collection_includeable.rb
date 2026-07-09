@@ -38,6 +38,8 @@ module Halitosis
 
       base.send :include, CollectionPreloader
 
+      base.send :include, EnforceAllowInclude
+
       base.send :include, InstanceMethods
     end
 
@@ -76,11 +78,35 @@ module Halitosis
       # @param context [Halitosis::Context] the render context
       #
       def before_render(context)
+        enforce_allow_include!(context) if self.class.enforce_allow_include?
+
         apply_preloads!(context)
         super
       end
 
       private
+
+      # Raise +InvalidIncludeParameter+ for any requested include path that is
+      # not backed by an +allow_include+ declaration. Walks the requested include
+      # tree, requiring a declared +CollectionIncludeable::Field+ for every node.
+      #
+      # @param context [Halitosis::Context] the render context
+      #
+      def enforce_allow_include!(context)
+        enforce_include_tree(context.include_options, [])
+      end
+
+      def enforce_include_tree(include_opts, prefix)
+        include_opts.each_key do |name|
+          path = prefix + [name.to_s]
+          dotted = path.join(".")
+
+          raise_invalid_include_parameter(dotted) unless self.class.fields.find_by_name(CollectionIncludeable::Field, dotted)
+
+          nested = include_opts[name]
+          enforce_include_tree(nested, path) if nested.is_a?(Hash) && nested.any?
+        end
+      end
 
       # Walk the include tree leaf-up and apply the deepest matching preload field for
       # each unique branch. A field is applied at most once per render, even when multiple

@@ -233,4 +233,138 @@ RSpec.describe "ResourceIncludes integration" do
       expect(labels).to eq(["alpha:enhanced", "beta:enhanced"])
     end
   end
+
+  describe "enforce_allow_include!" do
+    let(:child_class) do
+      Class.new do
+        include Halitosis
+
+        resource :part
+
+        attribute(:label) { part.to_s }
+
+        relationship(:detail) { nil }
+      end
+    end
+
+    let(:enforced_class) do
+      part_class = child_class
+
+      Class.new do
+        include Halitosis
+
+        resource :record
+
+        enforce_allow_include!
+
+        relationship :parts, preload: :raw_parts do |parts|
+          (parts || []).map { |p| part_class.new(p) }
+        end
+
+        relationship(:secret) { nil }
+
+        allow_include :parts do
+          allow_include(:detail) { |parts| parts.map { |p| "#{p}:detail" } }
+        end
+
+        def raw_parts
+          %w[alpha beta]
+        end
+      end
+    end
+
+    it "renders a relationship that has a matching allow_include" do
+      result = render(enforced_class, include: "parts")
+
+      labels = parts_from(result).map { |p| p[:label] }
+      expect(labels).to eq(%w[alpha beta])
+    end
+
+    it "renders a nested path that has a matching allow_include" do
+      result = render(enforced_class, include: "parts.detail")
+
+      labels = parts_from(result).map { |p| p[:label] }
+      expect(labels).to eq(["alpha:detail", "beta:detail"])
+    end
+
+    it "raises for a relationship without a matching allow_include" do
+      expect {
+        render(enforced_class, include: "secret")
+      }.to raise_error(
+        Halitosis::InvalidIncludeParameter,
+        /does not have a `secret` relationship path/
+      )
+    end
+
+    it "raises for a nested path without a matching allow_include" do
+      expect {
+        render(enforced_class, include: "parts.summary")
+      }.to raise_error(
+        Halitosis::InvalidIncludeParameter,
+        /does not have a `parts.summary` relationship path/
+      )
+    end
+
+    it "raises for an entirely unknown include path" do
+      expect {
+        render(enforced_class, include: "bogus")
+      }.to raise_error(
+        Halitosis::InvalidIncludeParameter,
+        /does not have a `bogus` relationship path/
+      )
+    end
+
+    it "does not raise when no include is requested" do
+      expect { render(enforced_class, include: nil) }.not_to raise_error
+    end
+
+    context "when no allow_include is declared at all" do
+      let(:no_allow_class) do
+        Class.new do
+          include Halitosis
+
+          resource :record
+
+          enforce_allow_include!
+
+          relationship(:parts) { nil }
+        end
+      end
+
+      it "raises when any include is requested" do
+        expect {
+          no_allow_class.new(record_resource, include: "parts").render
+        }.to raise_error(
+          Halitosis::InvalidIncludeParameter,
+          /does not have a `parts` relationship path/
+        )
+      end
+
+      it "does not raise when no include is requested" do
+        expect { no_allow_class.new(record_resource).render }.not_to raise_error
+      end
+    end
+
+    it "is inherited by subclasses" do
+      subclass = Class.new(enforced_class)
+
+      expect(subclass.enforce_allow_include?).to be(true)
+      expect {
+        subclass.new(record_resource, include: "secret").render
+      }.to raise_error(Halitosis::InvalidIncludeParameter)
+    end
+
+    it "is not enabled by default" do
+      unenforced = Class.new do
+        include Halitosis
+
+        resource :record
+
+        relationship(:secret) { nil }
+      end
+
+      expect(unenforced.enforce_allow_include?).to be(false)
+      expect { unenforced.new(record_resource, include: "secret").render }.not_to raise_error
+    end
+  end
 end
