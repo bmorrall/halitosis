@@ -106,7 +106,7 @@ module Halitosis
         else
           builder = Builder.new
           builder.instance_eval(&block)
-          ResourceIncludes::Field.new(name, nil, builder.children)
+          ResourceIncludes::Field.new(name, builder.preload_procedure, builder.children)
         end
 
         fields.add(field)

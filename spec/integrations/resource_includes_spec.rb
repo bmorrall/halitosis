@@ -367,4 +367,55 @@ RSpec.describe "ResourceIncludes integration" do
       expect { unenforced.new(record_resource, include: "secret").render }.not_to raise_error
     end
   end
+
+  describe "top-level allow_include builder with a preload" do
+    # Regression: the arity-0 (builder) branch of ClassMethods#allow_include
+    # was hard-coding nil as the procedure, silently discarding any preload
+    # declared inside the builder block.
+    #
+    let(:builder_preload_serializer_class) do
+      part_class = part_serializer_class
+
+      Class.new do
+        include Halitosis
+
+        resource :record
+
+        relationship :parts, preload: :raw_parts do |parts|
+          (parts || []).map { |p| part_class.new(p) }
+        end
+
+        allow_include :parts do
+          preload ->(parts) { parts.map { |p| "#{p}:loaded" } }
+
+          allow_include(:detail) { |parts| parts.map { |p| "#{p}:detail" } }
+        end
+
+        def raw_parts
+          %w[alpha beta]
+        end
+      end
+    end
+
+    describe "when only the top-level path is requested (include=parts)" do
+      it "applies the top-level builder preload" do
+        result = render(builder_preload_serializer_class, include: "parts")
+
+        labels = parts_from(result).map { |p| p[:label] }
+
+        expect(labels).to eq(["alpha:loaded", "beta:loaded"])
+      end
+    end
+
+    describe "when a nested path is requested (include=parts.detail)" do
+      it "applies both the top-level builder preload and the nested child preload" do
+        result = render(builder_preload_serializer_class, include: "parts.detail")
+
+        labels = parts_from(result).map { |p| p[:label] }
+
+        # top-level preload runs first (:loaded), then :detail procedure runs
+        expect(labels).to eq(["alpha:loaded:detail", "beta:loaded:detail"])
+      end
+    end
+  end
 end
