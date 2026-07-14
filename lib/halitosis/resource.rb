@@ -16,6 +16,8 @@ module Halitosis
       base.send :include, InstanceMethods
 
       base.send :attr_reader, :resource
+
+      base.include ResourceIncludeable
     end
 
     module ClassMethods
