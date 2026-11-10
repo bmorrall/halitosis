@@ -914,6 +914,8 @@ link(:external, type: -> { article.pdf? ? "application/pdf" : "text/html" }) do
 end
 ```
 
+A property that evaluates to `nil` is left out of the link.
+
 Suppress all links at render time with `include_links: false`:
 
 ```ruby

@@ -23,6 +23,25 @@ RSpec.describe Halitosis::Links::Field do
   describe "#value" do
     let(:context) { Halitosis::Context.new(nil) }
 
+    it "omits attributes that evaluate to nil" do
+      field = described_class.new(
+        :name, {attrs: {type: -> {}, title: "First"}}, proc { "first" }
+      )
+
+      expect(field.value(context)).to eq(href: "first", title: "First")
+    end
+
+    it "omits nil attributes from multiple hrefs" do
+      field = described_class.new(
+        :name, {attrs: {type: -> {}, title: "First"}}, proc { %w[first second] }
+      )
+
+      expect(field.value(context)).to eq([
+        {href: "first", title: "First"},
+        {href: "second", title: "First"}
+      ])
+    end
+
     it "handles multiple hrefs" do
       field = described_class.new(
         :name, proc { %w[first second] }

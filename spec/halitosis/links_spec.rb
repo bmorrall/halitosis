@@ -141,6 +141,14 @@ RSpec.describe Halitosis::Links do
         )
       end
 
+      it "omits the type when the proc returns nil" do
+        klass.external_link(type: -> {}) { "https://example.com/article" }
+
+        expect(klass.new.render[:_links][:external]).to eq(
+          href: "https://example.com/article"
+        )
+      end
+
       it "raises when no block is given" do
         expect { klass.external_link }
           .to raise_error(Halitosis::InvalidField, /external_link requires a block/i)

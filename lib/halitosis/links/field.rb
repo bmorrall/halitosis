@@ -78,7 +78,7 @@ module Halitosis
 
         attrs = options.fetch(:attrs, {}).transform_values do |v|
           context.call_instance(v)
-        end
+        end.compact
 
         case hrefs
         when Array
