@@ -190,6 +190,7 @@ RSpec.describe Halitosis::Resource do
         serializer = klass.new(nil, include: {favourite_food: true})
 
         expect(serializer.render).to match(
+          _included: {},
           duck: {name: "Ferdi", _relationships: {favourite_food: {name: "bread"}}}
         )
       end
@@ -232,6 +233,7 @@ RSpec.describe Halitosis::Resource do
         serializer = klass.new(nil, include: {favourite_foods: true})
 
         expect(serializer.render).to match(
+          _included: {},
           duck: {name: "Ferdi", _relationships: {favourite_foods: [{name: "bread"}]}}
         )
       end
@@ -280,6 +282,7 @@ RSpec.describe Halitosis::Resource do
         serializer = klass.new(nil, include: {favourite_food: true})
 
         expect(serializer.render).to match(
+          _included: {},
           duck: {
             name: "Ferdi",
             _relationships: {
@@ -295,6 +298,7 @@ RSpec.describe Halitosis::Resource do
         serializer = klass.new(nil, include: {favourite_food: {ingredients: true}})
 
         expect(serializer.render).to match(
+          _included: {},
           duck: {
             name: "Ferdi",
             _relationships: {

@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- **Breaking:** JSON:API-style sideloading of included relationships into `_included` is now the default. Removed the `collect_includes!` class method and the `config.collect_includes` option.
+- Add `legacy_nesting!` to opt out of sideloading. Included relationships are rendered nested inline, each with a `_type` key added next to its identifier.
 - Leave link properties that evaluate to `nil` out of the rendered link, instead of rendering them as `null`.
 - Add `enforce_allow_include!` to resource serializers. When enabled, any requested include path (top-level or nested) without a matching `allow_include` declaration raises `Halitosis::InvalidIncludeParameter`.
 

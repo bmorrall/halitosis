@@ -20,40 +20,52 @@ RSpec.describe Halitosis::CollectIncludes do
       include Halitosis
       include Halitosis::ResourceRelationships
 
-      collect_includes!
-
       relationship :child do
         child_klass.new
       end
     end
   end
 
-  describe ".collect_includes!" do
-    it "includes CollectIncludes::InstanceMethods" do
-      expect(klass.ancestors).to include(Halitosis::CollectIncludes::InstanceMethods)
+  it "is included in every serializer by default" do
+    expect(klass.ancestors).to include(Halitosis::CollectIncludes::InstanceMethods)
+  end
+
+  describe ".legacy_nesting!" do
+    let :legacy_klass do
+      child_klass = self.child_klass
+
+      Class.new do
+        include Halitosis
+        include Halitosis::ResourceRelationships
+
+        legacy_nesting!
+
+        relationship :child do
+          child_klass.new
+        end
+      end
     end
 
-    context "when config.collect_includes is true" do
-      before { allow(Halitosis.config).to receive(:collect_includes).and_return(true) }
+    it "is disabled by default" do
+      expect(klass.legacy_nesting?).to be false
+    end
 
-      it "automatically includes CollectIncludes::InstanceMethods without calling collect_includes!" do
-        child_klass = self.child_klass
+    it "enables legacy nesting" do
+      expect(legacy_klass.legacy_nesting?).to be true
+    end
 
-        klass = Class.new do
-          include Halitosis
-          include Halitosis::ResourceRelationships
+    it "is inherited by subclasses" do
+      expect(Class.new(legacy_klass).legacy_nesting?).to be true
+    end
 
-          relationship :child do
-            child_klass.new
-          end
-        end
+    it "renders included relationships inline with a _type and omits _included" do
+      result = legacy_klass.new(include: {child: true}).render
 
-        result = klass.new(include: {child: true}).render
+      expect(result).to eq(_relationships: {child: {id: 42, _type: "child", name: "child"}})
+    end
 
-        expect(klass.ancestors).to include(Halitosis::CollectIncludes::InstanceMethods)
-        expect(result[:_relationships][:child]).to eq(id: 42, _type: "child")
-        expect(result[:_included]).to eq(child: [{id: 42, name: "child"}])
-      end
+    it "does not add an included key when no relationships are included" do
+      expect(legacy_klass.new.render).to eq({})
     end
   end
 
@@ -73,8 +85,6 @@ RSpec.describe Halitosis::CollectIncludes do
           klass = Class.new do
             include Halitosis
             include Halitosis::ResourceRelationships
-
-            collect_includes!
 
             relationship :child do
               nil
@@ -114,13 +124,13 @@ RSpec.describe Halitosis::CollectIncludes do
         expect(result).to be_nil
       end
 
-      it "falls back to super when no included_registry on context" do
+      it "renders the child inline with a _type when no included_registry on context (legacy nesting)" do
         serializer = klass.new
         child = child_klass.new
         opts = {}
 
         result = serializer.send(:render_child, child, context_without_registry, opts)
-        expect(result).to eq(id: 42, name: "child")
+        expect(result).to eq(id: 42, _type: "child", name: "child")
       end
 
       it "falls back to super when child has no Identifiers::Field" do
