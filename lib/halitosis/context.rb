@@ -58,6 +58,15 @@ module Halitosis
 
     attr_writer :included_registry
 
+    # Include options each entry of the included registry was rendered with,
+    # keyed the same as +included_registry+. Shared with the root context.
+    #
+    # @return [Hash]
+    #
+    def included_include_options
+      parent ? parent.included_include_options : (@included_include_options ||= {})
+    end
+
     # Returns the sparse fieldset registry (resource type string → Set of
     # permitted field name strings) shared across the entire render tree.
     # Child contexts delegate to the root so nested resources always see the

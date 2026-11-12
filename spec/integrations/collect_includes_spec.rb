@@ -483,4 +483,86 @@ RSpec.describe "CollectIncludes" do
       )
     end
   end
+
+  context "when the same resource is reached by include paths requesting different relationships" do
+    let :graph_klass do
+      leaf = ->(name) do
+        Class.new do
+          include Halitosis
+
+          resource name
+
+          identifier(:id) { resource[:id] }
+        end
+      end
+      c_klass = leaf.call(:c)
+      e_klass = leaf.call(:e)
+
+      b_klass = Class.new do
+        include Halitosis
+        include Halitosis::ResourceRelationships
+
+        resource :b
+
+        identifier(:id) { resource[:id] }
+
+        relationship(:c) { c_klass.new({id: 3}) }
+        relationship(:e) { e_klass.new({id: 5}) }
+      end
+
+      d_klass = Class.new do
+        include Halitosis
+        include Halitosis::ResourceRelationships
+
+        resource :d
+
+        identifier(:id) { resource[:id] }
+
+        relationship(:b) { b_klass.new({id: resource[:b_id]}) }
+      end
+
+      Class.new do
+        include Halitosis
+        include Halitosis::ResourceRelationships
+
+        resource :a
+
+        identifier(:id) { resource[:id] }
+
+        relationship(:b) { b_klass.new({id: 2}) }
+        relationship(:d) { d_klass.new({id: 4, b_id: resource[:d_b_id]}) }
+      end
+    end
+
+    it "merges the relationships requested by every path into the shared payload" do
+      result = graph_klass.new({id: 1, d_b_id: 2}, include: "b.c,d.b.e").render
+
+      expect(result[:_included]).to eq(
+        c: [{id: 3}],
+        b: [{id: 2, _relationships: {c: {id: 3, _type: "c"}, e: {id: 5, _type: "e"}}}],
+        e: [{id: 5}],
+        d: [{id: 4, _relationships: {b: {id: 2, _type: "b"}}}]
+      )
+    end
+
+    it "merges regardless of the order the include paths are given in" do
+      result = graph_klass.new({id: 1, d_b_id: 2}, include: "d.b.e,b.c").render
+
+      expect(result[:_included][:b]).to eq(
+        [{id: 2, _relationships: {c: {id: 3, _type: "c"}, e: {id: 5, _type: "e"}}}]
+      )
+      expect(result[:_included][:e]).to eq([{id: 5}])
+    end
+
+    it "keeps separate payloads for different records of the same type" do
+      result = graph_klass.new({id: 1, d_b_id: 6}, include: "b.c,d.b.e").render
+
+      expect(result[:_included][:b]).to eq(
+        [
+          {id: 2, _relationships: {c: {id: 3, _type: "c"}}},
+          {id: 6, _relationships: {e: {id: 5, _type: "e"}}}
+        ]
+      )
+    end
+  end
 end

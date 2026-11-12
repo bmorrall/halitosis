@@ -97,16 +97,39 @@ module Halitosis
         end
 
         dedup_key = [type, id_value]
+        rendered_opts = context.included_include_options
+        requested = normalize_include_options(opts)
 
-        unless registry.key?(dedup_key)
-          child.before_render(child_context)
-          registry[dedup_key] = child.render_with_context(child_context)
+        if registry.key?(dedup_key)
+          # Already hoisted: re-render only when this path asks for includes
+          # the stored payload does not already cover (e.g. a.b.c + a.d.b.e).
+          previous = rendered_opts.fetch(dedup_key, {})
+          merged = HashUtil.deep_merge(previous, requested)
+          return stub if merged == previous
+
+          child_context = child.build_context(parent: context, include: merged)
+          requested = merged
         end
+
+        child.before_render(child_context)
+        registry[dedup_key] = child.render_with_context(child_context)
+        rendered_opts[dedup_key] = requested
 
         stub
       end
 
       private
+
+      # Normalize include options to nested hashes with string keys, treating
+      # non-hash leaves (e.g. +true+, +1+) as having no further includes.
+      #
+      # @return [Hash]
+      #
+      def normalize_include_options(opts)
+        return {} unless opts.is_a?(Hash)
+
+        opts.each_with_object({}) { |(key, value), hash| hash[key.to_s] = normalize_include_options(value) }
+      end
 
       def legacy_nesting?
         self.class.respond_to?(:legacy_nesting?) && self.class.legacy_nesting?
