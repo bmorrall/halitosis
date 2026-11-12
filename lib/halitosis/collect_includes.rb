@@ -8,9 +8,10 @@ module Halitosis
   # are hoisted into a root-level +_included+ hash, grouped by resource type
   # and deduplicated by id.
   #
-  # Serializers can opt out with +legacy_nesting!+, which keeps the full
-  # payload nested inline under +_relationships+ (merged with the typed stub,
-  # so +_type+ is still present) and omits +_included+.
+  # Serializers can enable +legacy_nesting!+, which additionally keeps the
+  # full payload nested inline under +_relationships+ (merged with the typed
+  # stub, so +_type+ is still present). The sideloaded records in +_included+
+  # are unchanged: their relationships are always typed stubs.
   #
   # The root serializer decides the mode for the whole render tree.
   #
@@ -21,8 +22,8 @@ module Halitosis
     end
 
     module ClassMethods
-      # Opt out of sideloading: render included relationships nested inline
-      # (with +_type+) rather than hoisting them into +_included+.
+      # Render included relationships nested inline (with +_type+) in addition
+      # to sideloading them into +_included+.
       #
       # @return [void]
       #
@@ -42,7 +43,10 @@ module Halitosis
     module InstanceMethods
       def build_context(options = {})
         super.tap do |context|
-          context.included_registry = {} unless options[:parent] || legacy_nesting?
+          next if options[:parent]
+
+          context.included_registry = {}
+          context.legacy_nesting = legacy_nesting?
         end
       end
 
@@ -64,8 +68,9 @@ module Halitosis
       # into the shared included registry. Recurses into nested relationships
       # by extending child instances with this module at render time.
       #
-      # When no included registry is present on the context (legacy nesting),
-      # the child is rendered inline with the typed stub merged in.
+      # With legacy nesting, the child is also rendered inline with the typed
+      # stub merged in. When no included registry is present on the context,
+      # the child is only rendered inline.
       #
       # Falls back to super when:
       #   - the child is not a Halitosis serializer
@@ -96,29 +101,68 @@ module Halitosis
           return stub.merge(child.render_with_context(child_context))
         end
 
-        dedup_key = [type, id_value]
-        rendered_opts = context.included_include_options
-        requested = normalize_include_options(opts)
-
-        if registry.key?(dedup_key)
-          # Already hoisted: re-render only when this path asks for includes
-          # the stored payload does not already cover (e.g. a.b.c + a.d.b.e).
-          previous = rendered_opts.fetch(dedup_key, {})
-          merged = HashUtil.deep_merge(previous, requested)
-          return stub if merged == previous
-
-          child_context = child.build_context(parent: context, include: merged)
-          requested = merged
+        # Legacy nesting renders every occurrence inline with its own include
+        # options, exactly as a nested render would.
+        if context.legacy_nesting?
+          child.before_render(child_context)
+          payload = child.render_with_context(child_context)
         end
 
-        child.before_render(child_context)
-        registry[dedup_key] = child.render_with_context(child_context)
-        rendered_opts[dedup_key] = requested
+        hoist_child(child, context, [type, id_value], normalize_include_options(opts), payload)
 
-        stub
+        return stub unless payload
+
+        stub.merge(payload).tap { |inline| context.legacy_stubs[inline] = stub }
       end
 
       private
+
+      # Store the child's payload in the included registry, deduplicated by
+      # +key+. A record that is already hoisted is only re-rendered when this
+      # path asks for includes its stored payload does not cover (e.g.
+      # +a.b.c,a.d.b.e+), using the merged include options.
+      #
+      # @param payload [Hash, nil] an inline render of the child with
+      #   +requested+ include options, reused when it matches what is needed
+      #
+      def hoist_child(child, context, key, requested, payload)
+        registry = context.included_registry
+        rendered_opts = context.included_include_options
+
+        if registry.key?(key)
+          previous = rendered_opts.fetch(key, {})
+          merged = HashUtil.deep_merge(previous, requested)
+          return if merged == previous
+
+          payload = nil unless merged == requested
+          requested = merged
+        end
+
+        unless payload
+          child_context = child.build_context(parent: context, include: requested)
+          child.before_render(child_context)
+          payload = child.render_with_context(child_context)
+        end
+
+        registry[key] = sideloaded(payload, context.legacy_stubs)
+        rendered_opts[key] = requested
+      end
+
+      # Replace legacy inline relationships with their typed stubs, so
+      # sideloaded records match a non-legacy render.
+      #
+      def sideloaded(value, legacy_stubs)
+        return value if legacy_stubs.empty?
+
+        case value
+        when Hash
+          legacy_stubs.fetch(value) { value.transform_values { |v| sideloaded(v, legacy_stubs) } }
+        when Array
+          value.map { |v| sideloaded(v, legacy_stubs) }
+        else
+          value
+        end
+      end
 
       # Normalize include options to nested hashes with string keys, treating
       # non-hash leaves (e.g. +true+, +1+) as having no further includes.

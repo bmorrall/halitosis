@@ -67,6 +67,25 @@ module Halitosis
       parent ? parent.included_include_options : (@included_include_options ||= {})
     end
 
+    # @return [Boolean] whether included relationships are also rendered
+    #   nested inline. Shared with the root context.
+    #
+    def legacy_nesting?
+      parent ? parent.legacy_nesting? : !!@legacy_nesting
+    end
+
+    attr_writer :legacy_nesting
+
+    # Inline legacy relationship hashes mapped (by identity) to their typed
+    # stubs, used to strip legacy nesting from sideloaded records. Shared with
+    # the root context.
+    #
+    # @return [Hash{Hash => Hash}]
+    #
+    def legacy_stubs
+      parent ? parent.legacy_stubs : (@legacy_stubs ||= {}.compare_by_identity)
+    end
+
     # Returns the sparse fieldset registry (resource type string → Set of
     # permitted field name strings) shared across the entire render tree.
     # Child contexts delegate to the root so nested resources always see the

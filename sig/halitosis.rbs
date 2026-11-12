@@ -13,8 +13,8 @@ module Halitosis
       # level only. The block receives the current query params hash.
       def precheck: (Symbol name) { (::Hash[Symbol, untyped] params) -> void } -> void
 
-      # Opt out of JSON:API-style sideloading: render included relationships
-      # nested inline (with +_type+) instead of hoisting them into +_included+.
+      # Also render included relationships nested inline (with +_type+),
+      # in addition to sideloading them into +_included+.
       def legacy_nesting!: () -> void
 
       # Whether legacy nesting is enabled.
@@ -90,7 +90,7 @@ module Halitosis
       # Register a named precheck block (inherited from Base::ClassMethods).
       def precheck: (Symbol name) { (::Hash[Symbol, untyped] params) -> void } -> void
 
-      # Opt out of sideloading into +_included+ (inherited from Base::ClassMethods).
+      # Also nest included relationships inline (inherited from Base::ClassMethods).
       def legacy_nesting!: () -> void
     end
   end
@@ -184,7 +184,7 @@ module Halitosis
       # Register a named precheck block.
       def precheck: (Symbol name) { (::Hash[Symbol, untyped] params) -> void } -> void
 
-      # Opt out of sideloading into +_included+; render includes nested inline with +_type+.
+      # Also nest included relationships inline with +_type+, alongside +_included+.
       def legacy_nesting!: () -> void
 
       # Declare a required initializer option.
