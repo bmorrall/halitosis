@@ -19,6 +19,9 @@ unless rails_version.empty?
   gem "rails", "~> #{rails_version}.0"
   gem "rspec-rails"
   gem "sqlite3", "~> 2.0"
+
+  # Add json gem for Rails versions below 8.1 to ensure compatibility
+  gem "json", "< 3" if Gem::Version.new(rails_version) < Gem::Version.new("8.1")
 end
 
 unless ENV["PAGINATION_ADAPTER"].to_s.empty?
