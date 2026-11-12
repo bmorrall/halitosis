@@ -220,6 +220,32 @@ RSpec.describe Halitosis::CollectIncludes do
 
         expect { serializer.send(:render_child, child, context, {}) }.not_to raise_error
       end
+
+      it "re-renders a child already in the registry when new include options are requested" do
+        serializer = klass.new
+        context = Halitosis::Context.new(serializer, {})
+        context.included_registry = {["child", 42] => {id: 42, name: "existing"}}
+        context.included_include_options[["child", 42]] = {"child" => {}}
+        child = child_klass.new
+
+        allow(child).to receive(:render_with_context).and_return(id: 42, name: "rerendered")
+        result = serializer.send(:render_child, child, context, {child: {child: true}})
+
+        expect(result).to eq(id: 42, _type: "child")
+        expect(context.included_registry[["child", 42]]).to eq(id: 42, name: "rerendered")
+        expect(context.included_include_options[["child", 42]]).to eq("child" => {"child" => {}})
+      end
+
+      it "does not re-render when the requested include options are already covered" do
+        serializer = klass.new
+        context = Halitosis::Context.new(serializer, {})
+        context.included_registry = {["child", 42] => {id: 42, name: "existing"}}
+        context.included_include_options[["child", 42]] = {"child" => {"child" => {}}}
+        child = child_klass.new
+
+        expect(child).not_to receive(:render_with_context)
+        serializer.send(:render_child, child, context, {"child" => true})
+      end
     end
   end
 end
