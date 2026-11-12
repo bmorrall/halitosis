@@ -529,7 +529,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
 
     it "falls back to the global config adapter when none is passed" do
       allow(Halitosis).to receive(:config).and_return(
-        instance_double(Halitosis::Configuration, pagination_adapter: :kaminari, extensions: [], collect_includes: false)
+        instance_double(Halitosis::Configuration, pagination_adapter: :kaminari, extensions: [])
       )
 
       klass = Class.new do

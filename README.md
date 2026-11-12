@@ -1477,15 +1477,15 @@ Keys for middleware that was not triggered (e.g. no `filter` param, or no `pagin
 
 ### Collecting includes (JSON:API-style sideloading)
 
-Include `collect_includes!` in a serializer to hoist included relationships out of the nested `_relationships` structure and into a top-level `_included` hash, grouped by resource type and deduplicated by id. This mirrors the [JSON:API compound document](https://jsonapi.org/format/#document-compound-documents) pattern.
+Included relationships are hoisted out of the nested `_relationships` structure and into a top-level `_included` hash, grouped by resource type and deduplicated by id. This mirrors the [JSON:API compound document](https://jsonapi.org/format/#document-compound-documents) pattern.
+
+Only children that declare an `identifier` are hoisted; children without one are rendered inline.
 
 ```ruby
 class ArticleSerializer
   include Halitosis
 
   resource :article
-
-  collect_includes!           # enable sideloading on this serializer
 
   identifier :id
   attribute :title
@@ -1512,7 +1512,7 @@ ArticleSerializer.new(article, include: "author").render
 #    }
 ```
 
-If no relationships are included, the `_included` key is omitted entirely.
+If no relationships are requested, the `_included` key is omitted entirely. If relationships are requested but none can be hoisted, `_included` is an empty hash.
 
 #### Deduplication
 
@@ -1521,8 +1521,6 @@ When multiple resources reference the same related object, it appears only once 
 ```ruby
 class ArticlesSerializer
   include Halitosis
-
-  collect_includes!
 
   collection :articles do |collection|
     collection.map { |article| ArticleSerializer.new(article) }
@@ -1542,6 +1540,36 @@ ArticlesSerializer.new(articles, include: "author").render
 #      }
 #    }
 ```
+
+#### Legacy nesting
+
+Call `legacy_nesting!` to opt out of sideloading. Included relationships are rendered nested inline, as before. Each nested child that declares an `identifier` also gets the `_type` key, so its inline payload is the sideloading stub merged with the full payload. The `_included` key is never rendered.
+
+```ruby
+class ArticleSerializer
+  include Halitosis
+
+  resource :article
+
+  legacy_nesting!
+
+  identifier :id
+  attribute :title
+
+  relationship(:author) { AuthorSerializer.new(article.author) }
+end
+
+ArticleSerializer.new(article, include: "author").render
+# => {
+#      article: {
+#        id: 1,
+#        title: "Hello World",
+#        _relationships: { author: { id: 5, _type: "author", name: "Alice" } }
+#      }
+#    }
+```
+
+The mode is chosen by the root serializer being rendered, and applies to the whole render tree. Subclasses inherit `legacy_nesting!`.
 
 ### Render options summary
 
@@ -1882,7 +1910,6 @@ end
 | --- | --- | --- |
 | `extensions` | `[]` | Modules included in every serializer class at load time |
 | `pagination_adapter` | `nil` | Default adapter for pagination metadata — `:kaminari`, `:will_paginate`, or a callable |
-| `collect_includes` | `false` | When `true`, enables JSON:API-style sideloading on every serializer (equivalent to calling `collect_includes!` on each) |
 
 ## Development
 

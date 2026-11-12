@@ -46,7 +46,7 @@ module Halitosis
 
     config.extensions.each { |extension| base.send :include, extension }
 
-    base.include CollectIncludes if config.collect_includes
+    base.include CollectIncludes
   end
 
   module ClassMethods
@@ -60,10 +60,6 @@ module Halitosis
       include Halitosis::Collection
 
       define_collection(name, ...)
-    end
-
-    def collect_includes!
-      include Halitosis::CollectIncludes
     end
   end
 

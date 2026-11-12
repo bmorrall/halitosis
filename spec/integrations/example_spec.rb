@@ -182,6 +182,7 @@ RSpec.describe "Halitosis Example" do
     rendered = DuckSerializer.new(Duck.new, include: {ducklings: true}).render
 
     expect(rendered).to eq(
+      _included: {},
       duck: {
         id: 1,
         age: 9.2,
@@ -206,6 +207,7 @@ RSpec.describe "Halitosis Example" do
     rendered = DuckSerializer.new(Duck.new, include: "ducklings").render
 
     expect(rendered).to eq(
+      _included: {},
       duck: {
         id: 1,
         age: 9.2,
@@ -266,6 +268,7 @@ RSpec.describe "Halitosis Example" do
     rendered = DucksSerializer.new(ducks, include: {ducklings: true}).render
 
     expect(rendered).to eq(
+      _included: {},
       ducks: [
         {
           id: 1,
@@ -359,6 +362,7 @@ RSpec.describe "Halitosis Example" do
     rendered = DucksSerializer.new(ducks, include: {parents: true}).render
 
     expect(rendered).to eq(
+      _included: {},
       ducks: [
         {
           id: 1,
@@ -407,6 +411,7 @@ RSpec.describe "Halitosis Example" do
     rendered = DucksSerializer.new(ducks, include: {parents: {ducklings: true}}).render
 
     expect(rendered).to eq(
+      _included: {},
       ducks: [
         {
           id: 1,

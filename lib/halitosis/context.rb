@@ -50,7 +50,7 @@ module Halitosis
       @include_options ||= HashUtil.hasherize_include_option(options[:include] || {})
     end
 
-    # @return [nil, Hash] the shared included resources registry, if collect_includes is active
+    # @return [nil, Hash] the shared included resources registry, or nil when legacy nesting is active
     #
     def included_registry
       parent ? parent.included_registry : @included_registry

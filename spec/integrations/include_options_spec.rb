@@ -34,24 +34,28 @@ RSpec.describe "Include Options" do
 
     it "allows child resources to be included" do
       expect(klass.new(include: {item: true}).render).to eq(
+        _included: {},
         _relationships: {item: {}}
       )
     end
 
     it "allows child items_array to be included" do
       expect(klass.new(include: {items_array: true}).render).to eq(
+        _included: {},
         _relationships: {items_array: [{}]}
       )
     end
 
     it "allows child items_collection to be included" do
       expect(klass.new(include: {items_collection: true}).render).to eq(
+        _included: {},
         _relationships: {items_collection: [{}]}
       )
     end
 
     it "allows grandchild resources to be included from a child resource" do
       expect(klass.new(include: {item: {item: true}}).render).to eq(
+        _included: {},
         _relationships: {
           item: {_relationships: {item: {}}}
         }
@@ -60,6 +64,7 @@ RSpec.describe "Include Options" do
 
     it "allows grandchild resources to be included from a resource array" do
       expect(klass.new(include: {items_array: {item: true}}).render).to eq(
+        _included: {},
         _relationships: {
           items_array: [{_relationships: {item: {}}}]
         }
@@ -68,6 +73,7 @@ RSpec.describe "Include Options" do
 
     it "allows grandchild resources to be included from a resource collection" do
       expect(klass.new(include: {items_collection: {item: true}}).render).to eq(
+        _included: {},
         _relationships: {
           items_collection: [{_relationships: {item: {}}}]
         }
@@ -76,6 +82,7 @@ RSpec.describe "Include Options" do
 
     it "allows grandchild items_array to be included from a child resource" do
       expect(klass.new(include: {item: {items_array: true}}).render).to eq(
+        _included: {},
         _relationships: {
           item: {_relationships: {items_array: [{}]}}
         }
@@ -84,6 +91,7 @@ RSpec.describe "Include Options" do
 
     it "allows grandchild items_array to be included from a resource array" do
       expect(klass.new(include: {items_array: {items_array: true}}).render).to eq(
+        _included: {},
         _relationships: {
           items_array: [{_relationships: {items_array: [{}]}}]
         }
@@ -92,6 +100,7 @@ RSpec.describe "Include Options" do
 
     it "allows grandchild items_array to be included from a resource collection" do
       expect(klass.new(include: {items_collection: {items_array: true}}).render).to eq(
+        _included: {},
         _relationships: {
           items_collection: [{_relationships: {items_array: [{}]}}]
         }
@@ -100,6 +109,7 @@ RSpec.describe "Include Options" do
 
     it "allows child resources and items_array to be included" do
       expect(klass.new(include: {item: true, items_array: true}).render).to eq(
+        _included: {},
         _relationships: {
           item: {},
           items_array: [{}]
@@ -176,18 +186,21 @@ RSpec.describe "Include Options" do
 
     it "allows child resources to be included" do
       expect(klass.new([], include: {item: true}).render).to eq(
+        _included: {},
         items: [{_relationships: {item: {}}}]
       )
     end
 
     it "allows child items_array to be included" do
       expect(klass.new([], include: {items_array: true}).render).to eq(
+        _included: {},
         items: [{_relationships: {items_array: [{}]}}]
       )
     end
 
     it "allows child items_collection to be included" do
       expect(klass.new([], include: {items_collection: true}).render).to eq(
+        _included: {},
         items: [{_relationships: {items_collection: [{}]}}]
       )
     end
