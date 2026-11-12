@@ -1543,7 +1543,7 @@ ArticlesSerializer.new(articles, include: "author").render
 
 #### Legacy nesting
 
-Call `legacy_nesting!` to opt out of sideloading. Included relationships are rendered nested inline, as before. Each nested child that declares an `identifier` also gets the `_type` key, so its inline payload is the sideloading stub merged with the full payload. The `_included` key is never rendered.
+Call `legacy_nesting!` to keep rendering included relationships nested inline, for clients that have not moved to `_included` yet. Records are still sideloaded into `_included` exactly as without it; each nested child that declares an `identifier` is additionally rendered inline as its stub merged with its full payload. Every included record is rendered nested, so this costs more than sideloading alone.
 
 ```ruby
 class ArticleSerializer
@@ -1565,9 +1565,16 @@ ArticleSerializer.new(article, include: "author").render
 #        id: 1,
 #        title: "Hello World",
 #        _relationships: { author: { id: 5, _type: "author", name: "Alice" } }
+#      },
+#      _included: {
+#        author: [
+#          { id: 5, name: "Alice" }
+#        ]
 #      }
 #    }
 ```
+
+Inline payloads contain exactly the relationships requested on that path. Sideloaded records never contain nested payloads: their relationships are typed stubs, and a record reached by several include paths has the relationships from all of them.
 
 The mode is chosen by the root serializer being rendered, and applies to the whole render tree. Subclasses inherit `legacy_nesting!`.
 

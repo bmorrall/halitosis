@@ -58,10 +58,13 @@ RSpec.describe Halitosis::CollectIncludes do
       expect(Class.new(legacy_klass).legacy_nesting?).to be true
     end
 
-    it "renders included relationships inline with a _type and omits _included" do
+    it "renders included relationships inline with a _type in addition to _included" do
       result = legacy_klass.new(include: {child: true}).render
 
-      expect(result).to eq(_relationships: {child: {id: 42, _type: "child", name: "child"}})
+      expect(result).to eq(
+        _relationships: {child: {id: 42, _type: "child", name: "child"}},
+        _included: {child: [{id: 42, name: "child"}]}
+      )
     end
 
     it "does not add an included key when no relationships are included" do

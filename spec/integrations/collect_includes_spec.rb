@@ -390,7 +390,7 @@ RSpec.describe "CollectIncludes" do
 
     let(:author_with_tag_attrs) { {id: 10, name: "Alice", tag: {id: 99, label: "ruby"}} }
 
-    it "nests the full payload of each depth inline with a _type" do
+    it "nests the full payload of each depth inline and sideloads records with stubbed relationships" do
       serializer = legacy_article_klass.new(
         {id: 1, title: "Hello", author: author_with_tag_attrs},
         include: {author: {tag: true}}
@@ -408,11 +408,72 @@ RSpec.describe "CollectIncludes" do
               _relationships: {tag: {id: 99, _type: "tag", label: "ruby"}}
             }
           }
+        },
+        _included: {
+          tag: [{id: 99, label: "ruby"}],
+          author: [{id: 10, name: "Alice", _relationships: {tag: {id: 99, _type: "tag"}}}]
         }
       )
     end
 
-    it "nests every item of an array relationship without deduplicating" do
+    it "stubs array relationships within sideloaded records" do
+      tag_klass = Class.new do
+        include Halitosis
+
+        resource :tag
+
+        identifier(:id) { resource[:id] }
+        attribute(:label) { resource[:label] }
+      end
+
+      author_klass = Class.new do
+        include Halitosis
+        include Halitosis::ResourceRelationships
+
+        resource :author
+
+        identifier(:id) { resource[:id] }
+
+        relationship(:tags) { resource[:tags].map { |attrs| tag_klass.new(attrs) } }
+      end
+
+      article_klass = Class.new do
+        include Halitosis
+        include Halitosis::ResourceRelationships
+
+        resource :article
+
+        legacy_nesting!
+
+        identifier(:id) { resource[:id] }
+
+        relationship(:author) { author_klass.new(resource[:author]) }
+      end
+
+      tags = [{id: 98, label: "ruby"}, {id: 99, label: "rails"}]
+      result = article_klass.new({id: 1, author: {id: 10, tags: tags}}, include: "author.tags").render
+
+      expect(result).to eq(
+        article: {
+          id: 1,
+          _relationships: {
+            author: {
+              id: 10,
+              _type: "author",
+              _relationships: {
+                tags: [{id: 98, _type: "tag", label: "ruby"}, {id: 99, _type: "tag", label: "rails"}]
+              }
+            }
+          }
+        },
+        _included: {
+          tag: [{id: 98, label: "ruby"}, {id: 99, label: "rails"}],
+          author: [{id: 10, _relationships: {tags: [{id: 98, _type: "tag"}, {id: 99, _type: "tag"}]}}]
+        }
+      )
+    end
+
+    it "nests every item of an array relationship inline, deduplicating only the sideloaded records" do
       serializer = legacy_article_klass.new(
         {id: 1, title: "Hello", authors: [author_with_tag_attrs, author_with_tag_attrs]},
         include: {authors: true}
@@ -428,6 +489,9 @@ RSpec.describe "CollectIncludes" do
               {id: 10, _type: "author", name: "Alice"}
             ]
           }
+        },
+        _included: {
+          author: [{id: 10, name: "Alice"}]
         }
       )
     end
@@ -453,7 +517,10 @@ RSpec.describe "CollectIncludes" do
       expect(serializer.render).to eq(
         articles: [
           {id: 1, title: "First", _relationships: {author: {id: 10, _type: "author", name: "Alice"}}}
-        ]
+        ],
+        _included: {
+          author: [{id: 10, name: "Alice"}]
+        }
       )
     end
 
@@ -552,6 +619,32 @@ RSpec.describe "CollectIncludes" do
         [{id: 2, _relationships: {c: {id: 3, _type: "c"}, e: {id: 5, _type: "e"}}}]
       )
       expect(result[:_included][:e]).to eq([{id: 5}])
+    end
+
+    it "with legacy_nesting!, nests each path as requested and sideloads the merged record with stubs" do
+      legacy_klass = Class.new(graph_klass) { legacy_nesting! }
+
+      result = legacy_klass.new({id: 1, d_b_id: 2}, include: "b.c,d.b.e").render
+
+      expect(result).to eq(
+        a: {
+          id: 1,
+          _relationships: {
+            b: {id: 2, _type: "b", _relationships: {c: {id: 3, _type: "c"}}},
+            d: {
+              id: 4,
+              _type: "d",
+              _relationships: {b: {id: 2, _type: "b", _relationships: {e: {id: 5, _type: "e"}}}}
+            }
+          }
+        },
+        _included: {
+          c: [{id: 3}],
+          b: [{id: 2, _relationships: {c: {id: 3, _type: "c"}, e: {id: 5, _type: "e"}}}],
+          e: [{id: 5}],
+          d: [{id: 4, _relationships: {b: {id: 2, _type: "b"}}}]
+        }
+      )
     end
 
     it "keeps separate payloads for different records of the same type" do
