@@ -307,6 +307,42 @@ RSpec.describe Halitosis::CollectionPaginatable do
       end
     end
 
+    it "raises InvalidPaginationParameter for a page[number] of 0" do
+      serializer = klass.new(items)
+
+      expect do
+        serializer.send(:apply_pagination!, serializer.send(:build_context, {page: {number: "0"}}))
+      end.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidPaginationParameter)
+        expect(exception.message).to match(/can not be paginated with the provided 'page\[number\]' value: must be at least 1/i)
+        expect(exception.parameter).to eq("page[number]")
+      end
+    end
+
+    it "raises InvalidPaginationParameter for a negative page[number]" do
+      serializer = klass.new(items)
+
+      expect do
+        serializer.send(:apply_pagination!, serializer.send(:build_context, {page: {number: "-1"}}))
+      end.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidPaginationParameter)
+        expect(exception.message).to match(/can not be paginated with the provided 'page\[number\]' value: must be at least 1/i)
+        expect(exception.parameter).to eq("page[number]")
+      end
+    end
+
+    it "raises InvalidPaginationParameter for a page[size] of 0" do
+      serializer = klass.new(items)
+
+      expect do
+        serializer.send(:apply_pagination!, serializer.send(:build_context, {page: {size: "0"}}))
+      end.to raise_error do |exception|
+        expect(exception).to be_an_instance_of(Halitosis::InvalidPaginationParameter)
+        expect(exception.message).to match(/can not be paginated with the provided 'page\[size\]' value: must be at least 1/i)
+        expect(exception.parameter).to eq("page[size]")
+      end
+    end
+
     context "when no paginate_by_page is declared" do
       let :unpaginated_klass do
         Class.new do

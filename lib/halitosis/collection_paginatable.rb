@@ -201,7 +201,10 @@ module Halitosis
       def parse_page_integer(value, default:, param:)
         return default if value.nil?
 
-        Integer(value)
+        integer = Integer(value)
+        raise_invalid_pagination_parameter(param, "must be at least 1") unless integer.positive?
+
+        integer
       rescue ArgumentError, TypeError
         raise_invalid_pagination_parameter(param)
       end
