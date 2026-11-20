@@ -272,6 +272,33 @@ RSpec.describe "Paginatable — paginate_links" do
     end
   end
 
+  context "with first_page: 0" do
+    it "uses first_page for the first link and the adapter's numbers for the rest" do
+      item_ser = item_klass
+      adapter = ->(_) { {current_page: 0, last_page: 4, prev_page: nil, next_page: 1} }
+
+      klass = Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection.map { |i| item_ser.new(i) }
+        end
+
+        paginate_by_page(adapter, default_page_size: 10, first_page: 0) { |collection, _number, _size| collection.first(10) }
+
+        paginate_links { |page_number, _qp| "/items?page[number]=#{page_number}" }
+      end
+
+      expect(klass.new(items).render.fetch(:_links)).to eq(
+        self: {href: "/items?page[number]=0"},
+        first: {href: "/items?page[number]=0"},
+        last: {href: "/items?page[number]=4"},
+        prev: nil,
+        next: {href: "/items?page[number]=1"}
+      )
+    end
+  end
+
   context "when no pagination procedure is declared" do
     it "raises InvalidField at DSL time" do
       item_ser = item_klass

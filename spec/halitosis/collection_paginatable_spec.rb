@@ -261,6 +261,63 @@ RSpec.describe Halitosis::CollectionPaginatable do
       end
     end
 
+    context "with first_page: 0" do
+      let :zero_based_klass do
+        Class.new do
+          include Halitosis
+
+          collection :items do |collection|
+            collection
+          end
+
+          paginate_by_page(:kaminari, default_page_size: 10, first_page: 0) do |collection, number, size|
+            collection[number * size, size] || []
+          end
+        end
+      end
+
+      it "defaults page[number] to 0" do
+        serializer = zero_based_klass.new(items)
+        context = serializer.send(:build_context, {})
+        serializer.send(:apply_pagination!, context)
+
+        expect(context.collection.map { |i| i[:id] }).to eq((1..10).to_a)
+        expect(context.query_params[:page]).to eq(number: 0, size: 10)
+      end
+
+      it "accepts a page[number] of 0" do
+        serializer = zero_based_klass.new(items)
+        context = serializer.send(:build_context, {page: {number: "0"}})
+        serializer.send(:apply_pagination!, context)
+
+        expect(context.collection.map { |i| i[:id] }).to eq((1..10).to_a)
+        expect(context.query_params[:page]).to eq(number: 0, size: 10)
+      end
+
+      it "raises InvalidPaginationParameter for a negative page[number]" do
+        serializer = zero_based_klass.new(items)
+
+        expect do
+          serializer.send(:apply_pagination!, serializer.send(:build_context, {page: {number: "-1"}}))
+        end.to raise_error do |exception|
+          expect(exception).to be_an_instance_of(Halitosis::InvalidPaginationParameter)
+          expect(exception.message).to match(/'page\[number\]' value: must be at least 0/i)
+          expect(exception.parameter).to eq("page[number]")
+        end
+      end
+
+      it "still raises InvalidPaginationParameter for a page[size] of 0" do
+        serializer = zero_based_klass.new(items)
+
+        expect do
+          serializer.send(:apply_pagination!, serializer.send(:build_context, {page: {size: "0"}}))
+        end.to raise_error do |exception|
+          expect(exception).to be_an_instance_of(Halitosis::InvalidPaginationParameter)
+          expect(exception.message).to match(/'page\[size\]' value: must be at least 1/i)
+        end
+      end
+    end
+
     it "raises InvalidPaginationParameter when the block returns nil" do
       bad_klass = Class.new do
         include Halitosis
