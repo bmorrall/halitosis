@@ -57,7 +57,7 @@ module Halitosis
       # Declare page-number / page-size pagination for this collection serializer.
       #
       # The block receives three arguments: +collection+, +number+ (Integer,
-      # 1-based), and +size+ (Integer). It must return the paginated collection,
+      # starting at +first_page+), and +size+ (Integer). It must return the paginated collection,
       # or +nil+ to signal that the provided values are invalid.
       #
       # +default_page_size+ is required and is used as the +size+ value when
@@ -69,8 +69,12 @@ module Halitosis
       #   set via +Halitosis.config.pagination_adapter+.
       # @param default_page_size [Integer] the default number of items per page
       # @param max_size [Integer, nil] optional upper bound on the page size;
-      #   when set, any requested +page[size]+ larger than this value is silently
-      #   clamped to +max_size+.
+      #   when set, any requested +page[size]+ larger than this value raises
+      #   +Halitosis::InvalidPaginationParameter+.
+      # @param first_page [Integer] the number of the first page (default 1).
+      #   Used as +number+ when no +page[number]+ is given; smaller values raise
+      #   +Halitosis::InvalidPaginationParameter+. Also the +first+ page in
+      #   links and meta, unless the adapter reports +:first_page+.
       #
       # @example
       #   paginate_by_page :kaminari, default_page_size: 25 do |collection, number, size|
@@ -82,7 +86,7 @@ module Halitosis
       #     collection.page(number).per(size)
       #   end
       #
-      def paginate_by_page(adapter = nil, default_page_size:, max_size: nil, &procedure)
+      def paginate_by_page(adapter = nil, default_page_size:, max_size: nil, first_page: 1, &procedure)
         unless procedure
           resolved_adapter = adapter || Halitosis.config.pagination_adapter
           if resolved_adapter
@@ -95,9 +99,9 @@ module Halitosis
           raise InvalidField, "#{name} paginate_by_page must be defined with a block or the adapter must provide a default_per_page_procedure"
         end
 
-        add_pagination_field(adapter) do |context, collection, page_params|
-          number = parse_page_integer(page_params[:number], default: 1, param: :number)
-          size = parse_page_integer(page_params[:size], default: default_page_size, param: :size)
+        add_pagination_field(adapter, first_page: first_page) do |context, collection, page_params|
+          number = parse_page_integer(page_params[:number], default: first_page, param: :number, min: first_page)
+          size = parse_page_integer(page_params[:size], default: default_page_size, param: :size, min: 1)
           raise_invalid_pagination_parameter("size", "must not exceed #{max_size}") if max_size && size > max_size
 
           result = procedure.call(collection, number, size)
@@ -144,7 +148,7 @@ module Halitosis
 
       private
 
-      def add_pagination_field(adapter = nil, &block)
+      def add_pagination_field(adapter = nil, first_page: 1, &block)
         if fields.singleton(CollectionPaginatable::Field)
           raise InvalidField, "#{name} pagination is already defined"
         end
@@ -158,7 +162,7 @@ module Halitosis
             "or set Halitosis.config.pagination_adapter."
         end
 
-        field = CollectionPaginatable::Field.new(:pagination, {adapter: CollectionPaginatable::Adapters.resolve(resolved_adapter)}, block)
+        field = CollectionPaginatable::Field.new(:pagination, {adapter: CollectionPaginatable::Adapters.resolve(resolved_adapter), first_page: first_page}, block)
         fields.add_singleton(field)
 
         field
@@ -196,13 +200,14 @@ module Halitosis
       # @param value [String, Integer, nil]
       # @param default [Integer]
       # @param param [Symbol] the parameter name used in the error message
+      # @param min [Integer] the smallest accepted value
       # @return [Integer]
       #
-      def parse_page_integer(value, default:, param:)
+      def parse_page_integer(value, default:, param:, min:)
         return default if value.nil?
 
         integer = Integer(value)
-        raise_invalid_pagination_parameter(param, "must be at least 1") unless integer.positive?
+        raise_invalid_pagination_parameter(param, "must be at least #{min}") if integer < min
 
         integer
       rescue ArgumentError, TypeError

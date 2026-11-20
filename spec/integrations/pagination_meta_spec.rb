@@ -337,4 +337,25 @@ RSpec.describe "Paginatable — paginate_meta" do
       expect(meta[:next]).to eq(2)
     end
   end
+
+  context "when the adapter reports first_page and last_page" do
+    it "uses them" do
+      item_ser = item_klass
+      adapter = ->(_) { {current_page: 3, first_page: 2, last_page: 6, total_pages: 5, prev_page: 2, next_page: 4} }
+
+      klass = Class.new do
+        include Halitosis
+
+        collection :items do |collection|
+          collection.map { |i| item_ser.new(i) }
+        end
+
+        paginate_by_page(adapter, default_page_size: 10, first_page: 0) { |collection, _number, _size| collection.first(10) }
+
+        paginate_meta only: %i[self first last prev next]
+      end
+
+      expect(klass.new(items, page: {number: 3}).render.fetch(:_meta)).to eq(self: 3, first: 2, last: 6, prev: 2, next: 4)
+    end
+  end
 end
