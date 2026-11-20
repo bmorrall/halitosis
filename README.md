@@ -653,7 +653,7 @@ paginate_by_page :kaminari, default_page_size: 25 do |collection, number, size|
 end
 ```
 
-Any callable that accepts the paginated collection and returns `{ current_page:, total_pages:, prev_page:, next_page: }` also works as an adapter. Custom callables do not provide a default procedure, so a block is required when using one.
+Any callable that accepts the paginated collection and returns `{ current_page:, first_page:, last_page:, total_pages:, prev_page:, next_page: }` also works as an adapter. Page numbers are used as reported. Custom callables do not provide a default procedure, so a block is required when using one.
 
 #### Pagy
 

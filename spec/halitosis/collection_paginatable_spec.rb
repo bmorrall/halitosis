@@ -550,7 +550,7 @@ RSpec.describe Halitosis::CollectionPaginatable do
 
         field = pagy_klass.fields.singleton(Halitosis::CollectionPaginatable::Field)
         expect(field.fetch_result(context)).to eq(
-          current_page: 2, total_pages: 5, per_page: 15, total_entries: 75,
+          current_page: 2, first_page: 1, last_page: 5, total_pages: 5, per_page: 15, total_entries: 75,
           prev_page: 1, next_page: 3
         )
         expect(context.query_params[:page]).to eq(number: 2, size: 15)

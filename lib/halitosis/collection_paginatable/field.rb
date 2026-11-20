@@ -91,8 +91,8 @@ module Halitosis
 
         {
           self: m[:current_page],
-          first: m[:first_page] || first_page,
-          last: m[:last_page] || m[:total_pages],
+          first: m[:first_page],
+          last: m[:last_page],
           prev: m[:prev_page],
           next: m[:next_page]
         }
@@ -104,10 +104,6 @@ module Halitosis
       #
       def adapter
         options[:adapter]
-      end
-
-      def first_page
-        options.fetch(:first_page, 1)
       end
 
       def store_result(context, value)

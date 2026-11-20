@@ -273,9 +273,9 @@ RSpec.describe "Paginatable — paginate_links" do
   end
 
   context "with first_page: 0" do
-    it "uses first_page for the first link and the adapter's numbers for the rest" do
+    it "uses the adapter's page numbers" do
       item_ser = item_klass
-      adapter = ->(_) { {current_page: 0, last_page: 4, prev_page: nil, next_page: 1} }
+      adapter = ->(_) { {current_page: 0, first_page: 0, last_page: 4, prev_page: nil, next_page: 1} }
 
       klass = Class.new do
         include Halitosis

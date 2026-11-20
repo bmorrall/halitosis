@@ -19,7 +19,7 @@ RSpec.describe Halitosis::CollectionPaginatable::Field do
   end
 
   let(:items) { (1..50).map { |i| {id: i} } }
-  let(:adapter) { ->(raw) { {current_page: 1, total_pages: 3, per_page: 10, total_entries: 30, prev_page: nil, next_page: 2} } }
+  let(:adapter) { ->(raw) { {current_page: 1, first_page: 1, last_page: 3, total_pages: 3, per_page: 10, total_entries: 30, prev_page: nil, next_page: 2} } }
   let(:field) { described_class.new(:pagination, {adapter: adapter}, ->(_c, col, _page) { col }) }
   let(:context) { klass.new(items).send(:build_context, {}) }
 
@@ -28,7 +28,7 @@ RSpec.describe Halitosis::CollectionPaginatable::Field do
       field.process(context, double)
 
       expect(field.metadata(context)).to eq(
-        current_page: 1, total_pages: 3, per_page: 10, total_entries: 30, prev_page: nil, next_page: 2
+        current_page: 1, first_page: 1, last_page: 3, total_pages: 3, per_page: 10, total_entries: 30, prev_page: nil, next_page: 2
       )
     end
   end
@@ -54,6 +54,14 @@ RSpec.describe Halitosis::CollectionPaginatable::Field do
       expect(field.page_numbers(context)).to eq(
         self: 1, first: 1, last: 3, prev: nil, next: 2
       )
+    end
+
+    it "leaves first and last nil when the adapter does not report them" do
+      adapter = ->(_raw) { {current_page: 1, total_pages: 3, prev_page: nil, next_page: 2} }
+      field = described_class.new(:pagination, {adapter: adapter}, ->(_c, col, _page) { col })
+      field.process(context, double)
+
+      expect(field.page_numbers(context)).to include(first: nil, last: nil)
     end
 
     it "returns nil when no metadata has been stored" do

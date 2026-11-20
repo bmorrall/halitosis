@@ -73,8 +73,7 @@ module Halitosis
       #   +Halitosis::InvalidPaginationParameter+.
       # @param first_page [Integer] the number of the first page (default 1).
       #   Used as +number+ when no +page[number]+ is given; smaller values raise
-      #   +Halitosis::InvalidPaginationParameter+. Also the +first+ page in
-      #   links and meta, unless the adapter reports +:first_page+.
+      #   +Halitosis::InvalidPaginationParameter+.
       #
       # @example
       #   paginate_by_page :kaminari, default_page_size: 25 do |collection, number, size|
@@ -99,7 +98,7 @@ module Halitosis
           raise InvalidField, "#{name} paginate_by_page must be defined with a block or the adapter must provide a default_per_page_procedure"
         end
 
-        add_pagination_field(adapter, first_page: first_page) do |context, collection, page_params|
+        add_pagination_field(adapter) do |context, collection, page_params|
           number = parse_page_integer(page_params[:number], default: first_page, param: :number, min: first_page)
           size = parse_page_integer(page_params[:size], default: default_page_size, param: :size, min: 1)
           raise_invalid_pagination_parameter("size", "must not exceed #{max_size}") if max_size && size > max_size
@@ -148,7 +147,7 @@ module Halitosis
 
       private
 
-      def add_pagination_field(adapter = nil, first_page: 1, &block)
+      def add_pagination_field(adapter = nil, &block)
         if fields.singleton(CollectionPaginatable::Field)
           raise InvalidField, "#{name} pagination is already defined"
         end
@@ -162,7 +161,7 @@ module Halitosis
             "or set Halitosis.config.pagination_adapter."
         end
 
-        field = CollectionPaginatable::Field.new(:pagination, {adapter: CollectionPaginatable::Adapters.resolve(resolved_adapter), first_page: first_page}, block)
+        field = CollectionPaginatable::Field.new(:pagination, {adapter: CollectionPaginatable::Adapters.resolve(resolved_adapter)}, block)
         fields.add_singleton(field)
 
         field

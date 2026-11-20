@@ -9,6 +9,8 @@ module Halitosis
     # Each adapter responds to +call(raw)+ and returns a +LazyMetadata+ wrapper:
     #
     #   metadata[:current_page]   # => Integer
+    #   metadata[:first_page]     # => Integer
+    #   metadata[:last_page]      # => Integer
     #   metadata[:total_pages]    # => Integer
     #   metadata[:prev_page]      # => Integer | nil
     #   metadata[:next_page]      # => Integer | nil
@@ -56,6 +58,8 @@ module Halitosis
       module Kaminari
         DEFINITIONS = {
           current_page: ->(c) { c.current_page },
+          first_page: ->(_c) { 1 },
+          last_page: ->(c) { c.total_pages },
           total_pages: ->(c) { c.total_pages },
           per_page: ->(c) { c.respond_to?(:limit_value) ? c.limit_value : nil },
           total_entries: ->(c) { c.respond_to?(:total_count) ? c.total_count : nil },
@@ -85,6 +89,8 @@ module Halitosis
       module WillPaginate
         DEFINITIONS = {
           current_page: ->(c) { c.current_page },
+          first_page: ->(_c) { 1 },
+          last_page: ->(c) { c.total_pages },
           total_pages: ->(c) { c.total_pages },
           per_page: ->(c) { c.respond_to?(:per_page) ? c.per_page : nil },
           total_entries: ->(c) { c.respond_to?(:total_entries) ? c.total_entries : nil },
@@ -114,6 +120,8 @@ module Halitosis
       module Pagy
         DEFINITIONS = {
           current_page: ->(p) { p.page },
+          first_page: ->(_p) { 1 },
+          last_page: ->(p) { p.pages },
           total_pages: ->(p) { p.pages },
           per_page: ->(p) { p.limit },
           total_entries: ->(p) { p.count },
